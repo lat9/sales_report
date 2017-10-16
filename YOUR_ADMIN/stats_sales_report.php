@@ -864,7 +864,7 @@ if ($output_format == 'print' || $output_format == 'display') {
         // display order line items, if necessary
         if ($sr->detail_level == 'order' && is_array($timeframe['orders']) ) {
             // sort the orders according to requested sort options
-            unset($dataset1, $dataset2);
+            $dataset1 = $dataset2 = array();
             foreach($timeframe['orders'] as $oID => $o_data) {
                 $dataset1[$oID] = $o_data[$li_sort_a];
                 $dataset2[$oID] = $o_data[$li_sort_b];
@@ -875,30 +875,9 @@ if ($output_format == 'print' || $output_format == 'display') {
             $dataset1 = array_map('strtolower', $dataset1);
             $dataset2 = array_map('strtolower', $dataset2);
 
-/*
-        //DEBUGGING
-        echo '<br /><br />]] DATA SET ONE [[<br /><br />';
-        print_r($dataset1);
-        echo '<br /><br />)) DATA SET TWO ((<br /><br />';
-        print_r($dataset2);
-        echo '<br /><br />-- END ITERATION --<br /><br />';
-*/
-        // we can't put sorting flags (SORT_ASC, SORT_DESC) into variables, so
-        // we use a series of if/else statements to choose the proper sort
-        // direction and perform the sort
-            if ($li_sort_order_a == 'asc') {
-                if ($li_sort_order_b == 'asc') {
-                    array_multisort($dataset1, SORT_ASC, $dataset2, SORT_ASC, $timeframe['orders']);
-                }  elseif ($li_sort_order_b == 'desc') {
-                    array_multisort($dataset1, SORT_ASC, $dataset2, SORT_DESC, $timeframe['orders']);
-                }
-            } elseif ($li_sort_order_a == 'desc') {
-                if ($li_sort_order_b == 'asc') {
-                    array_multisort($dataset1, SORT_DESC, $dataset2, SORT_ASC, $timeframe['orders']);
-                } elseif ($li_sort_order_b == 'desc') {
-                    array_multisort($dataset1, SORT_DESC, $dataset2, SORT_DESC, $timeframe['orders']);
-                }
-            }
+            $sort1 = ($li_sort_order_a == 'asc') ? SORT_ASC : SORT_DESC;
+            $sort2 = ($li_sort_order_b == 'asc') ? SORT_ASC : SORT_DESC;
+            array_multisort($dataset1, $sort1, $dataset2, $sort2, $timeframe['orders']);
 ?>
       <!--ORDER LINE ITEM HEADER-->
                 <tr class="lineItemHeadingRow">
@@ -969,7 +948,7 @@ if ($output_format == 'print' || $output_format == 'display') {
             }
         } elseif ($sr->detail_level == 'product' && is_array($timeframe['products']) ) { // display product line items, if necessary
             // sort the products according to requested sort options
-            unset($dataset1, $dataset2);
+            $dataset1 = $dataset2 = array();
             foreach($timeframe['products'] as $pID => $p_data) {
                 $dataset1[$pID] = $p_data[$li_sort_a];
                 $dataset2[$pID] = $p_data[$li_sort_b];
@@ -979,22 +958,9 @@ if ($output_format == 'print' || $output_format == 'display') {
             $dataset1 = array_map('strtolower', $dataset1);
             $dataset2 = array_map('strtolower', $dataset2);
 
-            // we can't put sorting flags (SORT_ASC, SORT_DESC) into variables, so
-            // we use a series of if/else statements to choose the proper sort
-            // direction and perform the sort
-            if ($li_sort_order_a == 'asc') {
-                if ($li_sort_order_b == 'asc') {
-                    array_multisort($dataset1, SORT_ASC, $dataset2, SORT_ASC, $timeframe['products']);
-                } elseif ($li_sort_order_b == 'desc') {
-                    array_multisort($dataset1, SORT_ASC, $dataset2, SORT_DESC, $timeframe['products']);
-                }
-            } elseif ($li_sort_order_a == 'desc') {
-                if ($li_sort_order_b == 'asc') {
-                    array_multisort($dataset1, SORT_DESC, $dataset2, SORT_ASC, $timeframe['products']);
-                } elseif ($li_sort_order_b == 'desc') {
-                    array_multisort($dataset1, SORT_DESC, $dataset2, SORT_DESC, $timeframe['products']);
-                }
-            }
+            $sort1 = ($li_sort_order_a == 'asc') ? SORT_ASC : SORT_DESC;
+            $sort2 = ($li_sort_order_b == 'asc') ? SORT_ASC : SORT_DESC;
+            array_multisort($dataset1, $sort1, $dataset2, $sort2, $timeframe['products']);
 
             // we have to nest tables for product line items
             // because the displayed data is so different from timeframe
@@ -1388,61 +1354,45 @@ function get_microtime()
 function show_arrow($report_field) 
 {
     global $li_sort_a, $li_sort_order_a, $li_sort_b, $li_sort_order_b, $output_format;
-    $arrow = "";
-    $link = "";
-
+    
+    $down_arrow = DIR_WS_IMAGES . 'icons/down_arrow.gif';
+    $up_arrow = DIR_WS_IMAGES . 'icons/up_arrow.gif';
+    
     if ($report_field == $li_sort_a) {
-        if ($li_sort_order_a == 'asc') {
-            $link = '<a href="' . zen_href_link(FILENAME_STATS_SALES_REPORT, zen_get_all_get_params(array('li_sort_order_a')) . 'li_sort_order_a=desc', 'NONSSL') . '" ' .
-          'onmouseover="img_over(\'img_sort_a\', \'' . DIR_WS_IMAGES . 'icons/down_arrow.gif' . '\')" ' .
-          'onmouseout="img_over(\'img_sort_a\', \'' . DIR_WS_IMAGES . 'icons/up_arrow.gif' . '\'' . ')">';
-
-            $arrow = zen_image(DIR_WS_IMAGES . 'icons/up_arrow.gif', ALT_TEXT_SORT_DESC, '', '', 'align=bottom id="img_sort_a"') . '<span class="lineItemHeadingContent">1</span>';
-
-            if ($output_format == 'display') {
-                return '&nbsp;' . $link . $arrow . '</a>';
-            } else {
-                return '&nbsp;' . $arrow;
-            }
-        } elseif ($li_sort_order_a == 'desc') {
-            $link = '<a href="' . zen_href_link(FILENAME_STATS_SALES_REPORT, zen_get_all_get_params(array('li_sort_order_a')) . 'li_sort_order_a=asc', 'NONSSL') . '" ' .
-      'onmouseover="img_over(\'img_sort_a\', \'' . DIR_WS_IMAGES . 'icons/up_arrow.gif' . '\')" ' .
-      'onmouseout="img_over(\'img_sort_a\', \'' . DIR_WS_IMAGES . 'icons/down_arrow.gif' . '\'' . ')">';
-
-            $arrow = zen_image(DIR_WS_IMAGES . 'icons/down_arrow.gif', ALT_TEXT_SORT_ASC, '', '', 'align=bottom id="img_sort_a"') . '<span class="lineItemHeadingContent">1</span>';
-
-            if ($output_format == 'display') {
-                return '&nbsp;' . $link . $arrow . '</a>';
-            } else {
-                return '&nbsp;' . $arrow;
-            }
-
-        }
+        $link_parms = zen_get_all_get_params(array('li_sort_order_a')) . 'li_sort_order_a=';
+        $arrow_id = 'img_sort_a';
+        $span_value = '1';
+        $sort_order = $li_sort_order_a;
     } elseif ($report_field == $li_sort_b) {
-        if ($li_sort_order_b == 'asc') {
-            $link = '<a href="' . zen_href_link(FILENAME_STATS_SALES_REPORT, zen_get_all_get_params(array('li_sort_order_b')) . 'li_sort_order_b=desc', 'NONSSL') . '" ' .
-      'onmouseover="img_over(\'img_sort_b\', \'' . DIR_WS_IMAGES . 'icons/down_arrow.gif' . '\')" ' .
-      'onmouseout="img_over(\'img_sort_b\', \'' . DIR_WS_IMAGES . 'icons/up_arrow.gif' . '\'' . ')">';
+        $link_parms = zen_get_all_get_params(array('li_sort_order_b')) . 'li_sort_order_b=';
+        $arrow_id = 'img_sort_b';
+        $span_value = '2';
+        $sort_order = $li_sort_order_b;
+    }
+    
+    $formatted_arrow = null;
+    if (isset($sort_order)) {
+        if ($sort_order == 'asc') {
+            $mouseover = $down_arrow;
+            $mouseout = $up_arrow;
+            $arrow_image = $up_arrow;
+            $arrow_alt = ALT_TEXT_SORT_DESC;
+            $link_parms .= 'desc';
+         } else {
+            $mouseover = $up_arrow;
+            $mouseout = $down_arrow;
+            $arrow_image = $down_arrow;
+            $arrow_alt = ALT_TEXT_SORT_ASC;
+            $link_parms .= 'asc';
+         } 
+        $arrow = zen_image($arrow_image, $arrow_alt, '', '', 'align=bottom id="' . $arrow_id . '"') . ' <span class="lineItemHeadingContent">' . $span_value . '</span>';
 
-            $arrow = zen_image(DIR_WS_IMAGES . 'icons/up_arrow.gif', ALT_TEXT_SORT_DESC, '', '', 'align=bottom id="img_sort_b"') .' <span class="lineItemHeadingContent">2</span>';
-
-            if ($output_format == 'display') {
-                return '&nbsp;' . $link . $arrow . '</a>';
-            } else {
-                return '&nbsp;' . $arrow;
-            }
-        } elseif ($li_sort_order_b == 'desc') {
-            $link = '<a href="' . zen_href_link(FILENAME_STATS_SALES_REPORT, zen_get_all_get_params(array('li_sort_order_b')) . 'li_sort_order_b=asc', 'NONSSL') . '" ' .
-      'onmouseover="img_over(\'img_sort_b\', \'' . DIR_WS_IMAGES . 'icons/up_arrow.gif' . '\')" ' .
-      'onmouseout="img_over(\'img_sort_b\', \'' . DIR_WS_IMAGES . 'icons/down_arrow.gif' . '\'' . ')">';
-
-            $arrow = zen_image(DIR_WS_IMAGES . 'icons/down_arrow.gif', ALT_TEXT_SORT_ASC, '', '', 'align=bottom id="img_sort_b"') . '<span class="lineItemHeadingContent">2</span>';
-
-            if ($output_format == 'display') {
-                return '&nbsp;' . $link . $arrow . '</a>';
-            } else {
-                return '&nbsp;' . $arrow;
-            }
+        if ($output_format == 'display') {
+            $link = '<a href="' . zen_href_link(FILENAME_STATS_SALES_REPORT, $link_parms, 'NONSSL') . "\" onmouseover=\"img_over('$arrow_id', '$mouseover');\" onmouseout=\"img_over('$arrow_id', '$mouseout');\">";
+            $formatted_arrow = '&nbsp;' . $link . $arrow . '</a>';
+        } else {
+            $formatted_arrow = '&nbsp;' . $arrow;
         }
     }
+    return $formatted_arrow;
 }
