@@ -52,7 +52,7 @@ class sales_report
         $this->payment_method = $payment_method;
         $this->payment_method_omit = $payment_method_omit;
         $this->current_status = $current_status;
-        $this->manufacturer = $manufacturer;
+        $this->manufacturer = (int)$manufacturer;
         $this->detail_level = $detail_level;
         $this->output_format = $output_format;
         $this->order_total_validation = $order_total_validation;
@@ -195,9 +195,15 @@ class sales_report
 
         // build the SQL query of order numbers within the current timeframe
         $sql = "SELECT DISTINCT o.orders_id from " . TABLE_ORDERS . " o \n";
-        if (isset($_GET['doProdInc']) && is_array($include_products) && count($include_products) > 0) {
+        
+        if ($this->manufacturer != 0 || (isset($_GET['doProdInc']) && is_array($include_products) && count($include_products) > 0)) {
             $sql .= "LEFT JOIN " . TABLE_ORDERS_PRODUCTS . " op ON o.orders_id = op.orders_id \n";
         }
+        
+        if ($this->manufacturer != 0) {
+            $sql .= ("LEFT JOIN " . TABLE_PRODUCTS . " p ON p.products_id = op.products_id" . PHP_EOL);
+        }
+        
 //      if ($_GET['doCustInc']== 'on' && is_array($include_customers) && sizeof($include_customers) > 0) {
 //        $sql .= "LEFT JOIN " . TABLE_ORDERS_PRODUCTS . " op ON o.orders_id = op.orders_id \n";
 //      }
@@ -207,6 +213,10 @@ class sales_report
             $sql .= "AND osh.orders_status_id = '" . $this->date_status . "' \n";
         } else {
             $sql .= "WHERE o.date_purchased >= '" . date("Y-m-d H:i:s", $sd) . "' AND o.date_purchased < '" . date("Y-m-d H:i:s", $ed) . "' \n";
+        }
+        
+        if ($this->manufacturer != 0) {
+            $sql .= "AND p.manufacturers_id = " . $this->manufacturer . PHP_EOL;
         }
         
         if ($this->payment_method) {
@@ -228,7 +238,7 @@ class sales_report
 
         // DEBUG
         //$this->sql[$id] = $sql;
-
+        
         // loop through query and build the arrays for this timeframe
         $sales = $db->Execute($sql);
         // make sure we actually have orders to process
@@ -912,7 +922,7 @@ class sales_report
                     echo CSV_HEADING_END_DATE . CSV_SEPARATOR;
                     echo TABLE_HEADING_PRODUCT_ID . CSV_SEPARATOR;
                     echo TABLE_HEADING_PRODUCT_NAME . CSV_SEPARATOR;
-		    echo TABLE_HEADING_PRODUCT_ATTRIBUTES . CSV_SEPARATOR;
+                    echo TABLE_HEADING_PRODUCT_ATTRIBUTES . CSV_SEPARATOR;
                     if (DISPLAY_MANUFACTURER) {
                         echo TABLE_HEADING_MANUFACTURER . CSV_SEPARATOR;
                     }
