@@ -166,47 +166,36 @@ class sales_report
         $this->timeframe[$id]['ed'] = mktime(0, 0, 0, date("m", $ed), date("d", $ed) - 1, date("Y", $ed));
 
         // build the excluded products array - not really debugged well
-        $this->product_filter = "";
+        $this->product_filter = '';
         $exclude_products = unserialize(EXCLUDE_PRODUCTS);
-        if (is_array($exclude_products) && sizeof($exclude_products) > 0) {
+        if (is_array($exclude_products) && count($exclude_products) > 0) {
             foreach($exclude_products as $pID) {
-                $this->product_filter .= " and op.products_id != '" . $pID . "' \n";
+                $this->product_filter .= " and op.products_id != " . (int)$pID;
             }
         }
 
         //need to add some error checking here - assumes list of valid numbers
-        $include_products = explode(",",$_GET['prod_includes']);
-        $include_customers = explode(",",$_GET['cust_includes']);
-
-        if ($_GET['doProdInc']== 'on' && is_array($include_products) && sizeof($include_products) > 0) {
-            $i = 0;
-            foreach ($include_products as $pID) {
-                if ($i == 0) {
-                    $this->product_filter .= " AND ( op.products_id = '" . trim($include_products[$i]);
-                } else {
-                    $this->product_filter .= "' \n  OR op.products_id = '" . trim($include_products[$i]);
-                }
-                $i++;
+        $include_products = explode(',', $_GET['prod_includes']);
+        if (isset($_GET['doProdInc']) && is_array($include_products) && count($include_products) > 0) {
+            for ($i = 0, $n = count($include_products); $i < $n; $i++){
+                $include_products[$i] = (int)trim($include_products[$i]);
             }
-            $this->product_filter .= "' )";
+            $include_products = array_values(array_unique($include_products));
+            $this->product_filter .= (" AND op.products_id IN (" . implode(',', $include_products) . ")");
         }
-
-        if ($_GET['doCustInc']== 'on' && is_array($include_customers) && sizeof($include_customers) > 0) {
-            $i = 0;
-            foreach ($include_customers as $cID) {
-                if ($i == 0) {
-                    $this->customer_filter .= " AND ( o.customers_id = '" . trim($include_customers[$i]);
-                } else {
-                    $this->customer_filter .= "' \n  OR o.customers_id = '" . trim($include_customers[$i]);
-                }
-                $i++;
+        
+        $include_customers = explode(',', $_GET['cust_includes']);
+        if (isset($_GET['doCustInc']) && is_array($include_customers) && count($include_customers) > 0) {
+            for ($i = 0, $n = count($include_customers); $i < $n; $i++){
+                $include_customers[$i] = (int)trim($include_customers[$i]);
             }
-            $this->customer_filter .= "' )";
+            $include_customers = array_values(array_unique($include_customers));
+            $this->customer_filter .= (" AND o.customers_id IN (" . implode(',', $include_customers) . ")");
         }
 
         // build the SQL query of order numbers within the current timeframe
         $sql = "SELECT DISTINCT o.orders_id from " . TABLE_ORDERS . " o \n";
-        if ($_GET['doProdInc']== 'on' && is_array($include_products) && sizeof($include_products) > 0) {
+        if (isset($_GET['doProdInc']) && is_array($include_products) && count($include_products) > 0) {
             $sql .= "LEFT JOIN " . TABLE_ORDERS_PRODUCTS . " op ON o.orders_id = op.orders_id \n";
         }
 //      if ($_GET['doCustInc']== 'on' && is_array($include_customers) && sizeof($include_customers) > 0) {
@@ -229,13 +218,13 @@ class sales_report
         if ($this->current_status) {
             $sql .= "AND o.orders_status = '" . $this->current_status . "' \n";
         }
-        if ($this->product_filter) {
+        if ($this->product_filter != '') {
             $sql .= $this->product_filter . " \n";
         }
-        if ($this->customer_filter) {
+        if ($this->customer_filter != '') {
             $sql .= $this->customer_filter . " \n";
         }
-        $sql .= "ORDER BY o.orders_id DESC";
+        $sql .= " ORDER BY o.orders_id DESC";
 
         // DEBUG
         //$this->sql[$id] = $sql;
@@ -376,7 +365,7 @@ class sales_report
               
                 // Get the amount of tax for this product
                 $product_tax = zen_calculate_tax($onetime_charges, $tax);
-                $product_tax += zen_calculate_tax(($final_price * $quantity), $tax);
+                $product_tax += zen_calculate_tax($final_price * $quantity, $tax);
               
                 $order_goods_tax += $product_tax;
               
@@ -397,20 +386,18 @@ class sales_report
 
             // check to see if product is unique in this timeframe
             // add to 'diff_products' array if so
-            $diff_prod_total = $this->unique_count($pID, $this->timeframe[$id]['total']['diff_products']);
-            if ($diff_prod_total) {
+            if (!in_array($pID, $this->timeframe[$id]['total']['diff_products'])) {
                 $this->timeframe[$id]['total']['diff_products'][] = $pID;
             }
 
-            $diff_prod_order = $this->unique_count($pID, $this->timeframe[$id]['orders'][$oID]['diff_products']);
-            if ($diff_prod_order) {
+            if (!in_array($pID, $this->timeframe[$id]['orders'][$oID]['diff_products'])) {
                 $this->timeframe[$id]['orders'][$oID]['diff_products'][] = $pID;
             }
 
             // build product line items (if requested)
             if ($this->detail_level == 'product' || $this->detail_level == 'matrix') {
                 // build array of product info so the function already has what it needs, avoiding another query
-                $product_tax = zen_calculate_tax($onetime_charges, $tax) + zen_calculate_tax(($final_price * $quantity), $tax);
+                $product_tax = zen_calculate_tax($onetime_charges, $tax) + zen_calculate_tax($final_price * $quantity, $tax);
                 // get product's attributes to display under product name
                 $products_name_with_attributes = $products->fields['products_name'] . '<br>';
                 $products_attributes = array();
@@ -485,7 +472,6 @@ class sales_report
                     $this->build_li_orders($oID, 'shipping', $value);
                 } elseif ($value < 0) {
                     // this allows for a custom discount, a la Super Orders
-          
                     $order_discount += abs($value);
                     $this->timeframe[$id]['total']['discount'] += abs($value);
                     $this->build_li_orders($oID, 'discount', abs($value) );
@@ -566,8 +552,7 @@ class sales_report
                 );
 
                 // get the customer data
-                global $db;
-                $c_data = $db->Execute(
+                $c_data = $GLOBALS['db']->Execute(
                     "SELECT c.* 
                        FROM " . TABLE_ORDERS . " o
                             INNER JOIN " . TABLE_CUSTOMERS . " c
@@ -648,7 +633,6 @@ class sales_report
     //
     function build_matrix() 
     {
-        global $db;
         for ($i = 0, $n = count($this->timeframe); $i < $n; $i++) {
             // skip the current timeframe if there isn't any data
             if (!is_array($this->timeframe[$i]['orders']) || !is_array($this->timeframe[$i]['products'])) {
@@ -676,7 +660,7 @@ class sales_report
 
             // gather statistics from orders array
             foreach ($this->timeframe[$i]['orders'] as $oID => $o_data) {
-                $order = $db->Execute(
+                $order = $GLOBALS['db']->Execute(
                     "SELECT * 
                        FROM " . TABLE_ORDERS . " 
                       WHERE orders_id = $oID 
@@ -872,19 +856,6 @@ class sales_report
         }  // END for ($i = 0, $i < sizeof($this->timeframe); $i++)
 
     }  // END function build_matrix()
-
-    function unique_count($item, $item_array) 
-    {
-        if (count($item_array) == 0) {
-            return true;
-        }
-        foreach ($item_array as $id => $compare_item) {
-            if ($item == $compare_item) {
-                return false;
-            }
-        }
-        return true;
-    }
 
     //////////////////////////////////////////////////////////
     // This function actually creates the CSV file when CSV
