@@ -27,31 +27,31 @@
 // entries are in the comments following each define.
 // Default settings are in brackets [].
 //
-define('DEFAULT_DATE_SEARCH_TYPE', 'preset'); // ['preset'], 'custom' (cannot be empty if next 3 options are set!)
-define('DEFAULT_DATE_PRESET', 'YTD'); // ['yesterday'], 'today', 'this_month', 'last_month', 'last_year', 'YTD', 'custom'
-define('DEFAULT_START_DATE', ''); // (date in mm-dd-yyyy format)
-define('DEFAULT_END_DATE', ''); // (date in mm-dd-yyyy format)
+define('DEFAULT_DATE_SEARCH_TYPE', 'preset');       // ['preset'], 'custom' (cannot be empty if next 3 options are set!)
+define('DEFAULT_DATE_PRESET', 'YTD');               // ['yesterday'], 'today', 'this_month', 'last_month', 'last_year', 'YTD', 'custom'
+define('DEFAULT_START_DATE', '');                   // (date in mm-dd-yyyy format)
+define('DEFAULT_END_DATE', '');                     // (date in mm-dd-yyyy format)
 
-define('DEFAULT_DATE_TARGET', 'purchased'); // ['purchased'], 'status'
-define('DEFAULT_DATE_STATUS', ''); // (status number) [lowest status number]
-define('DEFAULT_PAYMENT_METHOD', ''); // [any entry in `orders.payment_module_code` field]
-define('DEFAULT_CURRENT_STATUS', ''); // [status number]
-define('DEFAULT_MANUFACTURER', ''); // manufacturers_id from Admin > Catalog > Manufacturers ("mID=##" in the URL)
+define('DEFAULT_DATE_TARGET', 'purchased');         // ['purchased'], 'status'
+define('DEFAULT_DATE_STATUS', '');                  // (status number) [lowest status number]
+define('DEFAULT_PAYMENT_METHOD', '');               // [any entry in `orders.payment_module_code` field]
+define('DEFAULT_CURRENT_STATUS', '');               // [status number]
+define('DEFAULT_MANUFACTURER', '');                 // manufacturers_id from Admin > Catalog > Manufacturers ("mID=##" in the URL)
 
-define('DEFAULT_TIMEFRAME', 'year'); // ['day'], 'week', 'month', 'year'
-define('DEFAULT_TIMEFRAME_SORT', ''); // ['asc'], 'desc'
-define('DEFAULT_DETAIL_LEVEL', 'order'); // ['timeframe'], 'product', 'order', 'matrix'
+define('DEFAULT_TIMEFRAME', 'year');                // ['day'], 'week', 'month', 'year'
+define('DEFAULT_TIMEFRAME_SORT', '');               // ['asc'], 'desc'
+define('DEFAULT_DETAIL_LEVEL', 'order');            // ['timeframe'], 'product', 'order', 'matrix'
 
 // order line items: 'oID', 'last_name', 'num_products', 'goods', 'shipping', 'discount', 'gc_sold', 'gc_used', 'grand'
 // product line items: 'pID', 'name', 'manufacturer', 'model', 'base_price', 'quantity', 'onetime_charges', 'grand'
 define('DEFAULT_LI_SORT_A', 'model');
-define('DEFAULT_LI_SORT_ORDER_A', ''); // 'asc', 'desc'
+define('DEFAULT_LI_SORT_ORDER_A', '');              // 'asc', 'desc'
 define('DEFAULT_LI_SORT_B', 'name');
-define('DEFAULT_LI_SORT_ORDER_B', ''); // 'asc', 'desc'
+define('DEFAULT_LI_SORT_ORDER_B', '');              // 'asc', 'desc'
 
-define('DEFAULT_OUTPUT_FORMAT', 'display'); // ['display'], 'print', 'csv'
-define('DEFAULT_AUTO_PRINT', ''); // 'true', ['false']
-define('DEFAULT_CSV_HEADER', ''); // 'true', ['false']
+define('DEFAULT_OUTPUT_FORMAT', 'display');         // ['display'], 'print', 'csv'
+define('DEFAULT_AUTO_PRINT', '');                   // 'true', ['false']
+define('DEFAULT_CSV_HEADER', '');                   // 'true', ['false']
 
 
 //////////////////////////////////////////////////////////
@@ -87,7 +87,6 @@ define('DISPLAY_TABLE_HEADING_CUSTOMERS', true);
 define('DISPLAY_TABLE_HEADING_PRODUCTS', true);
 define('TEXT_CUSTOMER_TABLE_HEADING', ' Orders for: ');  //Prefix used to print before customer name(s) when filtering by customer
 
-
 //////////////////////////////////////////////////////////
 // PRODUCT MANUFACTURERS COLUMN
 // Setting this define to true will display the
@@ -96,7 +95,6 @@ define('TEXT_CUSTOMER_TABLE_HEADING', ' Orders for: ');  //Prefix used to print 
 // False will remove the manufacturer column from the report.
 //
 define('DISPLAY_MANUFACTURER', false);
-
 
 //////////////////////////////////////////////////////////
 // ONE-TIME FEES COLUMN
@@ -109,14 +107,12 @@ define('DISPLAY_MANUFACTURER', false);
 //
 define('DISPLAY_ONE_TIME_FEES', false);
 
-
 //////////////////////////////////////////////////////////
 // DECIMAL PLACES IN AVERAGES
 // Sets the number of decimal places displayed in averages
 // on timeframe statistics display
 //
 define('NUM_DECIMAL_PLACES', 2);
-
 
 //////////////////////////////////////////////////////////
 // TIMEFRAME DATE DISPLAY
@@ -127,21 +123,20 @@ define('NUM_DECIMAL_PLACES', 2);
 // formatting characters: http://us2.php.net/date
 //
 if (strtolower(DATE_FORMAT) == 'm/d/y') {
-  // Use US date format (m/d/Y)
-  define('TIME_DISPLAY_DAY', 'n-j-Y');
-  define('TIME_DISPLAY_WEEK', 'n-j-Y');
-  define('TIME_DISPLAY_MONTH', 'n-j-Y');
-  define('TIME_DISPLAY_YEAR', 'n-j-Y');
-  define('DATE_SPACER', ' thru<br/>&nbsp;&nbsp;&nbsp;');
-} else if (strtolower(DATE_FORMAT) == 'd/m/y') {
-  // Use UK date format (d/m/Y)
-  define('TIME_DISPLAY_DAY', 'jS-M-y');
-  define('TIME_DISPLAY_WEEK', 'jS-M-y');
-  define('TIME_DISPLAY_MONTH', 'jS-M-y');
-  define('TIME_DISPLAY_YEAR', 'jS-M-y');
-  define('DATE_SPACER', ' to<br/>&nbsp;&nbsp;&nbsp;');
+    // Use US date format (m/d/Y)
+    define('TIME_DISPLAY_DAY', 'n-j-Y');
+    define('TIME_DISPLAY_WEEK', 'n-j-Y');
+    define('TIME_DISPLAY_MONTH', 'n-j-Y');
+    define('TIME_DISPLAY_YEAR', 'n-j-Y');
+    define('DATE_SPACER', ' thru<br/>&nbsp;&nbsp;&nbsp;');
+} elseif (strtolower(DATE_FORMAT) == 'd/m/y') {
+    // Use UK date format (d/m/Y)
+    define('TIME_DISPLAY_DAY', 'jS-M-y');
+    define('TIME_DISPLAY_WEEK', 'jS-M-y');
+    define('TIME_DISPLAY_MONTH', 'jS-M-y');
+    define('TIME_DISPLAY_YEAR', 'jS-M-y');
+    define('DATE_SPACER', ' to<br/>&nbsp;&nbsp;&nbsp;');
 }
-
 
 //////////////////////////////////////////////////////////
 // EXCLUDE SPECIFIED PRODUCTS
@@ -166,8 +161,6 @@ if (strtolower(DATE_FORMAT) == 'm/d/y') {
 // EXAMPLE: define('EXCLUDE_PRODUCTS', serialize(array(25, 14, 43)) );
 //
 define('EXCLUDE_PRODUCTS', serialize(array( )));
-
-
 
 /*
 ** LANGUAGE DEFINES
@@ -237,7 +230,6 @@ define('CHECKBOX_AUTO_PRINT', 'Print report automatically');
 define('CHECKBOX_CSV_HEADER', 'Column titles in first row');
 define('CHECKBOX_NEW_WINDOW', 'Open results in new window');
 
-
 // Report Column Headings
 // Timeframe
 define('TABLE_HEADING_TIMEFRAME', 'Timeframe');
@@ -294,7 +286,6 @@ define('MATRIX_PRODUCT_SPREAD', 'Product Spread');
 define('MATRIX_PRODUCT_REVENUE_RATIO', 'Total Revenue %');
 define('MATRIX_PRODUCT_QUANTITY_RATIO', 'Total Quantity %');
 
-
 // CSV Export
 define('CSV_FILENAME_PREFIX', 'sales_');
 define('CSV_HEADING_START_DATE', 'Start Date');
@@ -338,4 +329,3 @@ define('TEXT_SAME_ONE', '| --');
 define('TEXT_PRINT_FORMAT', 'display report in print format');
 define('TEXT_PRINT_FORMAT_TITLE', 'TIP: click \'' . PAGE_HEADING . '\' to return to display view');
 define('TEXT_NO_DATA', '-- NO ORDERS IN TIMEFRAME --');
-?>
