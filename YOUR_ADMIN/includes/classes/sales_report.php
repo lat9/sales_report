@@ -319,7 +319,7 @@ class sales_report
         );
 
         // if we have to filter on manufacturer, the SQL is totally different
-        if ($this->manufacturer) {
+        if ($this->manufacturer != 0) {
             $products_sql = 
                 "SELECT op.* 
                    FROM " . TABLE_ORDERS_PRODUCTS . " op
