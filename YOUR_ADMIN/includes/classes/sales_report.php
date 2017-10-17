@@ -910,6 +910,7 @@ class sales_report
                     echo TABLE_HEADING_TOTAL_GOODS . CSV_SEPARATOR;
                     if ($display_tax) {
                         echo TABLE_HEADING_TAX . CSV_SEPARATOR;
+                        echo TABLE_HEADING_ORDER_RECORDED_TAX . CSV_SEPARATOR;
                     }
                     echo TABLE_HEADING_SHIPPING . CSV_SEPARATOR;
                     echo TABLE_HEADING_DISCOUNTS . CSV_SEPARATOR;
@@ -1003,19 +1004,9 @@ class sales_report
                         $dataset2[$oID] = $o_data[$li_sort_b];
                     }
 
-                    if ($li_sort_order_a == 'asc') {
-                        if ($li_sort_order_b == 'asc') {
-                            array_multisort($dataset1, SORT_ASC, $dataset2, SORT_ASC, $timeframe['orders']);
-                        } elseif ($li_sort_order_b == 'desc') {
-                            array_multisort($dataset1, SORT_ASC, $dataset2, SORT_DESC, $timeframe['orders']);
-                        }
-                    } elseif ($li_sort_order_a == 'desc') {
-                        if ($li_sort_order_b == 'asc') {
-                            array_multisort($dataset1, SORT_DESC, $dataset2, SORT_ASC, $timeframe['orders']);
-                        } elseif ($li_sort_order_b == 'desc') {
-                            array_multisort($dataset1, SORT_DESC, $dataset2, SORT_DESC, $timeframe['orders']);
-                        }
-                    }
+                    $sort1 = ($li_sort_order_a == 'asc') ? SORT_ASC : SORT_DESC;
+                    $sort2 = ($li_sort_order_b == 'asc') ? SORT_ASC : SORT_DESC;
+                    array_multisort($dataset1, $sort1, $dataset2, $sort2, $timeframe['orders']);
 
                     foreach($timeframe['orders'] as $key => $o_data) {
                         // skip order if it has no value
@@ -1054,19 +1045,9 @@ class sales_report
                         $dataset2[$pID] = $p_data[$li_sort_b];
                     }
 
-                    if ($li_sort_order_a == 'asc') {
-                        if ($li_sort_order_b == 'asc') {
-                            array_multisort($dataset1, SORT_ASC, $dataset2, SORT_ASC, $timeframe['products']);
-                        } elseif ($li_sort_order_b == 'desc') {
-                            array_multisort($dataset1, SORT_ASC, $dataset2, SORT_DESC, $timeframe['products']);
-                        }
-                    } elseif ($li_sort_order_a == 'desc') {
-                        if ($li_sort_order_b == 'asc') {
-                            array_multisort($dataset1, SORT_DESC, $dataset2, SORT_ASC, $timeframe['products']);
-                        } elseif ($li_sort_order_b == 'desc') {
-                            array_multisort($dataset1, SORT_DESC, $dataset2, SORT_DESC, $timeframe['products']);
-                        }
-                    }
+                    $sort1 = ($li_sort_order_a == 'asc') ? SORT_ASC : SORT_DESC;
+                    $sort2 = ($li_sort_order_b == 'asc') ? SORT_ASC : SORT_DESC;
+                    array_multisort($dataset1, $sort1, $dataset2, $sort2, $timeframe['products']);
 
                     foreach($timeframe['products'] as $key => $p_data) {
                         echo $start_date . CSV_SEPARATOR;
