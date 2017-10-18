@@ -1,7 +1,7 @@
-SALES REPORT Version 3.1.0
-By Frank Koehl (PM: BlindSide), Conor Kerr Ceon, Carl Peach
+SALES REPORT Version 3.2.0
+By Frank Koehl (PM: BlindSide), Conor Kerr Ceon, Carl Peach, Cindy Merkin (lat9)
  
-author Czech translation :  Josef Zahradník
+author Czech translation :  Josef ZahradnÃ­k
 web:                        www.magic-shop.cz   
 code page:                  cp1250
 
@@ -317,8 +317,16 @@ Changes in 2.2.0
 [ADDED]    Support for That Software Guy's "Better Together" order total module 
            added.
 [ADDED]    Support for Ceon's "Cashback" order total module added.
-=====================================
 
+=====================================
+Changes in 3.2.0, 2017-10-18 (lat9)
+=====================================
+[CHANGE]   Updated class selector for use under PHP 7.0 and later
+[BUGFIX]   Column-count "off" for CSV output when taxes are included.
+[BUGFIX]   Manufacturer filter was not being honored
+[CHANGE]   Applied PSR-2 styling to the various modules.
+[BUGFIX]   Correct year display for "Last Year" selection.
+=====================================
 Sponsored by Destination ImagiNation, Inc.
 www.destinationimagination.org
 
