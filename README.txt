@@ -326,6 +326,16 @@ Changes in 3.2.0, 2017-10-18 (lat9)
 [BUGFIX]   Manufacturer filter was not being honored
 [CHANGE]   Applied PSR-2 styling to the various modules.
 [BUGFIX]   Correct year display for "Last Year" selection.
+
+=====================================
+Changes in 3.2.1, 2019-02-15 (lat9)
+=====================================
+[CHANGE]   Interoperability with zc156, given that the language-file load order has changed.
+
+Modified:
+/YOUR_ADMIN/stats_sales_report.php
+/YOUR_ADMIN/includes/languages/english/stats_sales_report.php
+
 =====================================
 Sponsored by Destination ImagiNation, Inc.
 www.destinationimagination.org

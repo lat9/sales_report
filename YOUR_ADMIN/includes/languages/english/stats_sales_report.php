@@ -116,27 +116,9 @@ define('NUM_DECIMAL_PLACES', 2);
 
 //////////////////////////////////////////////////////////
 // TIMEFRAME DATE DISPLAY
-// These control the display format of the start and end
-// dates of each timeframe line.  Each define corresponds
-// to the timeframe of its namesake.  See the PHP manual
-// entry on the date() function for a table on the accepted
-// formatting characters: http://us2.php.net/date
+// Note:  Other constants moved to the main processing file for v3.2.1.
 //
-if (strtolower(DATE_FORMAT) == 'm/d/y') {
-    // Use US date format (m/d/Y)
-    define('TIME_DISPLAY_DAY', 'n-j-Y');
-    define('TIME_DISPLAY_WEEK', 'n-j-Y');
-    define('TIME_DISPLAY_MONTH', 'n-j-Y');
-    define('TIME_DISPLAY_YEAR', 'n-j-Y');
-    define('DATE_SPACER', ' thru<br/>&nbsp;&nbsp;&nbsp;');
-} elseif (strtolower(DATE_FORMAT) == 'd/m/y') {
-    // Use UK date format (d/m/Y)
-    define('TIME_DISPLAY_DAY', 'jS-M-y');
-    define('TIME_DISPLAY_WEEK', 'jS-M-y');
-    define('TIME_DISPLAY_MONTH', 'jS-M-y');
-    define('TIME_DISPLAY_YEAR', 'jS-M-y');
-    define('DATE_SPACER', ' to<br/>&nbsp;&nbsp;&nbsp;');
-}
+define('DATE_SPACER', ' to<br />&nbsp;&nbsp;&nbsp;');
 
 //////////////////////////////////////////////////////////
 // EXCLUDE SPECIFIED PRODUCTS

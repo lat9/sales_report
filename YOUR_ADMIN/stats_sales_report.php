@@ -29,6 +29,23 @@ require('includes/application_top.php');
 
 require(DIR_WS_CLASSES . 'currencies.php');
 $currencies = new currencies();
+
+//////////////////////////////////////////////////////////
+// TIMEFRAME DATE DISPLAY
+// These control the display format of the start and end
+// dates of each timeframe line.  Each define corresponds
+// to the timeframe of its namesake.  See the PHP manual
+// entry on the date() function for a table on the accepted
+// formatting characters: http://us2.php.net/date
+//
+// Moved here from the report's language file for v3.2.1 to provide zc156 interoperation,
+// given that that version has changed the loading order of admin language files.
+//
+$time_display = (strtolower(DATE_FORMAT) == 'd/m/y') ? 'n-j-Y' : 'jS-M-y';
+define('TIME_DISPLAY_DAY', $time_display);
+define('TIME_DISPLAY_WEEK', $time_display);
+define('TIME_DISPLAY_MONTH', $time_display);
+define('TIME_DISPLAY_YEAR', $time_display);
   
 // we ramp up the execution time to make sure those
 // really big reports don't time out
