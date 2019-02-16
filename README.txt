@@ -1,4 +1,4 @@
-SALES REPORT Version 3.2.0
+SALES REPORT Version 3.2.1
 By Frank Koehl (PM: BlindSide), Conor Kerr Ceon, Carl Peach, Cindy Merkin (lat9)
  
 author Czech translation :  Josef Zahradník
@@ -328,7 +328,7 @@ Changes in 3.2.0, 2017-10-18 (lat9)
 [BUGFIX]   Correct year display for "Last Year" selection.
 
 =====================================
-Changes in 3.2.1, 2019-02-15 (lat9)
+Changes in 3.2.1, 2019-02-16 (lat9)
 =====================================
 [CHANGE]   Interoperability with zc156, given that the language-file load order has changed.
 
