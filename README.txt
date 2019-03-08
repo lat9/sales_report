@@ -1,4 +1,4 @@
-SALES REPORT Version 3.2.1
+SALES REPORT Version 3.2.2
 By Frank Koehl (PM: BlindSide), Conor Kerr Ceon, Carl Peach, Cindy Merkin (lat9)
  
 author Czech translation :  Josef Zahradník
@@ -335,6 +335,14 @@ Changes in 3.2.1, 2019-02-16 (lat9)
 Modified:
 /YOUR_ADMIN/stats_sales_report.php
 /YOUR_ADMIN/includes/languages/english/stats_sales_report.php
+
+=====================================
+Changes in 3.2.2, 2019-03-xx (lat9)
+=====================================
+[CHANGE]   zc156 Interoperability: "Custom" date, calendar display is 'off-screen'.
+
+Modified:
+/YOUR_ADMIN/stats_sales_report.php
 
 =====================================
 Sponsored by Destination ImagiNation, Inc.

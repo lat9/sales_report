@@ -1,6 +1,6 @@
 <?php
 /**
- * SALES REPORT 3.1
+ * SALES REPORT 3.2.2
  *
  * This is where everything starts and ends. This file builds the HTML display, calls the class file
  * to build the data, then displays that data for the user.
@@ -354,6 +354,13 @@ font-size:9px;
 .ValidationColumnContent {
   background-color: #f8e6ca;
 }
+<?php
+if (PROJECT_VERSION_MAJOR . '.' . PROJECT_VERSION_MINOR > '1.5.6') {
+?>
+#spiffycalendar { left: 10px!important; }
+<?php
+}
+?>
 -->
 </style>
 <?php 
