@@ -712,6 +712,7 @@ if ($output_format == 'print' || $output_format == 'display') {
             $include_products = explode(",",$_GET['prod_includes']);
             if ($_GET['doProdInc']== 'on' && DISPLAY_TABLE_HEADING_PRODUCTS) {
                 foreach($include_products as $cID) {
+                    if (empty($cID)) continue; 
                     $tempAry = $db->Execute("select distinct pd.products_name from " .
                             TABLE_PRODUCTS_DESCRIPTION . " pd where products_id = " . trim($cID));
                     if ($i == 0) {
@@ -728,6 +729,7 @@ if ($output_format == 'print' || $output_format == 'display') {
             $include_customers = explode(",",$_GET['cust_includes']);
             if ($_GET['doCustInc']== 'on' && DISPLAY_TABLE_HEADING_CUSTOMERS) {
                 foreach($include_customers as $cID) {
+                    if (empty($cID)) continue; 
                     $tempAry = $db->Execute("select distinct c.customers_firstname, c.customers_lastname from " .
                             TABLE_CUSTOMERS . " c where customers_id = " . trim($include_customers[$i]));
                     if ($i == 0) {
