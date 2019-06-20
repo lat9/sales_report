@@ -243,10 +243,23 @@ $doProdInc = !empty($_GET['doProdInc']);
 $order_total_validation = (isset($_GET['order_total_validation']));
 
 // -----
+// Keep track of the admin's current choice for 'new_window' for their current session, recording that
+// selection in the session once they've requested a report to be generated.
+//
+if ($output_format === false) {
+    $new_window = (isset($_SESSION['sales_report_new_window'])) ? $_SESSION['sales_report_new_window'] : true;
+
+// -----
 // If this is not the initial page-entry for the report, i.e. the admin has chosen some
 // options to display, display the report.
 //
-if ($output_format !== false) {
+} else {
+    // -----
+    // Save the admin's current selection for the 'new_window' setting into the session.
+    //
+    $new_window = isset($_GET['new_window']);
+    $_SESSION['sales_report_new_window'] = $new_window;
+    
     // start the page parsing timer
     $parse_start = get_microtime();
     
@@ -679,7 +692,7 @@ if ($output_format == 'print') {
                         <td align="right" valign="bottom">
                             <table border="0" cellspacing="0" cellpadding="2">
                                 <tr>
-                                    <td align="left" class="smallText"><?php echo zen_draw_checkbox_field('new_window', '1', true) . CHECKBOX_NEW_WINDOW; ?><p style="text-align: left"><input type="button" id="btn_submit" value="<?php echo BUTTON_SEARCH; ?>" onClick="form_check();"></td>
+                                    <td align="left" class="smallText"><?php echo zen_draw_checkbox_field('new_window', '1', $new_window) . CHECKBOX_NEW_WINDOW; ?><p style="text-align: left"><input type="button" id="btn_submit" value="<?php echo BUTTON_SEARCH; ?>" onClick="form_check();"></td>
                                 </tr>
                             </table>
                         </td>
