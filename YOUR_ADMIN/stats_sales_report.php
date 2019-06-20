@@ -25,9 +25,9 @@
 //_TODO Matrix -> checkboxes for "per manufacturer" / "per product" / "per customer" stats
 
 
-require('includes/application_top.php');
+require 'includes/application_top.php';
 
-require(DIR_WS_CLASSES . 'currencies.php');
+require DIR_WS_CLASSES . 'currencies.php';
 $currencies = new currencies();
 
 //////////////////////////////////////////////////////////
@@ -56,7 +56,7 @@ ini_set('max_execution_time', '300');
 //                     print report           ($output_format = 'print')
 //                     csv report             ($output_format = 'csv')
 //                     criteria but no search ($output_format = 'none')
-$output_format = (isset($_GET['output_format']) ? $_GET['output_format'] : false);
+$output_format = (isset($_GET['output_format'])) ? $_GET['output_format'] : false;
 
 $status_array = array();
 $status_key = array();
@@ -69,14 +69,15 @@ $orders_status = $db->Execute(
 while (!$orders_status->EOF) {
     $status_array[] = array(
         'id' => $orders_status->fields['id'],
-        'text' => $orders_status->fields['text'] . ' [' . $orders_status->fields['id'] . ']');
+        'text' => $orders_status->fields['text'] . ' [' . $orders_status->fields['id'] . ']'
+    );
     $status_key[$orders_status->fields['id'] ] = $orders_status->fields['text'];
     $orders_status->MoveNext();
 }
 
 $payment_key = array();
 $payments_array[] = array(
-    'id' => false,
+    'id' => 0,
     'text' => TEXT_EMPTY_SELECT
 );
 $payments = $db->Execute(
@@ -93,13 +94,14 @@ while (!$payments->EOF) {
 }
 
 // build arrays for dropdowns in search menu
-if (!$output_format || $output_format != 'print') {
+if ($output_format != 'print') {
     $manufacturers = $db->Execute(
         "SELECT * 
            FROM " . TABLE_MANUFACTURERS . " 
        ORDER BY manufacturers_name ASC"
     );
     $manufacturer_array = array();
+    $manufacturer_key = array();
     if (!$manufacturers->EOF) {
         $manufacturer_array[] = array(
             'id' => 0,
@@ -110,10 +112,12 @@ if (!$output_format || $output_format != 'print') {
                 'id' => $manufacturers->fields['manufacturers_id'],
                 'text' => $manufacturers->fields['manufacturers_name']
             );
+            $manufacturer_key[] = $manufacturers->fields['manufacturers_id'];
             $manufacturers->MoveNext();
         }
     }
 
+    $detail_types = array('timeframe', 'product', 'order', 'matrix');
     $detail_array = array(
         array(
             'id' => 'timeframe',
@@ -147,10 +151,7 @@ if (!$output_format || $output_format != 'print') {
             'text' => SELECT_OUTPUT_CSV
         ),
     );
-}
-
-// build "key tables" to translate form values into text for print format headings
-if ($output_format == 'print') {
+} else {
     $detail_key = array(
         'timeframe' => SELECT_DETAIL_TIMEFRAME,
         'product' => SELECT_DETAIL_PRODUCT,
@@ -166,78 +167,89 @@ if ($output_format == 'print') {
     );
 }
 
+// -----
+// Initialize variables for the report and/or display, sanitizing where needed.
+//
+$valid_sorts = array('asc', 'desc');
+// process the search criteria
+$timeframe = (isset($_GET['timeframe']) && in_array($_GET['timeframe'], array('year', 'month', 'week', 'day'))) ? $_GET['timeframe'] : 'year';
+$timeframe_sort = (isset($_GET['timeframe_sort']) && in_array($_GET['timeframe_sort'], $valid_sorts)) ? $_GET['timeframe_sort'] : 'asc';
 
+// the sheer number of options for date range requires some extra checking...
+$date_preset = (!empty($_GET['date_preset'])) ? $_GET['date_preset'] : false;
+$today_timestamp = time();
+switch ($date_preset) {
+    case 'today':
+        $start_date = date(DATE_FORMAT, $today_timestamp);
+        $end_date = date(DATE_FORMAT, $today_timestamp);
+        break;
+    case 'yesterday':
+        $start_date = date(DATE_FORMAT, strtotime('yesterday', $today_timestamp));
+        $end_date = date(DATE_FORMAT, strtotime('yesterday', $today_timestamp));
+        break;
+    case 'last_month':
+        $start_date = date(DATE_FORMAT, strtotime('first day of last month', $today_timestamp));
+        $end_date = date(DATE_FORMAT, strtotime('last day of last month', $today_timestamp));
+        break;
+    case 'this_month':
+        $start_date = date(DATE_FORMAT, strtotime('first day of this month', $today_timestamp));
+        $end_date = date(DATE_FORMAT, $today_timestamp);
+        break;
+    case 'last_year':
+        $start_date = date(DATE_FORMAT, strtotime('last year January 1st', $today_timestamp));
+        $end_date = date(DATE_FORMAT, strtotime('last year December 31st', $today_timestamp));
+        break;
+    case 'YTD':
+        $start_date = date(DATE_FORMAT, strtotime('first day of January this year', $today_timestamp));
+        $end_date = date(DATE_FORMAT, $today_timestamp);
+        break;
+    // -----
+    // No preset date range, so it must be a custom ...
+    //
+    default:
+        // defaults to beginning of the month when not set
+        $start_date = (isset($_GET['start_date'])) ? $_GET['start_date'] : strtotime('first day of this month', $today_timestamp);
+
+        // defaults to start date when not set (only have to enter a single day just once)
+        $end_date = (isset($_GET['end_date'])) ? $_GET['end_date'] : $start_date;
+        break;
+}
+
+$date_target = (isset($_GET['date_target']) && in_array($_GET['date_target'], array('purchased', 'status'))) ? $_GET['date_target'] : 'purchased';
+if ($date_target == 'status') {
+    $date_status = (isset($_GET['date_status']) && in_array((int)$_GET['date_status'], $status_key)) ? (int)$_GET['date_status'] : DEFAULT_ORDERS_STATUS_ID;
+} else {
+    $date_status = false;
+}
+
+$payment_method = (isset($_GET['payment_method']) && in_array($_GET['payment_method'], $payment_key)) ? $_GET['payment_method'] : 0;
+$payment_method_omit = (isset($_GET['payment_method_omit']) && in_array($_GET['payment_method_omit'], $payment_key)) ? $_GET['payment_method_omit'] : 0;
+$current_status = (isset($_GET['current_status']) && in_array((int)$_GET['current_status'], $status_key)) ? (int)$_GET['current_status'] : 0;
+$manufacturer = (isset($_GET['manufacturer']) && in_array((int)$_GET['manufacturer'], $manufacturer_key)) ? (int)$_GET['manufacturer'] : 0;
+$detail_level = (isset($_GET['detail_level']) && in_array($_GET['detail_level'], $detail_types)) ? $_GET['detail_level'] : 'order';
+
+$li_sort_a = (isset($_GET['li_sort_a'])) ? $_GET['li_sort_a'] : '';
+$li_sort_order_a = (isset($_GET['li_sort_order_a']) && in_array($_GET['li_sort_order_a'], $valid_sorts)) ? $_GET['li_sort_order_a'] : 'asc';
+
+$li_sort_b = (isset($_GET['li_sort_b']) && in_array($_GET['li_sort_b'], $valid_sorts)) ? $_GET['li_sort_b'] : 'asc';
+$li_sort_order_b = (isset($_GET['li_sort_order_b']) && in_array($_GET['li_sort_order_b'], $valid_sorts)) ? $_GET['li_sort_order_b'] : 'asc';
+
+$auto_print = !empty($_GET['auto_print']);
+$csv_header = !empty($_GET['csv_header']);
+
+$doCustInc = !empty($_GET['doCustInc']);
+$doProdInc = !empty($_GET['doProdInc']);
+
+$order_total_validation = (isset($_GET['order_total_validation']));
+
+// -----
+// If this is not the initial page-entry for the report, i.e. the admin has chosen some
+// options to display, display the report.
+//
 if ($output_format !== false) {
     // start the page parsing timer
     $parse_start = get_microtime();
-
-    // process the search criteria
-    $timeframe = $_GET['timeframe'];
-    $timeframe_sort = $_GET['timeframe_sort'];
-
-    // the sheer number of options for date range requires some extra checking...
-    $date_preset = ($_GET['date_preset'] != '' ? $_GET['date_preset'] : false);
-    switch ($date_preset) {
-        case 'today':
-            $start_date = date(DATE_FORMAT, mktime(0, 0, 0, date("m"), date("d"), date("Y")));
-            $end_date = date(DATE_FORMAT, mktime(23, 59, 59, date("m"), date("d"), date("Y")));
-            break;
-        case 'yesterday':
-            $start_date = date(DATE_FORMAT, mktime(0, 0, 0, date("m"), date("d") - 1, date("Y")));
-            $end_date = date(DATE_FORMAT, mktime(0, 0, 0, date("m"), date("d") - 1, date("Y")));
-            break;
-        case 'last_month':
-            $start_date = date(DATE_FORMAT, mktime(0, 0, 0, date("m") - 1, 1, date("Y")));
-            $end_date = date(DATE_FORMAT, mktime(0, 0, 0, date("m"), 0, date("Y")));
-            break;
-        case 'this_month':
-            $start_date = date(DATE_FORMAT, mktime(0, 0, 0, date("m"), 1, date("Y")));
-            $end_date = date(DATE_FORMAT, mktime(0, 0, 0, date("m"), date("d"), date("Y")));
-            break;
-        case 'last_year':
-            $start_date = date(DATE_FORMAT, mktime(0, 0, 0, 1, 1, date("Y") - 1));
-            $end_date = date(DATE_FORMAT, mktime(23, 59, 59, 12, 31, date("Y") - 1));
-            break;
-        case 'YTD':
-            $start_date = date(DATE_FORMAT, mktime(0, 0, 0, 1, 1, date("Y")));
-            $end_date = date(DATE_FORMAT, mktime(23, 59, 59, date("m"), date("d"), date("Y")));
-            break;
-        // -----
-        // No preset date range, so it must be a custom ...
-        //
-        default:
-            // defaults to beginning of the month when not set
-            $start_date = ($_GET['start_date'] != '' ? $_GET['start_date'] : date(DATE_FORMAT, mktime(0, 0, 0, date("m") - 1, 1, date("Y"))) );
-
-            // defaults to start date when not set (only have to enter a single day just once)
-            $end_date = ($_GET['end_date'] != '' ? $_GET['end_date'] : $_GET['start_date']);
-            break;
-    }
-
-    $date_target = ($_GET['date_target'] != '' ? $_GET['date_target'] : false);
-    if ($date_target == 'status') {
-        $date_status = $_GET['date_status'];
-    } else {
-        $date_status = false;
-    }
-
-    $payment_method = ($_GET['payment_method'] != '' ? $_GET['payment_method'] : false);
-    $payment_method_omit = ($_GET['payment_method_omit'] != '' ? $_GET['payment_method_omit'] : false);
-    $current_status = ($_GET['current_status'] != '' ? $_GET['current_status'] : false);
-    $manufacturer = ($_GET['manufacturer'] != '' ? $_GET['manufacturer'] : false);
-    $detail_level = ($_GET['detail_level'] != '' ? $_GET['detail_level'] : false);
-
-    $li_sort_a = ($_GET['li_sort_a'] != '' ? $_GET['li_sort_a'] : false);
-    $li_sort_order_a = ($_GET['li_sort_order_a'] != '' ? $_GET['li_sort_order_a'] : false);
-
-    $li_sort_b = ($_GET['li_sort_b'] != '' ? $_GET['li_sort_b'] : false);
-    $li_sort_order_b = ($_GET['li_sort_order_b'] != '' ? $_GET['li_sort_order_b'] : false);
-
-    $auto_print = ($_GET['auto_print'] != '' ? true : false);
-    $csv_header = ($_GET['csv_header'] != '' ? true : false);
-
-    $order_total_validation = (isset($_GET['order_total_validation']));
-
+    
     // if any required field is empty, cancel the report and alert the user
     // JavaScript checks should usually catch these, this is "just in case"
     if (!$start_date || !$end_date || !$date_target || !$detail_level || !$output_format) {
@@ -408,14 +420,14 @@ if ($output_format == 'print') {
         <td align="left" valign="top"><table border="0" cellspacing="1" cellpadding="2">
             <tr>
 <?php
-    $date_target = PRINT_DATE_TARGET;
+    $date_target_heading = PRINT_DATE_TARGET;
     if ($date_target == 'purchased') {
-        $date_target .= PRINT_DATE_PURCHASED;
+        $date_target_heading .= PRINT_DATE_PURCHASED;
     } elseif ($date_target == 'status') {
-        $date_target .= (PRINT_DATE_STATUS . ' (' . $status_key[$date_status] . ')');
+        $date_target_heading .= (PRINT_DATE_STATUS . ' (' . $status_key[$date_status] . ')');
     }
 ?>
-                <td class="smalltext"><?php echo $date_target; ?></td>
+                <td class="smalltext"><?php echo $date_target_heading; ?></td>
             </tr>
             <tr>
                 <td class="smallText"><?php echo sprintf(PRINT_TIMEFRAMES, $timeframe_key[$timeframe], $timeframe_sort); ?></td>
@@ -468,8 +480,8 @@ if ($output_format == 'print') {
     require DIR_WS_INCLUDES . 'header.php'; 
 ?>
     <script language="javascript">
-        var StartDate = new ctlSpiffyCalendarBox("StartDate", "search", "start_date", "btnDate1", "<?php echo (($start_date == '') ? '' : $sr->sd); ?>", scBTNMODE_CALBTN);
-        var EndDate = new ctlSpiffyCalendarBox("EndDate", "search", "end_date", "btnDate2", "<?php echo (($end_date == '') ? '' : $sr->ed); ?>", scBTNMODE_CALBTN);
+        var StartDate = new ctlSpiffyCalendarBox("StartDate", "search", "start_date", "btnDate1", "<?php echo $start_date; ?>", scBTNMODE_CALBTN);
+        var EndDate = new ctlSpiffyCalendarBox("EndDate", "search", "end_date", "btnDate2", "<?php echo $end_date; ?>", scBTNMODE_CALBTN);
         /*
         var scBTNMODE_DEFAULT;
         var scBTNMODE_CUSTOMBLUE;
@@ -532,29 +544,25 @@ if ($output_format == 'print') {
                                 </td>
                             </tr>
                             <tr>
-                                <td class="smallText" id="td_date_status" style="visibility:hidden"><?php echo zen_draw_pull_down_menu('date_status', $status_array, $_GET['date_status'], 'id="date_status"'); ?></td>
+                                <td class="smallText" id="td_date_status" style="visibility:hidden"><?php echo zen_draw_pull_down_menu('date_status', $status_array, $date_status, 'id="date_status"'); ?></td>
                             </tr>
                             <tr>
-                                <td class="smallText"><input type="checkbox" name="doProdInc" <?php if ($_GET['doProdInc']) echo 'CHECKED'; ?> onClick="show('td_prod_includes')"> <?php echo SEARCH_SPECIFIC_PRODUCTS; ?></td>
+                                <td class="smallText"><input type="checkbox" name="doProdInc" <?php if ($doProdInc) echo 'CHECKED'; ?> onClick="show('td_prod_includes')"> <?php echo SEARCH_SPECIFIC_PRODUCTS; ?></td>
                             </tr>
                             <tr>
 <?php
-    $temp_prods = INCLUDE_PRODUCTS;
-    if (isset($_GET['prod_includes']) && $_GET['prod_includes'] != '') {
-        $temp_prods = $_GET['prod_includes'];
-    }
-    $extra_parms = (!isset($_GET['doProdInc'])) ? ' style="visibility: hidden;"' : '';
+    $temp_prods = (!empty($_GET['prod_includes'])) ? $_GET['prod_includes'] : INCLUDE_PRODUCTS;
+    $extra_parms = (!$doProdInc) ? ' style="visibility: hidden;"' : '';
 ?>
                                 <td class="smallText" id="td_prod_includes" <?php echo $extra_parms; ?>><?php echo zen_draw_input_field('prod_includes', $temp_prods, 30); ?></td>
                             </tr>
                             <tr>
-                                <td class="smallText"><input type="checkbox" name="doCustInc" <?php if ($_GET['doCustInc']) echo 'CHECKED'; ?> onclick="show('td_cust_includes')"> <?php echo SEARCH_SPECIFIC_CUSTOMERS; ?></td>
+                                <td class="smallText"><input type="checkbox" name="doCustInc" <?php if ($doCustInc) echo 'CHECKED'; ?> onclick="show('td_cust_includes')"> <?php echo SEARCH_SPECIFIC_CUSTOMERS; ?></td>
                             </tr>
                             <tr>
                                 <td class="smallText" id="td_cust_includes" <?php 
-              $temp_cust = INCLUDE_CUSTOMERS;
-              if ($_GET['cust_includes'])  $temp_cust = $_GET['cust_includes'];
-              if ($_GET['doCustInc'] != 'on') echo 'style="visibility:hidden"'; echo '>';  echo  zen_draw_input_field('cust_includes', $temp_cust, 30 ); ?>
+              $temp_cust = (!empty($_GET['cust_includes'])) ? $_GET['cust_includes'] : INCLUDE_CUSTOMERS;
+              if (!$doCustInc) echo 'style="visibility:hidden"'; echo '>';  echo  zen_draw_input_field('cust_includes', $temp_cust, 30 ); ?>
                                 </td>
                             </tr>
                         </table></td>
@@ -562,20 +570,20 @@ if ($output_format == 'print') {
                             <tr>
                                 <td class="smallText"><strong><?php echo
               SEARCH_PAYMENT_METHOD . '</strong><br />' .
-              zen_draw_pull_down_menu('payment_method', $payments_array, $_GET['payment_method'], 'id="payment_method"'); ?>
+              zen_draw_pull_down_menu('payment_method', $payments_array, $payment_method, 'id="payment_method"'); ?>
                                 </td>
                             </tr>
                             <tr>
-                                <td class="smallText"><strong><?php echo SEARCH_PAYMENT_METHOD . ' To Omit</strong><br />' . zen_draw_pull_down_menu('payment_method_omit', $payments_array, $_GET['payment_method_omit'], 'id="payment_method_omit"'); ?></td>
+                                <td class="smallText"><strong><?php echo SEARCH_PAYMENT_METHOD . ' To Omit</strong><br />' . zen_draw_pull_down_menu('payment_method_omit', $payments_array, $payment_method_omit, 'id="payment_method_omit"'); ?></td>
                             </tr>
                             <tr>
-                                <td class="smallText"><strong><?php echo SEARCH_CURRENT_STATUS . '</strong><br />' . zen_draw_pull_down_menu('current_status', array_merge(array(array('id' => '', 'text' => TEXT_EMPTY_SELECT)), $status_array), $_GET['current_status'], 'id="current_status"'); ?></td>
+                                <td class="smallText"><strong><?php echo SEARCH_CURRENT_STATUS . '</strong><br />' . zen_draw_pull_down_menu('current_status', array_merge(array(array('id' => 0, 'text' => TEXT_EMPTY_SELECT)), $status_array), $current_status, 'id="current_status"'); ?></td>
                             </tr>
 <?php 
     if ($manufacturer_array) { 
 ?>
                             <tr>
-                                <td class="smallText"><strong><?php echo SEARCH_MANUFACTURER . '</strong><br />' . zen_draw_pull_down_menu('manufacturer', $manufacturer_array, $_GET['manufacturer'], 'id="manufacturer"'); ?></td>
+                                <td class="smallText"><strong><?php echo SEARCH_MANUFACTURER . '</strong><br />' . zen_draw_pull_down_menu('manufacturer', $manufacturer_array, $manufacturer, 'id="manufacturer"'); ?></td>
                             </tr>
 <?php 
 } 
@@ -619,7 +627,7 @@ if ($output_format == 'print') {
                             <tr>
                                 <td class="smallText"><strong><?php echo
                                     SEARCH_DETAIL_LEVEL . '</strong><br />' .
-                                    zen_draw_pull_down_menu('detail_level', $detail_array, $_GET['detail_level'], 'id="detail_level" onchange="set_sort_options(document.search.detail_level.options[document.search.detail_level.selectedIndex].value);"'); ?>
+                                    zen_draw_pull_down_menu('detail_level', $detail_array, $detail_level, 'id="detail_level" onchange="set_sort_options(document.search.detail_level.options[document.search.detail_level.selectedIndex].value);"'); ?>
                                 </td>
                             </tr>
                         </table></td>
@@ -661,13 +669,13 @@ if ($output_format == 'print') {
                     <tr>
                         <td class="smallText" valign="bottom"><?php echo
                             '<strong>' . SEARCH_OUTPUT_FORMAT . '</strong><br />' .
-                            zen_draw_pull_down_menu('output_format', $output_array, $_GET['output_format'], 'id="output_format" onchange="format_checkbox(document.search.output_format.options[document.search.output_format.selectedIndex].value);"'); ?>
+                            zen_draw_pull_down_menu('output_format', $output_array, $output_format, 'id="output_format" onchange="format_checkbox(document.search.output_format.options[document.search.output_format.selectedIndex].value);"'); ?>
                         </td>
                         <td class="smallText" valign="bottom"><?php echo zen_draw_separator('pixel_trans.gif', 175, 1); ?><br />
                             <span id="span_auto_print" style="display:none"><?php echo zen_draw_checkbox_field('auto_print', '1', false) . CHECKBOX_AUTO_PRINT; ?></span>
                             <span id="span_csv_header" style="display:none"><?php echo zen_draw_checkbox_field('csv_header', '1', false) . CHECKBOX_CSV_HEADER; ?></span>
                         </td>
-                        <td align="right" valign="bottom" class="smallText"><span id="order_total_validation_checkbox" style="<?php if ($sr->detail_level != 'order') { echo 'display:none'; } ?>"><?php echo zen_draw_checkbox_field('order_total_validation', '1', false) . 'Output Order Total Validation Column'; ?></span><p><input type="button" id="defaults" value="<?php echo BUTTON_LOAD_DEFAULTS; ?>" onClick="populate_search(true);"></input></p></td>
+                        <td align="right" valign="bottom" class="smallText"><span id="order_total_validation_checkbox" style="<?php if ($detail_level != 'order') { echo 'display:none'; } ?>"><?php echo zen_draw_checkbox_field('order_total_validation', '1', false) . 'Output Order Total Validation Column'; ?></span><p><input type="button" id="defaults" value="<?php echo BUTTON_LOAD_DEFAULTS; ?>" onClick="populate_search(true);"></input></p></td>
                         <td align="right" valign="bottom">
                             <table border="0" cellspacing="0" cellpadding="2">
                                 <tr>
@@ -705,12 +713,12 @@ if ($output_format == 'print' || $output_format == 'display') {
 ?>
         <tr>
 <?php 
-        if ($_GET['doCustInc']== 'on' || $_GET['doProdInc']== 'on') {
+        if ($doCustInc || $doProdInc) {
             // if reporting for a specific product, build up a string of product descriptions
             $i = 0;
             $header_string = "";
-            $include_products = explode(",",$_GET['prod_includes']);
-            if ($_GET['doProdInc']== 'on' && DISPLAY_TABLE_HEADING_PRODUCTS) {
+            $include_products = explode(",", $_GET['prod_includes']);
+            if ($doProdInc && DISPLAY_TABLE_HEADING_PRODUCTS) {
                 foreach($include_products as $cID) {
                     if (empty($cID)) continue; 
                     $tempAry = $db->Execute("select distinct pd.products_name from " .
@@ -727,7 +735,7 @@ if ($output_format == 'print' || $output_format == 'display') {
             // with the actual customer fname,lname
             $i = 0;
             $include_customers = explode(",",$_GET['cust_includes']);
-            if ($_GET['doCustInc']== 'on' && DISPLAY_TABLE_HEADING_CUSTOMERS) {
+            if ($doCustInc && DISPLAY_TABLE_HEADING_CUSTOMERS) {
                 foreach($include_customers as $cID) {
                     if (empty($cID)) continue; 
                     $tempAry = $db->Execute("select distinct c.customers_firstname, c.customers_lastname from " .
