@@ -167,17 +167,9 @@ if ($output_format != 'print') {
     );
 }
 
-// -----
-// Initialize variables for the report and/or display, sanitizing where needed.
-//
-$valid_sorts = array('asc', 'desc');
-// process the search criteria
-$timeframe = (isset($_GET['timeframe']) && in_array($_GET['timeframe'], array('year', 'month', 'week', 'day'))) ? $_GET['timeframe'] : 'year';
-$timeframe_sort = (isset($_GET['timeframe_sort']) && in_array($_GET['timeframe_sort'], $valid_sorts)) ? $_GET['timeframe_sort'] : 'asc';
-
 // the sheer number of options for date range requires some extra checking...
 $date_preset = (!empty($_GET['date_preset'])) ? $_GET['date_preset'] : false;
-$today_timestamp = time();
+$today_timestamp = strtotime('today midnight');
 switch ($date_preset) {
     case 'today':
         $start_date = date(DATE_FORMAT, $today_timestamp);
@@ -208,7 +200,7 @@ switch ($date_preset) {
     //
     default:
         // defaults to beginning of the month when not set
-        $start_date = (isset($_GET['start_date'])) ? $_GET['start_date'] : strtotime('first day of this month', $today_timestamp);
+        $start_date = (isset($_GET['start_date'])) ? $_GET['start_date'] : date(DATE_FORMAT, strtotime('first day of this month', $today_timestamp));
 
         // defaults to start date when not set (only have to enter a single day just once)
         $end_date = (isset($_GET['end_date'])) ? $_GET['end_date'] : $start_date;
@@ -228,11 +220,20 @@ $current_status = (isset($_GET['current_status']) && in_array((int)$_GET['curren
 $manufacturer = (isset($_GET['manufacturer']) && in_array((int)$_GET['manufacturer'], $manufacturer_key)) ? (int)$_GET['manufacturer'] : 0;
 $detail_level = (isset($_GET['detail_level']) && in_array($_GET['detail_level'], $detail_types)) ? $_GET['detail_level'] : 'order';
 
-$li_sort_a = (isset($_GET['li_sort_a'])) ? $_GET['li_sort_a'] : '';
+// -----
+// Initialize variables for the report and/or display, sanitizing where needed.
+//
+$valid_sort_orders = array('asc', 'desc');
+$valid_sorts = array('oID', 'last_name', 'num_products', 'goods', 'shipping', 'discount', 'gc_sold', 'gc_used', 'grand');
+// process the search criteria
+$timeframe = (isset($_GET['timeframe']) && in_array($_GET['timeframe'], array('year', 'month', 'week', 'day'))) ? $_GET['timeframe'] : 'year';
+$timeframe_sort = (isset($_GET['timeframe_sort']) && in_array($_GET['timeframe_sort'], $valid_sort_orders)) ? $_GET['timeframe_sort'] : 'asc';
+
+$li_sort_a = (isset($_GET['li_sort_a']) && in_array($_GET['li_sort_a'], $valid_sorts)) ? $_GET['li_sort_a'] : 'oID';
 $li_sort_order_a = (isset($_GET['li_sort_order_a']) && in_array($_GET['li_sort_order_a'], $valid_sorts)) ? $_GET['li_sort_order_a'] : 'asc';
 
-$li_sort_b = (isset($_GET['li_sort_b']) && in_array($_GET['li_sort_b'], $valid_sorts)) ? $_GET['li_sort_b'] : 'asc';
-$li_sort_order_b = (isset($_GET['li_sort_order_b']) && in_array($_GET['li_sort_order_b'], $valid_sorts)) ? $_GET['li_sort_order_b'] : 'asc';
+$li_sort_b = (isset($_GET['li_sort_b']) && in_array($_GET['li_sort_b'], $valid_sorts)) ? $_GET['li_sort_b'] : 'oID';
+$li_sort_order_b = (isset($_GET['li_sort_order_b']) && in_array($_GET['li_sort_order_b'], $valid_sort_orders)) ? $_GET['li_sort_order_b'] : 'asc';
 
 $auto_print = !empty($_GET['auto_print']);
 $csv_header = !empty($_GET['csv_header']);
@@ -273,19 +274,27 @@ if ($output_format === false) {
     // build the report array
     if ($output_format != 'none') {
         require DIR_WS_CLASSES . 'sales_report.php';
-                                     //  (* = required)
-        $sr = new sales_report(
-            $timeframe,                  //* determines how sales tallies are grouped
-            $start_date, $end_date,      //* the date range
-            $date_target, $date_status,  //* what date field to search, and the status (if needed)
-            $payment_method,             //  payment method used for desired orders
-            $payment_method_omit,             //  payment method used for desired orders
-            $current_status,             //  currently assigned status to the order
-            $manufacturer,               //  only include orders with assigned manufacturer
-            $detail_level,               //* what information to output
-            $output_format,              //* how to display the results
-            $order_total_validation
+
+        $sr_parms = array(
+            'timeframe' => $timeframe,
+            'start_date' => $start_date,
+            'end_date' => $end_date,
+            'date_target' => $date_target,
+            'date_status' => $date_status,
+            'payment_method' => $payment_method,
+            'payment_method_omit' => $payment_method_omit,
+            'current_status' => $current_status,
+            'manufacturer' => $manufacturer,
+            'detail_level' => $detail_level,
+            'output_format' => $output_format,
+            'order_total_validation' => $order_total_validation,
+            'li_sort_a' => $li_sort_a,
+            'li_sort_order_a' => $li_sort_order_a,
+            'li_sort_b' => $li_sort_b,
+            'li_sort_order_b' => $li_sort_order_b,
+            'timeframe_sort' => $timeframe_sort
         );
+        $sr = new sales_report($sr_parms);
     
         if ($output_format == 'csv') {
             // we have to pass the sorting values of the form since
@@ -581,10 +590,7 @@ if ($output_format == 'print') {
                         </table></td>
                         <td valign="top"><table border="0" cellspacing="0" cellpadding="2">
                             <tr>
-                                <td class="smallText"><strong><?php echo
-              SEARCH_PAYMENT_METHOD . '</strong><br />' .
-              zen_draw_pull_down_menu('payment_method', $payments_array, $payment_method, 'id="payment_method"'); ?>
-                                </td>
+                                <td class="smallText"><strong><?php echo SEARCH_PAYMENT_METHOD . '</strong><br />' . zen_draw_pull_down_menu('payment_method', $payments_array, $payment_method, 'id="payment_method"'); ?></td>
                             </tr>
                             <tr>
                                 <td class="smallText"><strong><?php echo SEARCH_PAYMENT_METHOD . ' To Omit</strong><br />' . zen_draw_pull_down_menu('payment_method_omit', $payments_array, $payment_method_omit, 'id="payment_method_omit"'); ?></td>
@@ -913,8 +919,8 @@ if ($output_format == 'print' || $output_format == 'display') {
             // sort the orders according to requested sort options
             $dataset1 = $dataset2 = array();
             foreach($timeframe['orders'] as $oID => $o_data) {
-                $dataset1[$oID] = $o_data[$li_sort_a];
-                $dataset2[$oID] = $o_data[$li_sort_b];
+                $dataset1[$oID] = (isset($o_data[$li_sort_a])) ? $o_data[$li_sort_a] : array();
+                $dataset2[$oID] = (isset($o_data[$li_sort_b])) ? $o_data[$li_sort_b] : array();
             }
 
             // set the sorting arrays to all-lowercase so that the data

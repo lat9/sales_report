@@ -39,26 +39,29 @@ class sales_report
     var $payment_method, $payment_method_omit, $current_status, $manufacturer, $detail_level, $output_format;
     var $timeframe, $timeframe_id, $current_date, $product_filter;
 
-//-bof-20160825-lat9-PHP 7.0 compliance
-    function __construct ($timeframe, $sd, $ed, $date_target, $date_status, $payment_method, $payment_method_omit, $current_status, $manufacturer, $detail_level, $output_format, $order_total_validation) 
+    function __construct($parms) 
     {
-//-eof-20160825-lat9
         global $db;
 
         // place passed variables into class variables
-        $this->timeframe_group = $timeframe;
-        $this->date_target = $date_target;
-        $this->date_status = $date_status;
-        $this->payment_method = $payment_method;
-        $this->payment_method_omit = $payment_method_omit;
-        $this->current_status = $current_status;
-        $this->manufacturer = (int)$manufacturer;
-        $this->detail_level = $detail_level;
-        $this->output_format = $output_format;
-        $this->order_total_validation = $order_total_validation;
+        $this->timeframe_group = $parms['timeframe'];
+        $this->date_target = $parms['date_target'];
+        $this->date_status = $parms['date_status'];
+        $this->payment_method = $parms['payment_method'];
+        $this->payment_method_omit = $parms['payment_method_omit'];
+        $this->current_status = $parms['current_status'];
+        $this->manufacturer = $parms['manufacturer'];
+        $this->detail_level = $parms['detail_level'];
+        $this->output_format = $parms['output_format'];
+        $this->order_total_validation = $parms['order_total_validation'];
+        
+        $this->customer_filter = '';
+        $this->product_filter = '';
 
         // all our calculations are done using a "raw" timestamp format, which are
         // pulled from entered date strings using the substr function (similar to zen_date_raw)
+        $sd = $parms['start_date'];
+        $ed = $parms['end_date'];
         if (strtolower(DATE_FORMAT) == 'm/d/y') {
             // Use US date format (m/d/Y)
             $this->sd_raw = mktime(0, 0, 0, substr($sd, 0, 2), substr($sd, 3, 2), substr($sd, 6, 4) );
@@ -75,9 +78,8 @@ class sales_report
 
         // run a few checks on the dates
         // avoid dates before the first order
-        $first = $db->Execute("select UNIX_TIMESTAMP(min(date_purchased)) as date FROM " . TABLE_ORDERS);
-        $first_order = $first->fields['date'];
-        $this->global_sd = mktime(0, 0, 0, date("m", $first_order), date("d", $first_order), date("Y", $first_order));
+        $first = $db->Execute("SELECT MIN(date_purchased) AS date FROM " . TABLE_ORDERS);
+        $this->global_sd = strtotime(substr($first->fields['date'], 0, 10));
         if ($this->sd_raw < $this->global_sd) {
             $this->sd_raw = $this->global_sd;
         }
@@ -86,7 +88,7 @@ class sales_report
         }
 
         // avoid days in the future
-        $now = mktime(0, 0, 0, date("m"), date("d"), date("Y") );
+        $now = strtotime('today midnight');
         if ($this->sd_raw > $now) {
             $this->sd_raw = $now;
         }
@@ -241,6 +243,8 @@ class sales_report
         
         // loop through query and build the arrays for this timeframe
         $sales = $db->Execute($sql);
+        $grand_total = 0;
+        
         // make sure we actually have orders to process
         if ($sales->RecordCount() > 0) {
             // initialize the various timeframe arrays
@@ -540,7 +544,7 @@ class sales_report
         // first check to see if we even need to do anything
         if ($this->detail_level == 'order' || $this->detail_level == 'matrix') {
             // create the array if it doesn't already exist
-            if (!is_array($this->timeframe[$id]['orders'][$oID]) ) {
+            if (!isset($this->timeframe[$id]['orders'][$oID]) ) {
                 $this->timeframe[$id]['orders'][$oID] = array(
                     'oID' => $oID,
                     // the $oID key will be reset when we sort the array at
@@ -558,7 +562,8 @@ class sales_report
                     'gc_used' => 0,
                     'gc_used_qty' => 0,
                     'grand' => 0,
-                    'order_total_validation' => ''
+                    'order_total_validation' => '',
+                    'has_no_value' => 0
                 );
 
                 // get the customer data
