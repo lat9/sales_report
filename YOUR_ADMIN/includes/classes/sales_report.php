@@ -601,7 +601,7 @@ class sales_report
         $pID = $product['id'];
 
         // initialize the array for this products_id if it doesn't exist yet
-        if (!is_array($this->timeframe[$id]['products'][$pID]) ) {
+        if (!isset($this->timeframe[$id]['products'][$pID]) ) {
             $this->timeframe[$id]['products'][$pID] = array(
                 'pID' => $product['id'],
                 'name' => $product['name'],
@@ -685,15 +685,14 @@ class sales_report
                 // place pertient data in short variables
                 $cc_type = $order->fields['cc_type'];
                 $payment_method = $order->fields['payment_method'];
-                $payment_method_omit = $order->fields['payment_method_omit'];
                 $payment_module_code = $order->fields['payment_module_code'];
                 $shipping_method = $order->fields['shipping_method'];
                 $shipping_module_code = $order->fields['shipping_module_code'];
                 $currency = $order->fields['currency'];
 
                 // Format shipping method to remove the data in parentheses
-                $shipping_method = explode(" (", $shipping_method, 2);
-                $shipping_method = rtrim($shipping_method[0], ":");
+                $shipping_method = explode(' (', $shipping_method, 2);
+                $shipping_method = rtrim($shipping_method[0], ':');
 
                 // Number of unique customers
                 $cID = $o_data['customers_id'];
@@ -795,40 +794,40 @@ class sales_report
                 }
 
                 // Biggest order by revenue (display order # and customer name)
-                if ($this->timeframe[$i]['matrix']['biggest_per_revenue'] == 0) {
+                if (empty($this->timeframe[$i]['matrix']['biggest_per_revenue'])) {
                     $this->timeframe[$i]['matrix']['biggest_per_revenue'] = $oID;
                 } else {
-                    $current_leader = $this->timeframe[$i]['orders'][ $this->timeframe[$i]['matrix']['biggest_per_revenue'] ];
+                    $current_leader = $this->timeframe[$i]['orders'][$this->timeframe[$i]['matrix']['biggest_per_revenue']];
                     if ($o_data['goods'] > $current_leader['goods']) {
                         $this->timeframe[$i]['matrix']['biggest_per_revenue'] = $oID;
                     }
                 }
 
                 // Smallest order by revenue (display order # and customer name)
-                if ($this->timeframe[$i]['matrix']['smallest_per_revenue'] == 0) {
+                if (empty($this->timeframe[$i]['matrix']['smallest_per_revenue'])) {
                     $this->timeframe[$i]['matrix']['smallest_per_revenue'] = $oID;
                 } else {
-                    $current_leader = $this->timeframe[$i]['orders'][ $this->timeframe[$i]['matrix']['smallest_per_revenue'] ];
+                    $current_leader = $this->timeframe[$i]['orders'][$this->timeframe[$i]['matrix']['smallest_per_revenue']];
                     if ($o_data['goods'] < $current_leader['goods']) {
                         $this->timeframe[$i]['matrix']['smallest_per_revenue'] = $oID;
                     }
                 }
 
                 // Biggest order by product count (display order # and customer name)
-                if ($this->timeframe[$i]['matrix']['biggest_per_product'] == 0) {
+                if (empty($this->timeframe[$i]['matrix']['biggest_per_product'])) {
                     $this->timeframe[$i]['matrix']['biggest_per_product'] = $oID;
                 } else {
-                    $current_leader = $this->timeframe[$i]['orders'][ $this->timeframe[$i]['matrix']['biggest_per_product'] ];
+                    $current_leader = $this->timeframe[$i]['orders'][$this->timeframe[$i]['matrix']['biggest_per_product']];
                     if ($o_data['num_products'] > $current_leader['num_products']) {
                         $this->timeframe[$i]['matrix']['biggest_per_product'] = $oID;
                     }
                 }
 
                 // Smallest order by product count (display order # and customer name)
-                if ($this->timeframe[$i]['matrix']['smallest_per_product'] == 0) {
+                if (empty($this->timeframe[$i]['matrix']['smallest_per_product'])) {
                     $this->timeframe[$i]['matrix']['smallest_per_product'] = $oID;
                 } else {
-                    $current_leader = $this->timeframe[$i]['orders'][ $this->timeframe[$i]['matrix']['smallest_per_product'] ];
+                    $current_leader = $this->timeframe[$i]['orders'][$this->timeframe[$i]['matrix']['smallest_per_product']];
                     if ($o_data['num_products'] < $current_leader['num_products']) {
                         $this->timeframe[$i]['matrix']['smallest_per_product'] = $oID;
                     }
@@ -837,24 +836,27 @@ class sales_report
             }  // END foreach($this->timeframe[$i]['orders'] as $oID => $o_data)
 
             // Avg order value
-            $this->timeframe[$i]['matrix']['avg_order_value'] = ($this->timeframe[$i]['total']['grand'] / sizeof($this->timeframe[$i]['orders']));
+            $this->timeframe[$i]['matrix']['avg_order_value'] = ($this->timeframe[$i]['total']['grand'] / count($this->timeframe[$i]['orders']));
 
             // Avg number of products in an order
-            $this->timeframe[$i]['matrix']['avg_products_per_order'] = ($this->timeframe[$i]['total']['num_products'] / sizeof($this->timeframe[$i]['orders']));
+            $this->timeframe[$i]['matrix']['avg_products_per_order'] = ($this->timeframe[$i]['total']['num_products'] / count($this->timeframe[$i]['orders']));
 
             // Avg number of unique products in an order
-            $this->timeframe[$i]['matrix']['avg_diff_products_per_order'] = (sizeof($this->timeframe[$i]['total']['diff_products']) / sizeof($this->timeframe[$i]['orders']));
+            $this->timeframe[$i]['matrix']['avg_diff_products_per_order'] = (sizeof($this->timeframe[$i]['total']['diff_products']) / count($this->timeframe[$i]['orders']));
 
             // Avg # orders per unique customer
-            $this->timeframe[$i]['matrix']['avg_orders_per_customer'] = (sizeof($this->timeframe[$i]['orders']) / sizeof($this->timeframe[$i]['matrix']['diff_customers']));
+            $this->timeframe[$i]['matrix']['avg_orders_per_customer'] = (sizeof($this->timeframe[$i]['orders']) / count($this->timeframe[$i]['matrix']['diff_customers']));
 
             // gather statistics from products array
             foreach ($this->timeframe[$i]['products'] as $pID => $p_data) {
 
                 // Per product "spread" (number of orders that a product is a part of)
                 foreach ($this->timeframe[$i]['orders'] as $oID => $o_data) {
-                    foreach($o_data['diff_products'] as $ordered_pID) {
+                    foreach ($o_data['diff_products'] as $ordered_pID) {
                         if ($pID == $ordered_pID) {
+                            if (!isset($this->timeframe[$i]['matrix']['product_spread'][$pID])) {
+                                $this->timeframe[$i]['matrix']['product_spread'][$pID] = 0;
+                            }
                             $this->timeframe[$i]['matrix']['product_spread'][$pID]++;
                             break;
                         }
