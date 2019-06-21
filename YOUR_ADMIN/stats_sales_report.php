@@ -569,7 +569,7 @@ if ($output_format == 'print') {
                                 <td class="smallText" id="td_date_status" style="visibility:hidden"><?php echo zen_draw_pull_down_menu('date_status', $status_array, $date_status, 'id="date_status"'); ?></td>
                             </tr>
                             <tr>
-                                <td class="smallText"><input type="checkbox" name="doProdInc" <?php if ($doProdInc) echo 'CHECKED'; ?> onClick="show('td_prod_includes')"> <?php echo SEARCH_SPECIFIC_PRODUCTS; ?></td>
+                                <td class="smallText"><input type="checkbox" name="doProdInc"<?php if ($doProdInc) echo ' checked'; ?> onClick="show('td_prod_includes')"> <?php echo SEARCH_SPECIFIC_PRODUCTS; ?></td>
                             </tr>
                             <tr>
 <?php
@@ -579,7 +579,7 @@ if ($output_format == 'print') {
                                 <td class="smallText" id="td_prod_includes" <?php echo $extra_parms; ?>><?php echo zen_draw_input_field('prod_includes', $temp_prods, 30); ?></td>
                             </tr>
                             <tr>
-                                <td class="smallText"><input type="checkbox" name="doCustInc" <?php if ($doCustInc) echo 'CHECKED'; ?> onclick="show('td_cust_includes')"> <?php echo SEARCH_SPECIFIC_CUSTOMERS; ?></td>
+                                <td class="smallText"><input type="checkbox" name="doCustInc"<?php if ($doCustInc) echo ' checked'; ?> onclick="show('td_cust_includes')"> <?php echo SEARCH_SPECIFIC_CUSTOMERS; ?></td>
                             </tr>
                             <tr>
                                 <td class="smallText" id="td_cust_includes" <?php 
@@ -599,7 +599,7 @@ if ($output_format == 'print') {
                                 <td class="smallText"><strong><?php echo SEARCH_CURRENT_STATUS . '</strong><br />' . zen_draw_pull_down_menu('current_status', array_merge(array(array('id' => 0, 'text' => TEXT_EMPTY_SELECT)), $status_array), $current_status, 'id="current_status"'); ?></td>
                             </tr>
 <?php 
-    if ($manufacturer_array) { 
+    if (count($manufacturer_array) != 0) { 
 ?>
                             <tr>
                                 <td class="smallText"><strong><?php echo SEARCH_MANUFACTURER . '</strong><br />' . zen_draw_pull_down_menu('manufacturer', $manufacturer_array, $manufacturer, 'id="manufacturer"'); ?></td>
@@ -1106,7 +1106,7 @@ if ($output_format == 'print' || $output_format == 'display') {
                     </table></td>
                 </tr>
 <?php
-        } elseif ($sr->detail_level == 'matrix' && (is_array($timeframe['orders']) && is_array($timeframe['products']) ) ) {  // display the data matrix
+        } elseif ($sr->detail_level == 'matrix' && (is_array($timeframe['orders']) && is_array($timeframe['products']))) {  // display the data matrix
             $colspan = 13;
             if ($display_tax) {
                 $colspan += 2;
@@ -1186,7 +1186,7 @@ if ($output_format == 'print' || $output_format == 'display') {
                                     <td class="lineItemContent" colspan="3"><strong><?php echo MATRIX_TOTAL_PAYMENTS; ?></strong></td>
                                 </tr>
 <?php 
-            foreach($timeframe['matrix']['payment_methods'] as $key => $payment) { 
+            foreach ($timeframe['matrix']['payment_methods'] as $key => $payment) { 
 ?>
                                 <tr>
                                     <td class="lineItemContent"><?php echo $payment['method']; ?></td>
@@ -1202,7 +1202,7 @@ if ($output_format == 'print' || $output_format == 'display') {
                                     <td class="lineItemContent" colspan="2"><strong><?php echo MATRIX_TOTAL_CC; ?></strong></td>
                                 </tr>
  <?php 
-            foreach($timeframe['matrix']['credit_cards'] as $key => $cc) { 
+            foreach ($timeframe['matrix']['credit_cards'] as $key => $cc) { 
  ?>
                                 <tr>
                                     <td class="lineItemContent"><?php echo $cc['type']; ?></td>
@@ -1217,7 +1217,7 @@ if ($output_format == 'print' || $output_format == 'display') {
                                     <td class="lineItemContent" colspan="3"><strong><?php echo MATRIX_TOTAL_SHIPPING; ?></strong></td>
                                 </tr>
 <?php 
-            foreach($timeframe['matrix']['shipping_methods'] as $key => $shipping) { 
+            foreach ($timeframe['matrix']['shipping_methods'] as $key => $shipping) { 
 ?>
                                 <tr>
                                     <td class="lineItemContent"><?php echo $shipping['method']; ?></td>
@@ -1236,7 +1236,7 @@ if ($output_format == 'print' || $output_format == 'display') {
                                     <td class="lineItemContent" colspan="2"><strong><?php echo MATRIX_TOTAL_CURRENCIES; ?></strong></td>
                                 </tr>
 <?php 
-                foreach($timeframe['matrix']['currencies'] as $key => $currency) { 
+                foreach ($timeframe['matrix']['currencies'] as $key => $currency) { 
 ?>
                                 <tr>
                                     <td class="lineItemContent"><?php echo $currency['type']; ?></td>
@@ -1265,7 +1265,7 @@ if ($output_format == 'print' || $output_format == 'display') {
                             <td class="lineItemContent" align="right"><strong><?php echo MATRIX_PRODUCT_QUANTITY_RATIO; ?></strong></td>
                         </tr>
 <?php
-            foreach($timeframe['products'] as $pID => $p_data) {
+            foreach ($timeframe['products'] as $pID => $p_data) {
 ?>
                         <tr class="lineItemRow">
                             <td class="lineItemContent"><?php echo $pID; ?></td>
@@ -1287,7 +1287,7 @@ if ($output_format == 'print' || $output_format == 'display') {
     // now display the grand total line (if necessary)
     // the totals don't change with only 1 timeframe, so we
     // require that there be more than one to display it
-    if (sizeof($sr->timeframe) > 1) {
+    if (count($sr->timeframe) > 1) {
 ?>
                 <tr>
                     <td><!-- spacer cell --></td>
@@ -1392,13 +1392,13 @@ if ($output_format != 'print') {
 </body>
 </html>
 <?php
-require(DIR_WS_INCLUDES . 'application_bottom.php');
+require DIR_WS_INCLUDES . 'application_bottom.php';
 
 // used to show the page parse time
 // look for $parse_start and $parse_end to see how it works
 function get_microtime() 
 {
-    list($usec, $sec) = explode(" ", microtime());
+    list($usec, $sec) = explode(' ', microtime());
     return ((float)$usec + (float)$sec);
 }
 
