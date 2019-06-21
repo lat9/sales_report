@@ -239,7 +239,35 @@ $auto_print = !empty($_GET['auto_print']);
 $csv_header = !empty($_GET['csv_header']);
 
 $doCustInc = !empty($_GET['doCustInc']);
+$cust_includes = (isset($_GET['cust_includes'])) ? (string)$_GET['cust_includes'] : '';
+if ($cust_includes != '') {
+    $cia = array();
+    $ci = explode(',', str_replace(' ', '', $cust_includes));
+    foreach ($ci as $c) {
+        $c = (int)$c;
+        if ($c == 0) {
+            continue;
+        }
+        $cia[] = $c;
+    }
+    $_GET['cust_includes'] = $cust_includes = implode(',', array_unique($cia));
+    unset($cia, $ci, $c);
+}
 $doProdInc = !empty($_GET['doProdInc']);
+$prod_includes = (isset($_GET['prod_includes'])) ? (string)$_GET['prod_includes'] : '';
+if ($prod_includes != '') {
+    $pia = array();
+    $pi = explode(',', str_replace(' ', '', $prod_includes));
+    foreach ($pi as $p) {
+        $p = (int)$p;
+        if ($p == 0) {
+            continue;
+        }
+        $pia[] = $p;
+    }
+    $_GET['prod_includes'] = $prod_includes = implode(',', array_unique($pia));
+    unset($pia, $pi, $p);
+}
 
 $order_total_validation = (isset($_GET['order_total_validation']));
 
@@ -292,7 +320,11 @@ if ($output_format === false) {
             'li_sort_order_a' => $li_sort_order_a,
             'li_sort_b' => $li_sort_b,
             'li_sort_order_b' => $li_sort_order_b,
-            'timeframe_sort' => $timeframe_sort
+            'timeframe_sort' => $timeframe_sort,
+            'doCustInc' => $doCustInc,
+            'cust_includes' => $cust_includes,
+            'doProdInc' => $doProdInc,
+            'prod_includes' => $prod_includes
         );
         $sr = new sales_report($sr_parms);
     
@@ -540,7 +572,7 @@ if ($output_format == 'print') {
                             <tr>
                                 <td class="smallText" id="td_cust_includes" <?php 
               $temp_cust = (!empty($_GET['cust_includes'])) ? $_GET['cust_includes'] : INCLUDE_CUSTOMERS;
-              if (!$doCustInc) echo 'style="visibility:hidden"'; echo '>';  echo  zen_draw_input_field('cust_includes', $temp_cust, 30 ); ?>
+              if (!$doCustInc) echo 'style="visibility:hidden"'; echo '>';  echo  zen_draw_input_field('cust_includes', $temp_cust, 30); ?>
                                 </td>
                             </tr>
                         </table></td>
@@ -820,7 +852,7 @@ if ($output_format == 'print' || $output_format == 'display') {
 <?php
         }
         
-        if (is_array($timeframe['total'])) {
+        if (isset($timeframe['total'])) {
 ?>
                 <tr class="totalRow">
                     <td class="totalContent"><?php echo $time_display; ?></td>
@@ -1064,7 +1096,7 @@ if ($output_format == 'print' || $output_format == 'display') {
                     </table></td>
                 </tr>
 <?php
-        } elseif ($sr->detail_level == 'matrix' && (is_array($timeframe['orders']) && is_array($timeframe['products']))) {  // display the data matrix
+        } elseif ($sr->detail_level == 'matrix' && isset($timeframe['orders']) && isset($timeframe['products'])) {  // display the data matrix
             $colspan = 13;
             if ($display_tax) {
                 $colspan += 2;

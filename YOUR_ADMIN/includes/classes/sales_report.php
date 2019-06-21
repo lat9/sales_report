@@ -55,7 +55,12 @@ class sales_report
         $this->output_format = $parms['output_format'];
         $this->order_total_validation = $parms['order_total_validation'];
         
+        $this->doCustInc = $parms['doCustInc'];
+        $this->cust_includes = $parms['cust_includes'];
         $this->customer_filter = '';
+        
+        $this->doProdInc = $parms['doProdInc'];
+        $this->prod_includes = $parms['prod_includes'];
         $this->product_filter = '';
 
         // all our calculations are done using a "raw" timestamp format, which are
@@ -120,13 +125,10 @@ class sales_report
 
 
     //////////////////////////////////////////////////////////
-    // Each time this function runs, another timeframe array
-    // is built.  The variable $this->current_date acts as the
-    // key, used to determine the start and end dates of this
-    // particular timeframe.  All other functions are called
-    // from within here to build all the requested timeframe
-    // information (order line items, product line items, or
-    // data matrix).
+    // Each time this function runs, another timeframe array element is created.
+    // The variable $this->current_date acts as the key, used to determine the start and end dates of this
+    // particular timeframe.  All other functions are called from within here to build all the requested timeframe
+    // information (order line items, product line items, or data matrix).
     //
     function build_timeframe() 
     {
@@ -176,29 +178,18 @@ class sales_report
             }
         }
 
-        //need to add some error checking here - assumes list of valid numbers
-        $include_products = explode(',', $_GET['prod_includes']);
-        if (isset($_GET['doProdInc']) && is_array($include_products) && count($include_products) > 0) {
-            for ($i = 0, $n = count($include_products); $i < $n; $i++){
-                $include_products[$i] = (int)trim($include_products[$i]);
-            }
-            $include_products = array_values(array_unique($include_products));
-            $this->product_filter .= (" AND op.products_id IN (" . implode(',', $include_products) . ")");
+        if ($this->doProdInc && !empty($this->prod_includes)) {
+            $this->product_filter .= (" AND op.products_id IN ({$this->prod_includes})");
         }
         
-        $include_customers = explode(',', $_GET['cust_includes']);
-        if (isset($_GET['doCustInc']) && is_array($include_customers) && count($include_customers) > 0) {
-            for ($i = 0, $n = count($include_customers); $i < $n; $i++){
-                $include_customers[$i] = (int)trim($include_customers[$i]);
-            }
-            $include_customers = array_values(array_unique($include_customers));
-            $this->customer_filter .= (" AND o.customers_id IN (" . implode(',', $include_customers) . ")");
+        if ($this->doCustInc && !empty($this->cust_includes)) {
+            $this->customer_filter .= (" AND o.customers_id IN ({$this->cust_includes})");
         }
 
         // build the SQL query of order numbers within the current timeframe
         $sql = "SELECT DISTINCT o.orders_id from " . TABLE_ORDERS . " o \n";
         
-        if ($this->manufacturer != 0 || (isset($_GET['doProdInc']) && is_array($include_products) && count($include_products) > 0)) {
+        if ($this->manufacturer != 0 || ($this->doProdInc && !empty($this->prod_includes))) {
             $sql .= "LEFT JOIN " . TABLE_ORDERS_PRODUCTS . " op ON o.orders_id = op.orders_id \n";
         }
         
@@ -206,9 +197,6 @@ class sales_report
             $sql .= ("LEFT JOIN " . TABLE_PRODUCTS . " p ON p.products_id = op.products_id" . PHP_EOL);
         }
         
-//      if ($_GET['doCustInc']== 'on' && is_array($include_customers) && sizeof($include_customers) > 0) {
-//        $sql .= "LEFT JOIN " . TABLE_ORDERS_PRODUCTS . " op ON o.orders_id = op.orders_id \n";
-//      }
         if ($this->date_target == 'status') {
             $sql .= "LEFT JOIN " . TABLE_ORDERS_STATUS_HISTORY . " osh ON o.orders_id = osh.orders_id \n";
             $sql .= "WHERE osh.date_added >= '" . date("Y-m-d H:i:s", $sd) . "' AND osh.date_added < '" . date("Y-m-d H:i:s", $ed) . "' \n";
@@ -626,7 +614,6 @@ class sales_report
                 $this->timeframe[$id]['products'][$pID]['manufacturer'] = $manufacturer_name;
             }
         } else {
-
             // or add the values of ordered product to existing 'products' array
             // note that the informational fields are only defined once (i.e. the SQL sort order matters!)
             $this->timeframe[$id]['products'][$pID]['quantity'] += $product['quantity'];
@@ -650,7 +637,7 @@ class sales_report
     {
         for ($i = 0, $n = count($this->timeframe); $i < $n; $i++) {
             // skip the current timeframe if there isn't any data
-            if (!is_array($this->timeframe[$i]['orders']) || !is_array($this->timeframe[$i]['products'])) {
+            if (!isset($this->timeframe[$i]['orders']) || !isset($this->timeframe[$i]['products'])) {
                 continue;
             }
 
@@ -864,10 +851,10 @@ class sales_report
                 }
 
                 // percentage of all revenue by product BEFORE shipping, tax, discounts, and gc's
-                $this->timeframe[$i]['matrix']['product_revenue_ratio'][$pID] = number_format((($p_data['total'] / $this->timeframe[$i]['total']['goods']) * 100), 3);
+                $this->timeframe[$i]['matrix']['product_revenue_ratio'][$pID] = number_format($p_data['total'] / $this->timeframe[$i]['total']['goods'] * 100, 3);
 
                 // percentage of all quantity by product
-                $this->timeframe[$i]['matrix']['product_quantity_ratio'][$pID] = number_format((($p_data['quantity'] / $this->timeframe[$i]['total']['num_products']) * 100), 3);
+                $this->timeframe[$i]['matrix']['product_quantity_ratio'][$pID] = number_format($p_data['quantity'] / $this->timeframe[$i]['total']['num_products'] * 100, 3);
             }  // END foreach($this->timeframe[$i]['products'] as $pID => $p_data)
 
         }  // END for ($i = 0, $i < sizeof($this->timeframe); $i++)
