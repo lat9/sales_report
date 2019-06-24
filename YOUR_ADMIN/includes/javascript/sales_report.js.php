@@ -19,17 +19,6 @@
 
 ?>
 <script><!--
-////////////
-// Function    : popupWindow
-// Arguments   : none
-// Description : loads a new window when option is checked
-///////////////
-function popupWindow() {
-    window.open('', 'sr_popup');
-    // for a list of features:
-    // http://www.devguru.com/technologies/ecmascript/quickref/win_open.html
-}
-
 // -----
 // Main processing section, starts when the browser has finished and the page is "ready" ...
 //
@@ -230,6 +219,9 @@ $us_date_format = (strtolower(DATE_FORMAT) == 'm/d/y');
         }
             
         if (messages == '') {
+            if ($('#new-window').prop('checked')) {
+                $('form[name=search]').attr('target', '_blank');
+            }
             $('form[name=search]').submit();
         } else {
             alert('<?php echo ALERT_MSG_START; ?>'+'\n\n'+messages+'\n\n'+'<?php echo ALERT_MSG_FINISH; ?>');
