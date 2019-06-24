@@ -133,6 +133,7 @@ define('SEARCH_DATE_TARGET', 'Search date of...');
 define('SEARCH_PAYMENT_METHOD', 'Payment Method');
 define('SEARCH_PAYMENT_METHOD_OMIT', 'Payment Method To Omit');
 define('SEARCH_CURRENT_STATUS', 'Current Order Status');
+define('SEARCH_EXCLUDED_STATUS', 'Order Status to Omit');
 define('SEARCH_SPECIFIC_CUSTOMERS', 'Only include specific Customer IDs (comma separated list)');
 define('SEARCH_SPECIFIC_PRODUCTS', 'Only include specific Product IDs (comma separated list)');
 define('SEARCH_MANUFACTURER', 'Product Manufacturer');

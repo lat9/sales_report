@@ -52,6 +52,7 @@ class sales_report
         $this->payment_method = $parms['payment_method'];
         $this->payment_method_omit = $parms['payment_method_omit'];
         $this->current_status = $parms['current_status'];
+        $this->excluded_status = $parms['excluded_status'];
         $this->manufacturer = $parms['manufacturer'];
         $this->detail_level = $parms['detail_level'];
         $this->output_format = $parms['output_format'];
@@ -224,6 +225,9 @@ class sales_report
         }
         if ($this->current_status) {
             $sql .= "AND o.orders_status = {$this->current_status}" . PHP_EOL;
+        }
+        if ($this->excluded_status) {
+            $sql .= "AND o.orders_status != {$this->excluded_status}" . PHP_EOL;
         }
         if ($this->product_filter != '') {
             $sql .= $this->product_filter . PHP_EOL;

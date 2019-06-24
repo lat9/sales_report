@@ -72,7 +72,7 @@ while (!$orders_status->EOF) {
         'id' => $orders_status->fields['id'],
         'text' => $orders_status->fields['text'] . ' [' . $orders_status->fields['id'] . ']'
     );
-    $status_key[$orders_status->fields['id'] ] = $orders_status->fields['text'];
+    $status_key[$orders_status->fields['id']] = $orders_status->fields['text'];
     $orders_status->MoveNext();
 }
 
@@ -224,14 +224,15 @@ switch ($date_preset) {
 
 $date_target = (isset($_GET['date_target']) && in_array($_GET['date_target'], array('purchased', 'status'))) ? $_GET['date_target'] : 'purchased';
 if ($date_target == 'status') {
-    $date_status = (isset($_GET['date_status']) && in_array((int)$_GET['date_status'], $status_key)) ? (int)$_GET['date_status'] : DEFAULT_ORDERS_STATUS_ID;
+    $date_status = (isset($_GET['date_status']) && array_key_exists((int)$_GET['date_status'], $status_key)) ? (int)$_GET['date_status'] : DEFAULT_ORDERS_STATUS_ID;
 } else {
     $date_status = false;
 }
 
 $payment_method = (isset($_GET['payment_method']) && in_array($_GET['payment_method'], $payment_key)) ? $_GET['payment_method'] : '0';
 $payment_method_omit = (isset($_GET['payment_method_omit']) && in_array($_GET['payment_method_omit'], $payment_key)) ? $_GET['payment_method_omit'] : '0';
-$current_status = (isset($_GET['current_status']) && in_array((int)$_GET['current_status'], $status_key)) ? (int)$_GET['current_status'] : 0;
+$current_status = (isset($_GET['current_status']) && array_key_exists((int)$_GET['current_status'], $status_key)) ? (int)$_GET['current_status'] : 0;
+$excluded_status = (isset($_GET['excluded_status']) && array_key_exists((int)$_GET['excluded_status'], $status_key)) ? (int)$_GET['excluded_status'] : 0;
 $manufacturer = (isset($_GET['manufacturer']) && in_array((int)$_GET['manufacturer'], $manufacturer_key)) ? (int)$_GET['manufacturer'] : 0;
 $detail_level = (isset($_GET['detail_level']) && in_array($_GET['detail_level'], $detail_types)) ? $_GET['detail_level'] : 'order';
 switch ($detail_level) {
@@ -364,6 +365,7 @@ if ($output_format === false) {
             'payment_method' => $payment_method,
             'payment_method_omit' => $payment_method_omit,
             'current_status' => $current_status,
+            'excluded_status' => $excluded_status,
             'manufacturer' => $manufacturer,
             'detail_level' => $detail_level,
             'output_format' => $output_format,
@@ -625,7 +627,10 @@ if ($output_format == 'print') {
                                 <td class="smallText"><strong><?php echo SEARCH_PAYMENT_METHOD_OMIT . '</strong><br />' . zen_draw_pull_down_menu('payment_method_omit', $payments_array, $payment_method_omit, 'id="payment_method_omit"'); ?></td>
                             </tr>
                             <tr>
-                                <td class="smallText"><strong><?php echo SEARCH_CURRENT_STATUS . '</strong><br />' . zen_draw_pull_down_menu('current_status', array_merge(array(array('id' => 0, 'text' => TEXT_EMPTY_SELECT)), $status_array), $current_status, 'id="current_status"'); ?></td>
+                                <td class="smallText"><strong><?php echo SEARCH_CURRENT_STATUS . '</strong><br />' . zen_draw_pull_down_menu('current_status', array_merge(array(array('id' => '0', 'text' => TEXT_EMPTY_SELECT)), $status_array), $current_status, 'id="current_status"'); ?></td>
+                            </tr>
+                            <tr>
+                                <td class="smallText"><strong><?php echo SEARCH_EXCLUDED_STATUS . '</strong><br />' . zen_draw_pull_down_menu('excluded_status', array_merge(array(array('id' => '0', 'text' => TEXT_EMPTY_SELECT)), $status_array), $excluded_status, 'id="excluded-status"'); ?></td>
                             </tr>
 <?php 
     if (count($manufacturer_array) != 0) { 
@@ -725,7 +730,7 @@ if ($output_format == 'print') {
                             <span id="span-csv-header"><?php echo zen_draw_checkbox_field('csv_header', '1', false) . CHECKBOX_CSV_HEADER; ?></span>
                         </td>
                         <td class="smallText right" id="order-total-validation"><?php echo zen_draw_checkbox_field('order_total_validation', '1', false) . CHECKBOX_VALIDATE_TOTALS; ?></td>
-                        <td class="smallText right"><?php echo zen_draw_checkbox_field('new_window', '1', $new_window) . CHECKBOX_NEW_WINDOW; ?>
+                        <td class="smallText right"><?php echo zen_draw_checkbox_field('new_window', '1', $new_window, '', 'id="new-window"') . CHECKBOX_NEW_WINDOW; ?>
                             <br /><button type="button" id="btn-submit"><?php echo BUTTON_SEARCH; ?></button>
                         </td>
                     </tr>
