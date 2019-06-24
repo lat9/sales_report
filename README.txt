@@ -1,4 +1,4 @@
-SALES REPORT Version 3.2.2
+SALES REPORT Version 3.3.0
 By Frank Koehl (PM: BlindSide), Conor Kerr Ceon, Carl Peach, Cindy Merkin (lat9)
  
 author Czech translation :  Josef Zahradník
@@ -6,7 +6,7 @@ web:                        www.magic-shop.cz
 code page:                  cp1250
 
 Forum thread:
-http://www.zen-cart.com/forum/showthread.php?p=253173#post253173
+https://www.zen-cart.com/forum/showthread.php?p=253173#post253173
 
 =========
  INTRO
@@ -51,41 +51,7 @@ Frank
    same filenames, so simply overwrite all conflicting files.  Again, you should
    ALWAYS back up before making any changes.
 
-4. OPTIONAL - Edit admin/includes/general.js to allow rollover animation.
-              See ROLLOVER below for instructions.
-
-5. That's it!  You'll find "Sales Report" under "Reports" in the Admin.
-
-
- REPORT DEFAULTS
--------------------
-With this report you may configure what search settings appear when the report opens.
-These settings will also load when the "Report Defaults" button is clicked.
-
-1. Open admin/includes/languages/english/stats_sales_report.php
-2. Set the defaults as described under the "DEFAULT SEARCH OPTIONS" heading, and in the comments next to each "DEFAULT_" define.
-3. Save and upload the modified language file.
-
-
- ROLLOVER
-------------
-1. Open admin/includes/general.js
-
-2. FIND the line that reads as follows:
-        if (object.className == 'dataTableRow') object.className = 'dataTableRowOver';
-
-3. Make a new line under it and ADD the following 2 lines of code:
-        if (object.className == 'totalRow') object.className = 'totalRowOver';
-        if (object.className == 'lineItemRow') object.className = 'lineItemRowOver';
-
-4. FIND the line that reads as follows:
-        if (object.className == 'dataTableRowOver') object.className = 'dataTableRow';
-
-5. Make a new line under it and ADD the following 2 lines of code:
-        if (object.className == 'totalRowOver') object.className = 'totalRow';
-        if (object.className == 'lineItemRowOver') object.className = 'lineItemRow';
-
-
+4. That's it!  You'll find "Sales Report" under "Reports" in the Admin.
 
 ============
  FEATURES
@@ -337,12 +303,23 @@ Modified:
 /YOUR_ADMIN/includes/languages/english/stats_sales_report.php
 
 =====================================
-Changes in 3.2.2, 2019-03-xx (lat9)
+Changes in 3.3.0, 2019-06-xx (lat9) ... Drops support for Zen Cart versions prior to 1.5.5!
 =====================================
 [CHANGE]   zc156 Interoperability: "Custom" date, calendar display is 'off-screen'.
+[CHANGE]   Remove "default" settings.
+[CHANGE]   "Remember" admin's selection for 'Show report in a new window'.
+[BUGFIX]   Correct various PHP Notices for more recent versions of PHP
+[CHANGE]   Convert javascript to jQuery; report now outputs HTML5-compatible HTML.
 
 Modified:
 /YOUR_ADMIN/stats_sales_report.php
+/YOUR_ADMIN/includes/classes/sales_report.php
+/YOUR_ADMIN/includes/languages/english/stats_sales_report.php
+/YOUR_ADMIN/includes/javascript/sales_report_js.php
+
+No longer used/distributed:
+/YOUR_ADMIN/images/icons/custom_range.gif
+/YOUR_ADMIN/images/icons/preset_range.gif
 
 =====================================
 Sponsored by Destination ImagiNation, Inc.
