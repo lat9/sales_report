@@ -1,6 +1,6 @@
 <?php
 /**
- * SALES REPORT 3.1
+ * SALES REPORT 3.3.0
  *
  * The class file acts as the engine in the sales report.  All the data displayed is gathered and
  * calculated in here. The logic tree provides a brief summary of the main functions at work every
@@ -10,6 +10,7 @@
  * @author     Conor Kerr <conor.kerr_zen-cart@dev.ceon.net>
  * @author     Carl Peach <carlvt88 at zen-cart.com/forum>
  * @updated by stellarweb to work with version 1.5.0 02-29-12 
+ * @updated by lat9, for continued operation for zc155/zc156, 20190622
  * @copyright  Portions Copyright 2003-2006 Zen Cart Development Team
  * @copyright  Portions Copyright 2003 osCommerce
  * @license    http://www.gnu.org/copyleft/gpl.html   GNU Public License V2.0
@@ -54,6 +55,11 @@ class sales_report
         $this->detail_level = $parms['detail_level'];
         $this->output_format = $parms['output_format'];
         $this->order_total_validation = $parms['order_total_validation'];
+        
+        $this->li_sort_a = $parms['li_sort_a'];
+        $this->li_sort_order_a = $parms['li_sort_order_a'];
+        $this->li_sort_b = $parms['li_sort_b'];
+        $this->li_sort_order_b = $parms['li_sort_order_b'];
         
         $this->doCustInc = $parms['doCustInc'];
         $this->cust_includes = $parms['cust_includes'];
@@ -173,58 +179,66 @@ class sales_report
         $this->product_filter = '';
         $exclude_products = unserialize(EXCLUDE_PRODUCTS);
         if (is_array($exclude_products) && count($exclude_products) > 0) {
-            foreach($exclude_products as $pID) {
-                $this->product_filter .= " and op.products_id != " . (int)$pID;
+            foreach ($exclude_products as $pID) {
+                $this->product_filter .= " AND op.products_id != " . (int)$pID;
             }
         }
 
         if ($this->doProdInc && !empty($this->prod_includes)) {
-            $this->product_filter .= (" AND op.products_id IN ({$this->prod_includes})");
+            $this->product_filter .= " AND op.products_id IN ({$this->prod_includes})" . PHP_EOL;
         }
         
         if ($this->doCustInc && !empty($this->cust_includes)) {
-            $this->customer_filter .= (" AND o.customers_id IN ({$this->cust_includes})");
+            $this->customer_filter .= " AND o.customers_id IN ({$this->cust_includes})" . PHP_EOL;
         }
 
         // build the SQL query of order numbers within the current timeframe
-        $sql = "SELECT DISTINCT o.orders_id from " . TABLE_ORDERS . " o \n";
+        $sql = "SELECT DISTINCT o.orders_id FROM " . TABLE_ORDERS . " o" . PHP_EOL;
         
         if ($this->manufacturer != 0 || ($this->doProdInc && !empty($this->prod_includes))) {
-            $sql .= "LEFT JOIN " . TABLE_ORDERS_PRODUCTS . " op ON o.orders_id = op.orders_id \n";
+            $sql .= " LEFT JOIN " . TABLE_ORDERS_PRODUCTS . " op ON o.orders_id = op.orders_id" . PHP_EOL;
         }
         
         if ($this->manufacturer != 0) {
-            $sql .= ("LEFT JOIN " . TABLE_PRODUCTS . " p ON p.products_id = op.products_id" . PHP_EOL);
+            $sql .= " LEFT JOIN " . TABLE_PRODUCTS . " p ON p.products_id = op.products_id" . PHP_EOL;
         }
         
         if ($this->date_target == 'status') {
-            $sql .= "LEFT JOIN " . TABLE_ORDERS_STATUS_HISTORY . " osh ON o.orders_id = osh.orders_id \n";
-            $sql .= "WHERE osh.date_added >= '" . date("Y-m-d H:i:s", $sd) . "' AND osh.date_added < '" . date("Y-m-d H:i:s", $ed) . "' \n";
-            $sql .= "AND osh.orders_status_id = '" . $this->date_status . "' \n";
+            $sql .= "LEFT JOIN " . TABLE_ORDERS_STATUS_HISTORY . " osh ON o.orders_id = osh.orders_id" . PHP_EOL;
+            $sql .= " WHERE osh.date_added >= '" . date("Y-m-d H:i:s", $sd) . "' AND osh.date_added < '" . date("Y-m-d H:i:s", $ed) . "'" . PHP_EOL;
+            $sql .= " AND osh.orders_status_id = {$this->date_status}" . PHP_EOL;
         } else {
-            $sql .= "WHERE o.date_purchased >= '" . date("Y-m-d H:i:s", $sd) . "' AND o.date_purchased < '" . date("Y-m-d H:i:s", $ed) . "' \n";
+            $sql .= " WHERE o.date_purchased >= '" . date("Y-m-d H:i:s", $sd) . "' AND o.date_purchased < '" . date("Y-m-d H:i:s", $ed) . "'" . PHP_EOL;
         }
         
         if ($this->manufacturer != 0) {
-            $sql .= "AND p.manufacturers_id = " . $this->manufacturer . PHP_EOL;
+            $sql .= "AND p.manufacturers_id = {$this->manufacturer}" . PHP_EOL;
         }
         
         if ($this->payment_method) {
-            $sql .= "AND o.payment_module_code LIKE '" . $this->payment_method . "' \n";
+            $sql .= "AND o.payment_module_code LIKE '" . $this->payment_method . "'" . PHP_EOL;
         }
         if ($this->payment_method_omit) {
-            $sql .= "AND o.payment_module_code NOT LIKE '" . $this->payment_method_omit . "' \n";
+            $sql .= "AND o.payment_module_code NOT LIKE '" . $this->payment_method_omit . "'" . PHP_EOL;
         }
         if ($this->current_status) {
-            $sql .= "AND o.orders_status = '" . $this->current_status . "' \n";
+            $sql .= "AND o.orders_status = {$this->current_status}" . PHP_EOL;
         }
         if ($this->product_filter != '') {
-            $sql .= $this->product_filter . " \n";
+            $sql .= $this->product_filter . PHP_EOL;
         }
         if ($this->customer_filter != '') {
-            $sql .= $this->customer_filter . " \n";
+            $sql .= $this->customer_filter . PHP_EOL;
         }
-        $sql .= " ORDER BY o.orders_id DESC";
+        
+        if ($this->li_sort_a == 'oID') {
+            $orders_sort = $this->li_sort_order_a;
+        } elseif ($this->li_sort_b == 'oID') {
+            $orders_sort = $this->li_sort_order_b;
+        } else {
+            $orders_sort = 'DESC';
+        }
+        $sql .= " ORDER BY o.orders_id $orders_sort";
 
         // DEBUG
         //$this->sql[$id] = $sql;
@@ -249,10 +263,10 @@ class sales_report
             while (!$sales->EOF) {
                 $oID = $sales->fields['orders_id'];
                 $grand_total += $this->build_li_totals($oID);
-                if (count($this->timeframe[$id]['orders']) == 0) {
+                if (empty($this->timeframe[$id]['orders'])) {
                     $this->timeframe[$id]['orders'] = false;
                 }
-                if (count($this->timeframe[$id]['products']) == 0) {
+                if (empty($this->timeframe[$id]['products'])) {
                     $this->timeframe[$id]['products'] = false;
                 }
                 $sales->MoveNext();
@@ -392,7 +406,7 @@ class sales_report
                 $this->timeframe[$id]['total']['diff_products'][] = $pID;
             }
 
-            if (!in_array($pID, $this->timeframe[$id]['orders'][$oID]['diff_products'])) {
+            if (empty($this->timeframe[$id]['orders'][$oID]['diff_products']) || !in_array($pID, $this->timeframe[$id]['orders'][$oID]['diff_products'])) {
                 $this->timeframe[$id]['orders'][$oID]['diff_products'][] = $pID;
             }
 

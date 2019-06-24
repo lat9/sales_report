@@ -1,6 +1,6 @@
 <?php
 /**
- * SALES REPORT 3.2.2
+ * SALES REPORT 3.3.0
  *
  * This is where everything starts and ends. This file builds the HTML display, calls the class file
  * to build the data, then displays that data for the user.
@@ -9,6 +9,7 @@
  * @author     Conor Kerr <conor.kerr_zen-cart@dev.ceon.net>
  * @author     Carl Peach <carlvt88 at zen-cart.com/forum>
  * @updated by stellarweb to work with version 1.5.0 02-29-12 
+ * @updated by lat9, for continued operation for zc155/zc156, 20190622
  * @copyright  Portions Copyright 2003-2006 Zen Cart Development Team
  * @copyright  Portions Copyright 2003 osCommerce
  * @license    http://www.gnu.org/copyleft/gpl.html   GNU Public License V2.0
@@ -77,7 +78,7 @@ while (!$orders_status->EOF) {
 
 $payment_key = array();
 $payments_array[] = array(
-    'id' => 0,
+    'id' => '0',
     'text' => TEXT_EMPTY_SELECT
 );
 $payments = $db->Execute(
@@ -93,7 +94,9 @@ while (!$payments->EOF) {
     $payments->MoveNext();
 }
 
-// build arrays for dropdowns in search menu
+// -----
+// Build arrays for dropdowns in search menu
+//
 if ($output_format != 'print') {
     $manufacturers = $db->Execute(
         "SELECT * 
@@ -116,42 +119,39 @@ if ($output_format != 'print') {
             $manufacturers->MoveNext();
         }
     }
-
-    $detail_types = array('timeframe', 'product', 'order', 'matrix');
-    $detail_array = array(
-        array(
-            'id' => 'timeframe',
-            'text' => SELECT_DETAIL_TIMEFRAME
-        ),
-        array(
-            'id' => 'product',
-            'text' => SELECT_DETAIL_PRODUCT
-        ),
-        array(
-            'id' => 'order',
-            'text' => SELECT_DETAIL_ORDER
-        ),
-        array(
-            'id' => 'matrix',
-            'text' => SELECT_DETAIL_MATRIX
-        ),
+    
+    $order_sorts = array('oID', 'last_name', 'num_products', 'goods', 'shipping', 'discount', 'gc_sold', 'gc_used', 'grand');
+    $order_sorts_array = array(
+        array('id' => 'oID', 'text' => TABLE_HEADING_ORDERS_ID),
+        array('id' => 'last_name', 'text' => SELECT_LAST_NAME),
+        array('id' => 'num_products', 'text' => TABLE_HEADING_NUM_PRODUCTS),
+        array('id' => 'goods', 'text' => TABLE_HEADING_TOTAL_GOODS),
+        array('id' => 'shipping', 'text' => TABLE_HEADING_SHIPPING),
+        array('id' => 'discount', 'text' => TABLE_HEADING_DISCOUNTS),
+        array('id' => 'gc_sold', 'text' => TABLE_HEADING_GC_SOLD),
+        array('id' => 'gc_used', 'text' => TABLE_HEADING_GC_USED),
+        array('id' => 'grand', 'text' => TABLE_HEADING_ORDER_TOTAL),
+    );
+    
+    $product_sorts = array('pID', 'name', 'manufacturer', 'model', 'base_price', 'quantity', 'onetime_charges', 'grand');
+    $product_sorts_array = array(
+        array('id' => 'pID', 'text' => SELECT_PRODUCT_ID),
+        array('id' => 'name', 'text' => TABLE_HEADING_PRODUCT_NAME),
+        array('id' => 'manufacturer', 'text' => TABLE_HEADING_MANUFACTURER),
+        array('id' => 'model', 'text' => TABLE_HEADING_MODEL),
+        array('id' => 'base_price', 'text' => TABLE_HEADING_BASE_PRICE),
+        array('id' => 'quantity', 'text' => SELECT_QUANTITY),
+        array('id' => 'onetime_charges', 'text' => TABLE_HEADING_ONETIME_CHARGES),
+        array('id' => 'grand', 'text' => TABLE_HEADING_PRODUCT_TOTAL),
     );
 
     $output_array = array(
-        array(
-            'id' => 'display',
-            'text' => SELECT_OUTPUT_DISPLAY
-        ),
-        array(
-            'id' => 'print',
-            'text' => SELECT_OUTPUT_PRINT
-        ),
-        array(
-            'id' => 'csv',
-            'text' => SELECT_OUTPUT_CSV
-        ),
+        array('id' => 'display', 'text' => SELECT_OUTPUT_DISPLAY),
+        array('id' => 'print', 'text' => SELECT_OUTPUT_PRINT),
+        array('id' => 'csv', 'text' => SELECT_OUTPUT_CSV),
     );
 } else {
+    $manufacturer_key = array();
     $detail_key = array(
         'timeframe' => SELECT_DETAIL_TIMEFRAME,
         'product' => SELECT_DETAIL_PRODUCT,
@@ -167,8 +167,17 @@ if ($output_format != 'print') {
     );
 }
 
+$detail_types = array('timeframe', 'product', 'order', 'matrix');
+$detail_array = array(
+    array('id' => 'timeframe', 'text' => SELECT_DETAIL_TIMEFRAME),
+    array('id' => 'product', 'text' => SELECT_DETAIL_PRODUCT),
+    array('id' => 'order', 'text' => SELECT_DETAIL_ORDER),
+    array('id' => 'matrix', 'text' => SELECT_DETAIL_MATRIX),
+);
+
 // the sheer number of options for date range requires some extra checking...
-$date_preset = (!empty($_GET['date_preset'])) ? $_GET['date_preset'] : false;
+$date_preset = (!empty($_GET['date_preset'])) ? $_GET['date_preset'] : 'YTD';
+$date_custom = '0';
 $today_timestamp = strtotime('today midnight');
 switch ($date_preset) {
     case 'today':
@@ -191,19 +200,25 @@ switch ($date_preset) {
         $start_date = date(DATE_FORMAT, strtotime('last year January 1st', $today_timestamp));
         $end_date = date(DATE_FORMAT, strtotime('last year December 31st', $today_timestamp));
         break;
-    case 'YTD':
-        $start_date = date(DATE_FORMAT, strtotime('first day of January this year', $today_timestamp));
-        $end_date = date(DATE_FORMAT, $today_timestamp);
-        break;
+
     // -----
-    // No preset date range, so it must be a custom ...
+    // Either an initial entry to the report (default to YTD), the YTD preset was selected or
+    // a custom date-range was selected.
     //
     default:
-        // defaults to beginning of the month when not set
-        $start_date = (isset($_GET['start_date'])) ? $_GET['start_date'] : date(DATE_FORMAT, strtotime('first day of this month', $today_timestamp));
+        if (empty($_GET['date_custom'])) {
+            $_GET['date_preset'] = 'YTD';
+            $start_date = date(DATE_FORMAT, strtotime('first day of January this year', $today_timestamp));
+            $end_date = date(DATE_FORMAT, $today_timestamp);
+        } else {
+            $date_custom = '1';
+            
+            // defaults to beginning of the month when not set
+            $start_date = (isset($_GET['start_date'])) ? $_GET['start_date'] : date(DATE_FORMAT, strtotime('first day of this month', $today_timestamp));
 
-        // defaults to start date when not set (only have to enter a single day just once)
-        $end_date = (isset($_GET['end_date'])) ? $_GET['end_date'] : $start_date;
+            // defaults to start date when not set (only have to enter a single day just once)
+            $end_date = (isset($_GET['end_date'])) ? $_GET['end_date'] : $start_date;
+        }
         break;
 }
 
@@ -214,25 +229,60 @@ if ($date_target == 'status') {
     $date_status = false;
 }
 
-$payment_method = (isset($_GET['payment_method']) && in_array($_GET['payment_method'], $payment_key)) ? $_GET['payment_method'] : 0;
-$payment_method_omit = (isset($_GET['payment_method_omit']) && in_array($_GET['payment_method_omit'], $payment_key)) ? $_GET['payment_method_omit'] : 0;
+$payment_method = (isset($_GET['payment_method']) && in_array($_GET['payment_method'], $payment_key)) ? $_GET['payment_method'] : '0';
+$payment_method_omit = (isset($_GET['payment_method_omit']) && in_array($_GET['payment_method_omit'], $payment_key)) ? $_GET['payment_method_omit'] : '0';
 $current_status = (isset($_GET['current_status']) && in_array((int)$_GET['current_status'], $status_key)) ? (int)$_GET['current_status'] : 0;
 $manufacturer = (isset($_GET['manufacturer']) && in_array((int)$_GET['manufacturer'], $manufacturer_key)) ? (int)$_GET['manufacturer'] : 0;
 $detail_level = (isset($_GET['detail_level']) && in_array($_GET['detail_level'], $detail_types)) ? $_GET['detail_level'] : 'order';
+switch ($detail_level) {
+    case 'order':
+        $valid_sorts = $order_sorts;
+        $li_sort_a_order = (isset($_GET['li_sort_a']) && in_array($_GET['li_sort_a'], $valid_sorts)) ? $_GET['li_sort_a'] : 'oID';
+        $li_sort_b_order = (isset($_GET['li_sort_b']) && in_array($_GET['li_sort_a'], $valid_sorts)) ? $_GET['li_sort_b'] : 'oID';
+        $li_sort_a_product = 'pID';
+        $li_sort_b_product = 'pID';
+        $sort_default = 'oID';
+        break;
+    case 'product':
+        $valid_sorts = $product_sorts;
+        $li_sort_a_product = (isset($_GET['li_sort_a']) && in_array($_GET['li_sort_a'], $valid_sorts)) ? $_GET['li_sort_a'] : 'pID';
+        $li_sort_b_product = (isset($_GET['li_sort_b']) && in_array($_GET['li_sort_a'], $valid_sorts)) ? $_GET['li_sort_b'] : 'pID';
+        $li_sort_a_order = 'oID';
+        $li_sort_b_order = 'oID';
+        $sort_default = 'pID';
+    default:
+        // -----
+        // The 'csv' output format is not compatible with the 'matrix' detail level.  This 'should' be prevented
+        // by the report's jQuery processing, but just in case the output format will be changed to 'order' and the
+        // report's form-entry re-entered with message.
+        //
+        if ($detail_level == 'matrix' && $output_format == 'csv') {
+            $_GET['output_format'] = 'order';
+            $messageStack->add_session(ERROR_CSV_CONFLICT, 'error');
+            zen_redirect(zen_href_link(FILENAME_STATS_SALES_REPORT, zen_get_all_get_params()));
+        }
+        $valid_sorts = array();
+        $sort_default = false;
+        $li_sort_a_order = 'oID';
+        $li_sort_b_order = 'oID';
+        $li_sort_a_product = 'pID';
+        $li_sort_b_product = 'pID';
+        break;
+}
 
 // -----
 // Initialize variables for the report and/or display, sanitizing where needed.
 //
 $valid_sort_orders = array('asc', 'desc');
-$valid_sorts = array('oID', 'last_name', 'num_products', 'goods', 'shipping', 'discount', 'gc_sold', 'gc_used', 'grand');
+
 // process the search criteria
 $timeframe = (isset($_GET['timeframe']) && in_array($_GET['timeframe'], array('year', 'month', 'week', 'day'))) ? $_GET['timeframe'] : 'year';
 $timeframe_sort = (isset($_GET['timeframe_sort']) && in_array($_GET['timeframe_sort'], $valid_sort_orders)) ? $_GET['timeframe_sort'] : 'asc';
 
-$li_sort_a = (isset($_GET['li_sort_a']) && in_array($_GET['li_sort_a'], $valid_sorts)) ? $_GET['li_sort_a'] : 'oID';
-$li_sort_order_a = (isset($_GET['li_sort_order_a']) && in_array($_GET['li_sort_order_a'], $valid_sorts)) ? $_GET['li_sort_order_a'] : 'asc';
+$li_sort_a = (isset($_GET['li_sort_a']) && in_array($_GET['li_sort_a'], $valid_sorts)) ? $_GET['li_sort_a'] : $sort_default;
+$li_sort_order_a = (isset($_GET['li_sort_order_a']) && in_array($_GET['li_sort_order_a'], $valid_sort_orders)) ? $_GET['li_sort_order_a'] : 'asc';
 
-$li_sort_b = (isset($_GET['li_sort_b']) && in_array($_GET['li_sort_b'], $valid_sorts)) ? $_GET['li_sort_b'] : 'oID';
+$li_sort_b = (isset($_GET['li_sort_b']) && in_array($_GET['li_sort_b'], $valid_sorts)) ? $_GET['li_sort_b'] : $sort_default;
 $li_sort_order_b = (isset($_GET['li_sort_order_b']) && in_array($_GET['li_sort_order_b'], $valid_sort_orders)) ? $_GET['li_sort_order_b'] : 'asc';
 
 $auto_print = !empty($_GET['auto_print']);
@@ -373,10 +423,6 @@ legend { background: #ffffff; border:1px solid #C96E29; color:#333333; font-size
 .v-bot { vertical-align: bottom; }
 .no-wrap { white-space: nowrap; }
 
-#tbl_date_preset { width: 170; }
-#tbl_date_custom { width: 170; display: none; }
-
-#div_li_table_a, #div_li_table_b { display: block; visibility: hidden; }
 #span_auto_print, #span_csv_header { display: none; }
 
 #td_wait_text { font-size: 12px; visibility: hidden; }
@@ -384,6 +430,11 @@ legend { background: #ffffff; border:1px solid #C96E29; color:#333333; font-size
 if (PROJECT_VERSION_MAJOR . '.' . PROJECT_VERSION_MINOR > '1.5.6') {
 ?>
 #spiffycalendar { left: 10px!important; }
+<?php
+}
+if ($detail_level != 'order') {
+?>
+#order_total_validation_checkbox { display: none; }
 <?php
 }
 ?>
@@ -411,8 +462,7 @@ if ($output_format != 'print') {
   // -->
 </script>
 <?php 
-} 
-require DIR_WS_INCLUDES . 'javascript/sales_report.js.php'; 
+}
 ?>
 </head>
 <?php
@@ -488,7 +538,7 @@ if ($output_format == 'print') {
 <?php
 } elseif (!$output_format || $output_format != 'print') { // display the normal search header
 ?>
-<body onload="init(); populate_search();">
+<body onload="init();">
     <div id="spiffycalendar" class="text"></div>
 <?php 
     require DIR_WS_INCLUDES . 'header.php'; 
@@ -497,7 +547,7 @@ if ($output_format == 'print') {
         var StartDate = new ctlSpiffyCalendarBox("StartDate", "search", "start_date", "btnDate1", "<?php echo $start_date; ?>", scBTNMODE_CALBTN);
         var EndDate = new ctlSpiffyCalendarBox("EndDate", "search", "end_date", "btnDate2", "<?php echo $end_date; ?>", scBTNMODE_CALBTN);
     </script>
-    <?php echo zen_draw_form('search', FILENAME_STATS_SALES_REPORT, '', 'get', '', true); ?>
+    <?php echo zen_draw_form('search', FILENAME_STATS_SALES_REPORT, '', 'get', '', true) . zen_draw_hidden_field('date_custom', $date_custom, 'id="date-custom"'); ?>
     <table class="table">
         <tr>
             <td class="pageHeading"><?php echo PAGE_HEADING; ?></td>
@@ -511,30 +561,30 @@ if ($output_format == 'print') {
                     <tr class="v-top">
                         <td><table id="tbl_date_preset">
                             <tr>
-                                <td class="smallText"><strong><?php echo SEARCH_DATE_PRESET; ?></strong>&nbsp;<a href="javascript:swap_date_search('date_preset');"><?php echo zen_image(DIR_WS_IMAGES . 'icons/custom_range.gif', '', '', '', 'align="bottom"'); ?></a></td>
+                                <td class="smallText"><strong><?php echo SEARCH_DATE_PRESET; ?></strong>&nbsp;<button id="choose-custom" type="button"><?php echo BUTTON_TIMEFRAME_CUSTOM; ?></button></td>
                             </tr>
                             <tr>
-                                <td class="smallText" id="td_today"><?php echo zen_draw_radio_field('date_preset', 'today', false) . sprintf(SEARCH_DATE_TODAY, date("M. j", mktime(0, 0, 0, date("m"), date("d"), date("Y"))) ); ?></td>
+                                <td class="smallText" id="td_today"><?php echo zen_draw_radio_field('date_preset', 'today', ($date_preset == 'today')) . sprintf(SEARCH_DATE_TODAY, date("M. j", mktime(0, 0, 0, date("m"), date("d"), date("Y")))); ?></td>
                             </tr>
                             <tr>
-                                <td class="smallText" id="td_yesterday"><?php echo zen_draw_radio_field('date_preset', 'yesterday', false) . sprintf(SEARCH_DATE_YESTERDAY, date("M. j", mktime(0, 0, 0, date("m"), date("d") - 1, date("Y"))) ); ?></td>
+                                <td class="smallText" id="td_yesterday"><?php echo zen_draw_radio_field('date_preset', 'yesterday', ($date_preset == 'yesterday')) . sprintf(SEARCH_DATE_YESTERDAY, date("M. j", mktime(0, 0, 0, date("m"), date("d") - 1, date("Y")))); ?></td>
                             </tr>
                             <tr>
-                                <td class="smallText" id="td_last_month"><?php echo zen_draw_radio_field('date_preset', 'last_month', false) . sprintf(SEARCH_DATE_LAST_MONTH, date("F \'y", mktime(0, 0, 0, date("m") - 1)) ); ?></td>
+                                <td class="smallText" id="td_last_month"><?php echo zen_draw_radio_field('date_preset', 'last_month', ($date_preset == 'last_month')) . sprintf(SEARCH_DATE_LAST_MONTH, date("F \'y", mktime(0, 0, 0, date("m") - 1))); ?></td>
                             </tr>
                             <tr>
-                                <td class="smallText" id="td_this_month"><?php echo zen_draw_radio_field('date_preset', 'this_month', false) . sprintf(SEARCH_DATE_THIS_MONTH, date("F \'y") ); ?></td>
+                                <td class="smallText" id="td_this_month"><?php echo zen_draw_radio_field('date_preset', 'this_month', ($date_preset == 'this_month')) . sprintf(SEARCH_DATE_THIS_MONTH, date("F \'y")); ?></td>
                             </tr>
                             <tr>
-                                <td class="smallText" id="td_last_year"><?php echo zen_draw_radio_field('date_preset', 'last_year', false) . sprintf(SEARCH_DATE_LAST_YEAR, date("Y") - 1 ); ?></td>
+                                <td class="smallText" id="td_last_year"><?php echo zen_draw_radio_field('date_preset', 'last_year', ($date_preset == 'last_year')) . sprintf(SEARCH_DATE_LAST_YEAR, date("Y") - 1); ?></td>
                             </tr>
                             <tr>
-                                <td class="smallText" id="td_YTD"><?php echo zen_draw_radio_field('date_preset', 'YTD', false) . sprintf(SEARCH_DATE_YTD, "Jan 1 to " . date("M. j Y", mktime(0, 0, 0, date("m"), date("d"), date("Y")))); ?></td>
+                                <td class="smallText" id="td_YTD"><?php echo zen_draw_radio_field('date_preset', 'YTD', ($date_preset == 'YTD' || !empty($date_custom))) . sprintf(SEARCH_DATE_YTD, "Jan 1 to " . date("M. j Y", mktime(0, 0, 0, date("m"), date("d"), date("Y")))); ?></td>
                             </tr>
                         </table>
                         <table id="tbl_date_custom">
                             <tr>
-                                <td class="smallText"><strong><?php echo SEARCH_DATE_CUSTOM; ?></strong>&nbsp;<a href="javascript:swap_date_search('date_custom')"><?php echo zen_image(DIR_WS_IMAGES . 'icons/preset_range.gif', '', '', '', 'align="bottom"'); ?></a></td>
+                                <td class="smallText"><strong><?php echo SEARCH_DATE_CUSTOM; ?></strong>&nbsp;<button id="choose-preset" type="button"><?php echo BUTTON_TIMEFRAME_PRESET; ?></button></td>
                             </tr>
                             <tr>
                                 <td class="smallText"><?php echo SEARCH_START_DATE ?><br /><script>StartDate.writeControl(); StartDate.dateFormat="<?php echo DATE_FORMAT_SPIFFYCAL; ?>";</script></td>
@@ -548,32 +598,29 @@ if ($output_format == 'print') {
                                 <td class="smallText"><strong><?php echo SEARCH_DATE_TARGET; ?></strong></td>
                             </tr>
                             <tr>
-                                <td class="smallText">
-                                    <input type="radio" name="date_target" value="purchased" onclick="hide('td_date_status', true);" /><?php echo RADIO_DATE_TARGET_PURCHASED; ?><br />
-                                    <input type="radio" name="date_target" value="status" onclick="show('td_date_status');" /><?php echo RADIO_DATE_TARGET_STATUS; ?>
-                                </td>
+                                <td class="smallText"><?php
+                                    echo zen_draw_radio_field('date_target', 'purchased', ($date_target == 'purchased')) . ' ' . RADIO_DATE_TARGET_PURCHASED . '<br />' .
+                                         zen_draw_radio_field('date_target', 'status', ($date_target != 'purchased')) . ' ' . RADIO_DATE_TARGET_STATUS;
+                                ?></td>
                             </tr>
                             <tr>
-                                <td class="smallText" id="td_date_status" style="visibility:hidden"><?php echo zen_draw_pull_down_menu('date_status', $status_array, $date_status, 'id="date_status"'); ?></td>
+                                <td class="smallText" id="td_date_status"><?php echo zen_draw_pull_down_menu('date_status', $status_array, $date_status, 'id="date_status"'); ?></td>
                             </tr>
                             <tr>
-                                <td class="smallText"><input type="checkbox" name="doProdInc"<?php if ($doProdInc) echo ' checked'; ?> onClick="show('td_prod_includes')"> <?php echo SEARCH_SPECIFIC_PRODUCTS; ?></td>
+                                <td class="smallText"><?php echo zen_draw_checkbox_field('doProdInc', '1', $doProdInc, '', 'id="do-prod-inc"') . ' ' . SEARCH_SPECIFIC_PRODUCTS; ?></td>
                             </tr>
                             <tr>
 <?php
     $temp_prods = (!empty($_GET['prod_includes'])) ? $_GET['prod_includes'] : INCLUDE_PRODUCTS;
-    $extra_parms = (!$doProdInc) ? ' style="visibility: hidden;"' : '';
+    $temp_cust = (!empty($_GET['cust_includes'])) ? $_GET['cust_includes'] : INCLUDE_CUSTOMERS;
 ?>
-                                <td class="smallText" id="td_prod_includes" <?php echo $extra_parms; ?>><?php echo zen_draw_input_field('prod_includes', $temp_prods, 30); ?></td>
+                                <td class="smallText" id="td_prod_includes"><?php echo zen_draw_input_field('prod_includes', $temp_prods, 30); ?></td>
                             </tr>
                             <tr>
-                                <td class="smallText"><input type="checkbox" name="doCustInc"<?php if ($doCustInc) echo ' checked'; ?> onclick="show('td_cust_includes')"> <?php echo SEARCH_SPECIFIC_CUSTOMERS; ?></td>
+                                <td class="smallText"><?php echo zen_draw_checkbox_field('doCustInc', '1', $doCustInc, '', 'id="do-cust-inc"') . ' ' . SEARCH_SPECIFIC_CUSTOMERS; ?></td>
                             </tr>
                             <tr>
-                                <td class="smallText" id="td_cust_includes" <?php 
-              $temp_cust = (!empty($_GET['cust_includes'])) ? $_GET['cust_includes'] : INCLUDE_CUSTOMERS;
-              if (!$doCustInc) echo 'style="visibility:hidden"'; echo '>';  echo  zen_draw_input_field('cust_includes', $temp_cust, 30); ?>
-                                </td>
+                                <td class="smallText" id="td_cust_includes"><?php echo zen_draw_input_field('cust_includes', $temp_cust, 30);?></td>
                             </tr>
                         </table></td>
                         <td><table>
@@ -581,7 +628,7 @@ if ($output_format == 'print') {
                                 <td class="smallText"><strong><?php echo SEARCH_PAYMENT_METHOD . '</strong><br />' . zen_draw_pull_down_menu('payment_method', $payments_array, $payment_method, 'id="payment_method"'); ?></td>
                             </tr>
                             <tr>
-                                <td class="smallText"><strong><?php echo SEARCH_PAYMENT_METHOD . ' To Omit</strong><br />' . zen_draw_pull_down_menu('payment_method_omit', $payments_array, $payment_method_omit, 'id="payment_method_omit"'); ?></td>
+                                <td class="smallText"><strong><?php echo SEARCH_PAYMENT_METHOD_OMIT . '</strong><br />' . zen_draw_pull_down_menu('payment_method_omit', $payments_array, $payment_method_omit, 'id="payment_method_omit"'); ?></td>
                             </tr>
                             <tr>
                                 <td class="smallText"><strong><?php echo SEARCH_CURRENT_STATUS . '</strong><br />' . zen_draw_pull_down_menu('current_status', array_merge(array(array('id' => 0, 'text' => TEXT_EMPTY_SELECT)), $status_array), $current_status, 'id="current_status"'); ?></td>
@@ -608,49 +655,51 @@ if ($output_format == 'print') {
         <!-- nested table to show/hide sort options without shifting entire row-->
                         <td><table>
                             <tr>
-                                <td class="smallText" valign="middle"><strong><?php echo SEARCH_TIMEFRAME; ?></strong></td>
+                                <td class="smallText"><strong><?php echo SEARCH_TIMEFRAME; ?></strong></td>
                             </tr>
                             <tr>
                                 <td class="smallText"><?php echo
-                                    zen_draw_radio_field('timeframe', 'day', true) . SEARCH_TIMEFRAME_DAY . '<br />' .
-                                    zen_draw_radio_field('timeframe', 'week') . SEARCH_TIMEFRAME_WEEK . '<br />' .
-                                    zen_draw_radio_field('timeframe', 'month') . SEARCH_TIMEFRAME_MONTH . '<br />' .
-                                    zen_draw_radio_field('timeframe', 'year') . SEARCH_TIMEFRAME_YEAR; ?>
+                                    zen_draw_radio_field('timeframe', 'day', $timeframe == 'day') . SEARCH_TIMEFRAME_DAY . '<br />' .
+                                    zen_draw_radio_field('timeframe', 'week', $timeframe == 'week') . SEARCH_TIMEFRAME_WEEK . '<br />' .
+                                    zen_draw_radio_field('timeframe', 'month', $timeframe == 'month') . SEARCH_TIMEFRAME_MONTH . '<br />' .
+                                    zen_draw_radio_field('timeframe', 'year', $timeframe == 'year') . SEARCH_TIMEFRAME_YEAR; ?>
                                 </td>
                             </tr>
                         </table></td>
                         <td><table>
                             <tr>
-                                <td class="smallText" valign="middle"><strong><?php echo SEARCH_TIMEFRAME_SORT; ?></strong></td>
+                                <td class="smallText"><strong><?php echo SEARCH_TIMEFRAME_SORT; ?></strong></td>
                             </tr>
                             <tr>
-                                <td class="smallText" valign="top"><?php echo
-                                    zen_draw_radio_field('timeframe_sort', 'asc', true) . zen_image(DIR_WS_IMAGES . 'icons/up_arrow.gif') . '&nbsp;' . RADIO_TIMEFRAME_SORT_ASC . '<br />' .
-                                    zen_draw_radio_field('timeframe_sort', 'desc') . zen_image(DIR_WS_IMAGES . 'icons/down_arrow.gif') . '&nbsp;' . RADIO_TIMEFRAME_SORT_DESC; ?>
+                                <td class="smallText"><?php echo
+                                    zen_draw_radio_field('timeframe_sort', 'asc', $timeframe_sort == 'asc') . zen_image(DIR_WS_IMAGES . 'icons/up_arrow.gif') . '&nbsp;' . RADIO_TIMEFRAME_SORT_ASC . '<br />' .
+                                    zen_draw_radio_field('timeframe_sort', 'desc', $timeframe_sort != 'asc') . zen_image(DIR_WS_IMAGES . 'icons/down_arrow.gif') . '&nbsp;' . RADIO_TIMEFRAME_SORT_DESC; ?>
                                 </td>
                             </tr>
                         </table></td>
                         <td><table>
                             <tr>
-                                <td class="smallText"><strong><?php echo
-                                    SEARCH_DETAIL_LEVEL . '</strong><br />' .
-                                    zen_draw_pull_down_menu('detail_level', $detail_array, $detail_level, 'id="detail_level" onchange="set_sort_options(document.search.detail_level.options[document.search.detail_level.selectedIndex].value);"'); ?>
-                                </td>
+                                <td class="smallText"><strong><?php echo SEARCH_DETAIL_LEVEL; ?></strong><br /><?php echo zen_draw_pull_down_menu('detail_level', $detail_array, $detail_level, 'id="detail_level"'); ?></td>
                             </tr>
                         </table></td>
         <!-- end table nesting -->          
                         <td><div id="div_li_table_a"><table>
-                                <tr class="v-top">
-                                    <td class="smallText"><strong><span id="span_sort_title"><!-- JS will populate this --></span></strong></td>
-                                </tr>
-                                <tr class="v-top">
-                                    <td class="smallText">
-                                        <select name="li_sort_a" id="li_sort_a" size="0"><!-- JS will populate this --></select><br />
-                                            <?php echo
-                                            zen_draw_radio_field('li_sort_order_a', 'asc', true) . zen_image(DIR_WS_IMAGES . 'icons/up_arrow.gif') . '&nbsp;' . RADIO_LI_SORT_ASC . '<br />' .
-                                            zen_draw_radio_field('li_sort_order_a', 'desc') . zen_image(DIR_WS_IMAGES . 'icons/down_arrow.gif') . '&nbsp;' . RADIO_LI_SORT_DESC; ?>
-                                     </td>
-                                </tr>
+                            <tr class="v-top">
+                                <td class="smallText" id="li-sort-title-order"><strong><?php echo SEARCH_SORT_ORDER; ?></strong></td>
+                                <td class="smallText" id="li-sort-title-product"><strong><?php echo SEARCH_SORT_PRODUCT; ?></strong></td>
+                            </tr>
+                            <tr class="v-top">
+                                <td class="smallText">
+                                    <?php echo zen_draw_pull_down_menu('li_sort_a', $order_sorts_array, $li_sort_a_order, 'id="li-sort-a-order"') .
+                                               zen_draw_pull_down_menu('li_sort_a', $product_sorts_array, $li_sort_a_product, 'id="li-sort-a-product"'); ?>
+                                    <br />
+                                    <?php echo
+                                        zen_draw_radio_field('li_sort_order_a', 'asc', $li_sort_order_a == 'asc') . zen_image(DIR_WS_IMAGES . 'icons/up_arrow.gif') . '&nbsp;' . RADIO_LI_SORT_ASC . 
+                                        '<br />' .
+                                        zen_draw_radio_field('li_sort_order_a', 'desc', $li_sort_order_a != 'asc') . zen_image(DIR_WS_IMAGES . 'icons/down_arrow.gif') . '&nbsp;' . RADIO_LI_SORT_DESC; 
+                                    ?>
+                                 </td>
+                            </tr>
                         </table></div></td>
                         <td><div id="div_li_table_b"><table>
                             <tr>
@@ -658,10 +707,12 @@ if ($output_format == 'print') {
                             </tr>
                             <tr>
                                 <td class="smallText">
-                                    <select name="li_sort_b" id="li_sort_b" size="0"><!-- JS will populate this --></select><br />
+                                    <?php echo zen_draw_pull_down_menu('li_sort_b', $order_sorts_array, $li_sort_b_order, 'id="li-sort-b-order"') .
+                                               zen_draw_pull_down_menu('li_sort_b', $product_sorts_array, $li_sort_b_product, 'id="li-sort-b-product"'); ?>
+                                    <br />
                                     <?php echo
-                                    zen_draw_radio_field('li_sort_order_b', 'asc', true) . zen_image(DIR_WS_IMAGES . 'icons/up_arrow.gif') . '&nbsp;' . RADIO_LI_SORT_ASC . '<br />' .
-                                    zen_draw_radio_field('li_sort_order_b', 'desc') . zen_image(DIR_WS_IMAGES . 'icons/down_arrow.gif') . '&nbsp;' . RADIO_LI_SORT_DESC; ?>
+                                    zen_draw_radio_field('li_sort_order_b', 'asc', $li_sort_order_b == 'asc') . zen_image(DIR_WS_IMAGES . 'icons/up_arrow.gif') . '&nbsp;' . RADIO_LI_SORT_ASC . '<br />' .
+                                    zen_draw_radio_field('li_sort_order_b', 'desc', $li_sort_order_b != 'asc') . zen_image(DIR_WS_IMAGES . 'icons/down_arrow.gif') . '&nbsp;' . RADIO_LI_SORT_DESC; ?>
                                 </td>
                             </tr>
                         </table></div></td>
@@ -674,21 +725,14 @@ if ($output_format == 'print') {
                 <fieldset><legend><?php echo HEADING_TITLE_PROCESS; ?></legend>
                 <table class="table">
                     <tr class="v-bot">
-                        <td class="smallText"><?php echo
-                            '<strong>' . SEARCH_OUTPUT_FORMAT . '</strong><br />' .
-                            zen_draw_pull_down_menu('output_format', $output_array, $output_format, 'id="output_format" onchange="format_checkbox(document.search.output_format.options[document.search.output_format.selectedIndex].value);"'); ?>
-                        </td>
+                        <td class="smallText"><strong><?php echo SEARCH_OUTPUT_FORMAT; ?></strong><br /><?php echo zen_draw_pull_down_menu('output_format', $output_array, $output_format, 'id="output-format"'); ?></td>
                         <td class="smallText"><?php echo zen_draw_separator('pixel_trans.gif', 175, 1); ?><br />
-                            <span id="span_auto_print"><?php echo zen_draw_checkbox_field('auto_print', '1', false) . CHECKBOX_AUTO_PRINT; ?></span>
-                            <span id="span_csv_header"><?php echo zen_draw_checkbox_field('csv_header', '1', false) . CHECKBOX_CSV_HEADER; ?></span>
+                            <span id="span-auto-print"><?php echo zen_draw_checkbox_field('auto_print', '1', false) . CHECKBOX_AUTO_PRINT; ?></span>
+                            <span id="span-csv-header"><?php echo zen_draw_checkbox_field('csv_header', '1', false) . CHECKBOX_CSV_HEADER; ?></span>
                         </td>
-                        <td class="smallText right"><span id="order_total_validation_checkbox" style="<?php if ($detail_level != 'order') { echo 'display:none'; } ?>"><?php echo zen_draw_checkbox_field('order_total_validation', '1', false) . 'Output Order Total Validation Column'; ?></span><p><input type="button" id="defaults" value="<?php echo BUTTON_LOAD_DEFAULTS; ?>" onclick="populate_search(true);"></td>
-                        <td class="right">
-                            <table>
-                                <tr>
-                                    <td class="smallText"><?php echo zen_draw_checkbox_field('new_window', '1', $new_window) . CHECKBOX_NEW_WINDOW; ?><br /><input type="button" id="btn_submit" value="<?php echo BUTTON_SEARCH; ?>" onclick="form_check();"></td>
-                                </tr>
-                            </table>
+                        <td class="smallText right" id="order-total-validation"><?php echo zen_draw_checkbox_field('order_total_validation', '1', false) . CHECKBOX_VALIDATE_TOTALS; ?></td>
+                        <td class="smallText right"><?php echo zen_draw_checkbox_field('new_window', '1', $new_window) . CHECKBOX_NEW_WINDOW; ?>
+                            <br /><button type="button" id="btn-submit"><?php echo BUTTON_SEARCH; ?></button>
                         </td>
                     </tr>
                 </table></fieldset>
@@ -720,22 +764,22 @@ if ($output_format == 'print' || $output_format == 'display') {
         if ($doCustInc || $doProdInc) {
             // if reporting for a specific product, build up a string of product descriptions
             $i = 0;
-            $header_string = "";
-            $include_products = explode(",", $_GET['prod_includes']);
+            $header_string = '';
+            $include_products = explode(',', (string)$_GET['prod_includes']);
             if ($doProdInc && DISPLAY_TABLE_HEADING_PRODUCTS) {
-                foreach ($include_products as $cID) {
-                    if (empty($cID)) {
+                foreach ($include_products as $pID) {
+                    if (empty((int)$pID)) {
                         continue; 
                     }
                     $tempAry = $db->Execute(
                         "SELECT DISTINCT pd.products_name 
                            FROM " . TABLE_PRODUCTS_DESCRIPTION . " pd 
-                          WHERE products_id = " . (int)$cID
+                          WHERE products_id = " . (int)$pID
                     );
                     if ($i == 0) {
                         $header_string = $tempAry->fields['products_name'] ;
                     } else {
-                        $header_string .= ", " . $tempAry->fields['products_name'];
+                        $header_string .= ', ' . $tempAry->fields['products_name'];
                     }
                     $i++;
                 }
@@ -743,30 +787,38 @@ if ($output_format == 'print' || $output_format == 'display') {
             // if reporting for a specific customer, replace the first number in the string of IDs
             // with the actual customer fname,lname
             $i = 0;
-            $include_customers = explode(",",$_GET['cust_includes']);
+            $include_customers = explode(',', (string)$_GET['cust_includes']);
             if ($doCustInc && DISPLAY_TABLE_HEADING_CUSTOMERS) {
-                foreach($include_customers as $cID) {
-                    if (empty($cID)) continue; 
-                    $tempAry = $db->Execute("select distinct c.customers_firstname, c.customers_lastname from " .
-                            TABLE_CUSTOMERS . " c where customers_id = " . trim($include_customers[$i]));
+                foreach ($include_customers as $cID) {
+                    if (empty((int)$cID)) {
+                        continue;
+                    }
+                    $tempAry = $db->Execute(
+                        "SELECT DISTINCT c.customers_firstname, c.customers_lastname 
+                           FROM " . TABLE_CUSTOMERS . " c 
+                          WHERE customers_id = " . (int)$cID
+                    );
                     if ($i == 0) {
                         $header_string .= TEXT_CUSTOMER_TABLE_HEADING . $tempAry->fields['customers_firstname'] . " " . $tempAry->fields['customers_lastname'];
                     } else {
-                        $header_string .= ", " . $tempAry->fields['customers_firstname'] . " " . $tempAry->fields['customers_lastname'];
+                        $header_string .= ", " . $tempAry->fields['customers_firstname'] . ' ' . $tempAry->fields['customers_lastname'];
                     }
                     $i++;
                 }
             }
 ?>
             <td><?php echo $header_string; ?> </td>
-            <td class="right"><?php echo '<a href="' . zen_href_link(FILENAME_STATS_SALES_REPORT, zen_get_all_get_params(array('output_format', 'auto_print')) . 'output_format=print&auto_print=1') . '" title="' . TEXT_PRINT_FORMAT_TITLE . '"><span class="smallText">' . zen_image(DIR_WS_IMAGES . 'icons/icon_print.gif') . '&nbsp;' . TEXT_PRINT_FORMAT . '</span></a>'; ?></td>
 <?php
-        } else { 
+            $colspan = '';
+        } else {
+            $colspan = ' colspan="2"';
+        }
+        $sr_link = zen_href_link(FILENAME_STATS_SALES_REPORT, zen_get_all_get_params(array('output_format', 'auto_print')) . 'output_format=print&auto_print=1');
+        $icon_print = zen_image(DIR_WS_IMAGES . 'icons/icon_print.gif');
 ?>
-            <td colspan="2" class="right"><?php echo '<a href="' . zen_href_link(FILENAME_STATS_SALES_REPORT, zen_get_all_get_params(array('output_format', 'auto_print')) . 'output_format=print&auto_print=1') . '" title="' . TEXT_PRINT_FORMAT_TITLE . '"><span class="smallText">' . zen_image(DIR_WS_IMAGES . 'icons/icon_print.gif') . '&nbsp;' . TEXT_PRINT_FORMAT . '</span></a>'; ?></td>
-<?php
-        } 
-?>
+            <td class="right"<?php echo $colspan; ?>>
+                <a href="<?php echo $sr_link; ?>" title="<?php echo TEXT_PRINT_FORMAT_TITLE; ?>"><span class="smallText"><?php echo "$icon_print&nbsp;" . TEXT_PRINT_FORMAT; ?></span></a>
+            </td>
         </tr>
 <?php
     }  // END if ($output_format == 'display')
@@ -885,7 +937,7 @@ if ($output_format == 'print' || $output_format == 'display') {
 ?>
                 </tr>
 <?php
-        } else if (DISPLAY_EMPTY_TIMEFRAMES) {
+        } elseif (DISPLAY_EMPTY_TIMEFRAMES) {
         // don't display anything
         } else {
             // display the "no data" line
@@ -908,7 +960,7 @@ if ($output_format == 'print' || $output_format == 'display') {
         if ($sr->detail_level == 'order' && is_array($timeframe['orders']) ) {
             // sort the orders according to requested sort options
             $dataset1 = $dataset2 = array();
-            foreach($timeframe['orders'] as $oID => $o_data) {
+            foreach ($timeframe['orders'] as $oID => $o_data) {
                 $dataset1[$oID] = (isset($o_data[$li_sort_a])) ? $o_data[$li_sort_a] : array();
                 $dataset2[$oID] = (isset($o_data[$li_sort_b])) ? $o_data[$li_sort_b] : array();
             }
@@ -1375,6 +1427,7 @@ if ($output_format == 'print' || $output_format == 'display') {
 ?>
     </table></form>
 <?php 
+require DIR_WS_INCLUDES . 'javascript/sales_report.js.php'; 
 if ($output_format != 'print') {
     require DIR_WS_INCLUDES . 'footer.php'; 
 }
