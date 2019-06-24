@@ -119,31 +119,6 @@ if ($output_format != 'print') {
             $manufacturers->MoveNext();
         }
     }
-    
-    $order_sorts = array('oID', 'last_name', 'num_products', 'goods', 'shipping', 'discount', 'gc_sold', 'gc_used', 'grand');
-    $order_sorts_array = array(
-        array('id' => 'oID', 'text' => TABLE_HEADING_ORDERS_ID),
-        array('id' => 'last_name', 'text' => SELECT_LAST_NAME),
-        array('id' => 'num_products', 'text' => TABLE_HEADING_NUM_PRODUCTS),
-        array('id' => 'goods', 'text' => TABLE_HEADING_TOTAL_GOODS),
-        array('id' => 'shipping', 'text' => TABLE_HEADING_SHIPPING),
-        array('id' => 'discount', 'text' => TABLE_HEADING_DISCOUNTS),
-        array('id' => 'gc_sold', 'text' => TABLE_HEADING_GC_SOLD),
-        array('id' => 'gc_used', 'text' => TABLE_HEADING_GC_USED),
-        array('id' => 'grand', 'text' => TABLE_HEADING_ORDER_TOTAL),
-    );
-    
-    $product_sorts = array('pID', 'name', 'manufacturer', 'model', 'base_price', 'quantity', 'onetime_charges', 'grand');
-    $product_sorts_array = array(
-        array('id' => 'pID', 'text' => SELECT_PRODUCT_ID),
-        array('id' => 'name', 'text' => TABLE_HEADING_PRODUCT_NAME),
-        array('id' => 'manufacturer', 'text' => TABLE_HEADING_MANUFACTURER),
-        array('id' => 'model', 'text' => TABLE_HEADING_MODEL),
-        array('id' => 'base_price', 'text' => TABLE_HEADING_BASE_PRICE),
-        array('id' => 'quantity', 'text' => SELECT_QUANTITY),
-        array('id' => 'onetime_charges', 'text' => TABLE_HEADING_ONETIME_CHARGES),
-        array('id' => 'grand', 'text' => TABLE_HEADING_PRODUCT_TOTAL),
-    );
 
     $output_array = array(
         array('id' => 'display', 'text' => SELECT_OUTPUT_DISPLAY),
@@ -173,6 +148,31 @@ $detail_array = array(
     array('id' => 'product', 'text' => SELECT_DETAIL_PRODUCT),
     array('id' => 'order', 'text' => SELECT_DETAIL_ORDER),
     array('id' => 'matrix', 'text' => SELECT_DETAIL_MATRIX),
+);
+    
+$order_sorts = array('oID', 'last_name', 'num_products', 'goods', 'shipping', 'discount', 'gc_sold', 'gc_used', 'grand');
+$order_sorts_array = array(
+    array('id' => 'oID', 'text' => TABLE_HEADING_ORDERS_ID),
+    array('id' => 'last_name', 'text' => SELECT_LAST_NAME),
+    array('id' => 'num_products', 'text' => TABLE_HEADING_NUM_PRODUCTS),
+    array('id' => 'goods', 'text' => TABLE_HEADING_TOTAL_GOODS),
+    array('id' => 'shipping', 'text' => TABLE_HEADING_SHIPPING),
+    array('id' => 'discount', 'text' => TABLE_HEADING_DISCOUNTS),
+    array('id' => 'gc_sold', 'text' => TABLE_HEADING_GC_SOLD),
+    array('id' => 'gc_used', 'text' => TABLE_HEADING_GC_USED),
+    array('id' => 'grand', 'text' => TABLE_HEADING_ORDER_TOTAL),
+);
+
+$product_sorts = array('pID', 'name', 'manufacturer', 'model', 'base_price', 'quantity', 'onetime_charges', 'grand');
+$product_sorts_array = array(
+    array('id' => 'pID', 'text' => SELECT_PRODUCT_ID),
+    array('id' => 'name', 'text' => TABLE_HEADING_PRODUCT_NAME),
+    array('id' => 'manufacturer', 'text' => TABLE_HEADING_MANUFACTURER),
+    array('id' => 'model', 'text' => TABLE_HEADING_MODEL),
+    array('id' => 'base_price', 'text' => TABLE_HEADING_BASE_PRICE),
+    array('id' => 'quantity', 'text' => SELECT_QUANTITY),
+    array('id' => 'onetime_charges', 'text' => TABLE_HEADING_ONETIME_CHARGES),
+    array('id' => 'grand', 'text' => TABLE_HEADING_PRODUCT_TOTAL),
 );
 
 // the sheer number of options for date range requires some extra checking...
@@ -237,19 +237,20 @@ $detail_level = (isset($_GET['detail_level']) && in_array($_GET['detail_level'],
 switch ($detail_level) {
     case 'order':
         $valid_sorts = $order_sorts;
-        $li_sort_a_order = (isset($_GET['li_sort_a']) && in_array($_GET['li_sort_a'], $valid_sorts)) ? $_GET['li_sort_a'] : 'oID';
-        $li_sort_b_order = (isset($_GET['li_sort_b']) && in_array($_GET['li_sort_a'], $valid_sorts)) ? $_GET['li_sort_b'] : 'oID';
+        $li_sort_a = $li_sort_a_order = (isset($_GET['li_sort_a']) && in_array($_GET['li_sort_a'], $valid_sorts)) ? $_GET['li_sort_a'] : 'oID';
+        $li_sort_b = $li_sort_b_order = (isset($_GET['li_sort_b']) && in_array($_GET['li_sort_a'], $valid_sorts)) ? $_GET['li_sort_b'] : 'oID';
         $li_sort_a_product = 'pID';
         $li_sort_b_product = 'pID';
         $sort_default = 'oID';
         break;
     case 'product':
         $valid_sorts = $product_sorts;
-        $li_sort_a_product = (isset($_GET['li_sort_a']) && in_array($_GET['li_sort_a'], $valid_sorts)) ? $_GET['li_sort_a'] : 'pID';
-        $li_sort_b_product = (isset($_GET['li_sort_b']) && in_array($_GET['li_sort_a'], $valid_sorts)) ? $_GET['li_sort_b'] : 'pID';
+        $li_sort_a = $li_sort_a_product = (isset($_GET['li_sort_a']) && in_array($_GET['li_sort_a'], $valid_sorts)) ? $_GET['li_sort_a'] : 'pID';
+        $li_sort_b = $li_sort_b_product = (isset($_GET['li_sort_b']) && in_array($_GET['li_sort_a'], $valid_sorts)) ? $_GET['li_sort_b'] : 'pID';
         $li_sort_a_order = 'oID';
         $li_sort_b_order = 'oID';
         $sort_default = 'pID';
+        break;
     default:
         // -----
         // The 'csv' output format is not compatible with the 'matrix' detail level.  This 'should' be prevented
@@ -263,8 +264,8 @@ switch ($detail_level) {
         }
         $valid_sorts = array();
         $sort_default = false;
-        $li_sort_a_order = 'oID';
-        $li_sort_b_order = 'oID';
+        $li_sort_a = $li_sort_a_order = 'oID';
+        $li_sort_b = $li_sort_b_order = 'oID';
         $li_sort_a_product = 'pID';
         $li_sort_b_product = 'pID';
         break;
@@ -355,6 +356,7 @@ if ($output_format === false) {
 
         $sr_parms = array(
             'timeframe' => $timeframe,
+            'timeframe_sort' => $timeframe_sort,
             'start_date' => $start_date,
             'end_date' => $end_date,
             'date_target' => $date_target,
@@ -370,7 +372,6 @@ if ($output_format === false) {
             'li_sort_order_a' => $li_sort_order_a,
             'li_sort_b' => $li_sort_b,
             'li_sort_order_b' => $li_sort_order_b,
-            'timeframe_sort' => $timeframe_sort,
             'doCustInc' => $doCustInc,
             'cust_includes' => $cust_includes,
             'doProdInc' => $doProdInc,
@@ -381,14 +382,7 @@ if ($output_format === false) {
         if ($output_format == 'csv') {
             // we have to pass the sorting values of the form since
             // the class instantiation does not require them
-            $sr->output_csv(
-                $csv_header,
-                $timeframe_sort,
-                $li_sort_a,
-                $li_sort_order_a,
-                $li_sort_b,
-                $li_sort_order_b
-            );
+            $sr->output_csv($csv_header);
             exit;
         }
     }  // END if ($output_format != 'none')
@@ -961,8 +955,8 @@ if ($output_format == 'print' || $output_format == 'display') {
             // sort the orders according to requested sort options
             $dataset1 = $dataset2 = array();
             foreach ($timeframe['orders'] as $oID => $o_data) {
-                $dataset1[$oID] = (isset($o_data[$li_sort_a])) ? $o_data[$li_sort_a] : array();
-                $dataset2[$oID] = (isset($o_data[$li_sort_b])) ? $o_data[$li_sort_b] : array();
+                $dataset1[$oID] = $o_data[$li_sort_a];
+                $dataset2[$oID] = $o_data[$li_sort_b];
             }
 
             // set the sorting arrays to all-lowercase so that the data
@@ -1041,10 +1035,10 @@ if ($output_format == 'print' || $output_format == 'display') {
                 </tr>
 <?php
             }
-        } elseif ($sr->detail_level == 'product' && is_array($timeframe['products']) ) { // display product line items, if necessary
+        } elseif ($sr->detail_level == 'product' && !empty($timeframe['products']) ) { // display product line items, if necessary
             // sort the products according to requested sort options
             $dataset1 = $dataset2 = array();
-            foreach($timeframe['products'] as $pID => $p_data) {
+            foreach ($timeframe['products'] as $pID => $p_data) {
                 $dataset1[$pID] = $p_data[$li_sort_a];
                 $dataset2[$pID] = $p_data[$li_sort_b];
             }

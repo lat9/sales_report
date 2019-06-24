@@ -46,6 +46,7 @@ class sales_report
 
         // place passed variables into class variables
         $this->timeframe_group = $parms['timeframe'];
+        $this->timeframe_sort = $parms['timeframe_sort'];
         $this->date_target = $parms['date_target'];
         $this->date_status = $parms['date_status'];
         $this->payment_method = $parms['payment_method'];
@@ -147,23 +148,23 @@ class sales_report
 
         switch ($this->timeframe_group) {
             case 'year':
-                $ed = mktime(0, 0, 0, date("m", $sd), date("d", $sd), date("Y", $sd) + 1);
+                $ed = mktime(0, 0, 0, date('m', $sd), date('d', $sd), date('Y', $sd) + 1);
                 break;
             case 'month':
-                $ed = mktime(0, 0, 0, date("m", $sd) + 1, 1, date("Y", $sd));
+                $ed = mktime(0, 0, 0, date('m', $sd) + 1, 1, date('Y', $sd));
                 break;
             case 'week':
-                $ed = mktime(0, 0, 0, date("m", $sd), date("d", $sd) + 7, date("Y", $sd));
+                $ed = mktime(0, 0, 0, date('m', $sd), date('d', $sd) + 7, date('Y', $sd));
                 break;
             case 'day':
-                $ed = mktime(0, 0, 0, date("m", $sd), date("d", $sd) + 1, date("Y", $sd));
+                $ed = mktime(0, 0, 0, date('m', $sd), date('d', $sd) + 1, date('Y', $sd));
                 break;
         }
 
         // dial back $ed if it's beyond the user-specified end date
         // we go 1 day beyond specified end date because end date is exclusive in the query
         if ($ed > $this->ed_raw) {
-            $ed = mktime(0, 0, 0, date("m", $this->ed_raw), date("d", $this->ed_raw) + 1, date("Y", $this->ed_raw));
+            $ed = mktime(0, 0, 0, date('m', $this->ed_raw), date('d', $this->ed_raw) + 1, date('Y', $this->ed_raw));
         }
 
         // define the timeframe array
@@ -173,7 +174,7 @@ class sales_report
         // timestamp format allows us to use whatever display format we want at output
         // we subtract 1 day so that the displayed end date is the actual end date
         $this->timeframe[$id]['sd'] = $sd;
-        $this->timeframe[$id]['ed'] = mktime(0, 0, 0, date("m", $ed), date("d", $ed) - 1, date("Y", $ed));
+        $this->timeframe[$id]['ed'] = mktime(0, 0, 0, date('m', $ed), date('d', $ed) - 1, date('Y', $ed));
 
         // build the excluded products array - not really debugged well
         $this->product_filter = '';
@@ -230,15 +231,7 @@ class sales_report
         if ($this->customer_filter != '') {
             $sql .= $this->customer_filter . PHP_EOL;
         }
-        
-        if ($this->li_sort_a == 'oID') {
-            $orders_sort = $this->li_sort_order_a;
-        } elseif ($this->li_sort_b == 'oID') {
-            $orders_sort = $this->li_sort_order_b;
-        } else {
-            $orders_sort = 'DESC';
-        }
-        $sql .= " ORDER BY o.orders_id $orders_sort";
+        $sql .= " ORDER BY o.orders_id {$this->timeframe_sort}";
 
         // DEBUG
         //$this->sql[$id] = $sql;
@@ -377,7 +370,7 @@ class sales_report
             } else {
                 // Round up the final product price in same manner as order class - otherwise the amounts
                 // from this report will most likely not agree with the actual final order values!
-                $product_price = zen_round(( ($final_price * $quantity) + $onetime_charges ), $currencies->currencies[$order_info->fields['currency']]['decimal_places']);
+                $product_price = zen_round(($final_price * $quantity) + $onetime_charges, $currencies->currencies[$order_info->fields['currency']]['decimal_places']);
               
                 // Get the amount of tax for this product
                 $product_tax = zen_calculate_tax($onetime_charges, $tax);
@@ -452,56 +445,80 @@ class sales_report
         }
 
         // pull shipping, discounts, tax, and gift certificates used from orders_total table
-        $totals = $db->Execute("select * from " . TABLE_ORDERS_TOTAL . " where orders_id = '" . $oID . "'");
+        $totals = $db->Execute(
+            "SELECT * 
+               FROM " . TABLE_ORDERS_TOTAL . " 
+              WHERE orders_id = $oID"
+        );
         while (!$totals->EOF) {
             $class = $totals->fields['class'];
             $value = $totals->fields['value'];
-            if ($class != "ot_total" && $class != "ot_subtotal") {
-                if ($class == "ot_gv") {
+            switch ($class) {
+                case 'ot_total':
+                case 'ot_subtotal':
+                    break;
+                    
+                case 'ot_gv':
                     $order_gc_used += $value;
                     $this->timeframe[$id]['total']['gc_used'] += $value;
                     $this->build_li_orders($oID, 'gc_used', $value);
 
                     $this->timeframe[$id]['total']['gc_used_qty']++;
                     $this->build_li_orders($oID, 'gc_used_qty', 1);
-                } elseif ($class == "ot_coupon" || $class == "ot_group_pricing" || $class == "ot_better_together") {  
+                    break;
+                    
+                case 'ot_coupon':
+                case 'ot_group_pricing':
+                case 'ot_better_together':
+                    $order_discount += $value;
+                    $this->timeframe[$id]['total']['discount'] += $value;
+                    $this->build_li_orders($oID, 'discount', $value);
+                    $this->timeframe[$id]['total']['discount_qty']++;
+                    $this->build_li_orders($oID, 'discount_qty', 1);
+                    break;
+                    
+                case 'ot_cashback':
                     $order_discount += $value;
                     $this->timeframe[$id]['total']['discount'] += $value;
                     $this->build_li_orders($oID, 'discount', $value);
 
                     $this->timeframe[$id]['total']['discount_qty']++;
                     $this->build_li_orders($oID, 'discount_qty', 1);
-                } elseif ($class == "ot_cashback") {
-                    $order_discount += $value;
-                    $this->timeframe[$id]['total']['discount'] += $value;
-                    $this->build_li_orders($oID, 'discount', $value);
-
-                    $this->timeframe[$id]['total']['discount_qty']++;
-                    $this->build_li_orders($oID, 'discount_qty', 1);
-                } elseif ($class == "ot_tax") {
+                    break;
+                    
+                case 'ot_tax':
                     $order_recorded_tax += $value;
                     $this->timeframe[$id]['total']['order_recorded_tax'] += $value;
                     $this->build_li_orders($oID, 'order_recorded_tax', $value);
-                } elseif ($class == "ot_shipping") {
+                    break;
+                    
+                case 'ot_shipping':
                     $order_shipping += $value;
                     $this->timeframe[$id]['total']['shipping'] += $value;
                     $this->build_li_orders($oID, 'shipping', $value);
-                } elseif ($value < 0) {
-                    // this allows for a custom discount, a la Super Orders
-                    $order_discount += abs($value);
-                    $this->timeframe[$id]['total']['discount'] += abs($value);
-                    $this->build_li_orders($oID, 'discount', abs($value) );
+                    break;
+                    
+                default:
+                    if ($value < 0) {
+                        // this allows for a custom discount, a la Super Orders
+                        $order_discount += abs($value);
+                        $this->timeframe[$id]['total']['discount'] += abs($value);
+                        $this->build_li_orders($oID, 'discount', abs($value) );
 
-                    $this->timeframe[$id]['total']['discount_qty']++;
-                    $this->build_li_orders($oID, 'discount_qty', 1);
-                }
+                        $this->timeframe[$id]['total']['discount_qty']++;
+                        $this->build_li_orders($oID, 'discount_qty', 1);
+                    }
+                    break;
             }
             $totals->MoveNext();
         }
 
         // we want to count an order if it has a value in any category
         $order_values = ($order_goods + $order_goods_tax + $order_shipping + $order_gc_sold + $order_discount + $order_gc_used);
-        if ($order_values != 0) {
+        if ($order_values == 0) {
+            $order_total = 0;
+            $this->build_li_orders($oID, 'has_no_value', true);
+        } else {
             $this->timeframe[$id]['total']['num_orders']++;
             $this->build_li_orders($oID, 'has_no_value', false);
 
@@ -525,12 +542,8 @@ class sales_report
                     $this->build_li_orders($oID, 'order_total_validation', $order_total_validation);
                 } 
             }
-            return $order_total;
-        } else {
-            $this->build_li_orders($oID, 'has_no_value', true);
-            return 0;
         }
-
+        return $order_total;
     }  // END function build_li_totals($oID)
 
 
@@ -879,85 +892,101 @@ class sales_report
     // This function actually creates the CSV file when CSV
     // output is requested.  The logic and looping structure
     // is nearly identical to that found in the HTML output,
-    // but we seperate it out for the sake of code clarity and
+    // but we separate it out for the sake of code clarity and
     // to allow for some differences between the 2 outputs.
     //
-    function output_csv($csv_header, $timeframe_sort, $li_sort_a, $li_sort_order_a, $li_sort_b, $li_sort_order_b) 
+    function output_csv($csv_header) 
     {
-        $display_tax =  ($this->grand_total['goods_tax'] > 0);
+        $filename = CSV_FILENAME_PREFIX . date('Ymd', $this->sd_raw) . "-" . date('Ymd', $this->ed_raw);
+        if (preg_match('/MSIE/', $_SERVER['HTTP_USER_AGENT'])) {
+            header('Content-Type: application/octetstream');
+            header('Content-Disposition: attachment; filename=' . $filename);
+            header("Expires: Mon, 26 Jul 2001 05:00:00 GMT");
+            header("Last-Modified: " . gmdate("D, d M Y H:i:s") . " GMT");
+            header("Cache-Control: must_revalidate, post-check=0, pre-check=0");
+            header("Pragma: public");
+            header("Cache-control: private");
+        } else {
+            header('Content-Type: application/x-octet-stream');
+            header('Content-Disposition: attachment; filename=' . $filename);
+            header("Expires: Mon, 26 Jul 2001 05:00:00 GMT");
+            header("Last-Modified: " . gmdate("D, d M Y H:i:s") . " GMT");
+            header("Pragma: no-cache");
+        }
 
-        $filename = CSV_FILENAME_PREFIX . date('Ymd', $startDate) . "-" . date('Ymd', $endDate);
-        header("Pragma: cache");
-        header("Content-Type: text/comma-separated-values");
-        header("Content-Disposition: attachment; filename=" . urlencode($filename) . ".csv");
+        $display_tax = ($this->grand_total['goods_tax'] > 0);
 
         if ($csv_header) {
             switch ($this->detail_level) {
                 case 'timeframe':
-                    echo CSV_HEADING_START_DATE . CSV_SEPARATOR;
-                    echo CSV_HEADING_END_DATE . CSV_SEPARATOR;
-                    echo TABLE_HEADING_NUM_ORDERS . CSV_SEPARATOR;
-                    echo TABLE_HEADING_NUM_PRODUCTS . CSV_SEPARATOR;
-                    echo TABLE_HEADING_TOTAL_GOODS . CSV_SEPARATOR;
+                    $line = array(
+                        CSV_HEADING_START_DATE,
+                        CSV_HEADING_END_DATE,
+                        TABLE_HEADING_NUM_ORDERS,
+                        TABLE_HEADING_NUM_PRODUCTS,
+                        TABLE_HEADING_TOTAL_GOODS
+                    );
                     if ($display_tax) {
-                        echo TABLE_HEADING_TAX . CSV_SEPARATOR;
+                        $line[] = TABLE_HEADING_TAX;
+                        $line[] = TABLE_HEADING_ORDER_RECORDED_TAX;
                     }
-                    echo TABLE_HEADING_SHIPPING . CSV_SEPARATOR;
-                    echo TABLE_HEADING_DISCOUNTS . CSV_SEPARATOR;
-                    echo TABLE_HEADING_GC_SOLD . CSV_SEPARATOR;
-                    echo TABLE_HEADING_GC_USED . CSV_SEPARATOR;
-                    echo TABLE_HEADING_TOTAL . CSV_NEWLINE;
-                    break;
-                case 'order':
-                    echo CSV_HEADING_START_DATE . CSV_SEPARATOR;
-                    echo CSV_HEADING_END_DATE . CSV_SEPARATOR;
-                    echo TABLE_HEADING_ORDERS_ID . CSV_SEPARATOR;
-                    echo CSV_HEADING_LAST_NAME . CSV_SEPARATOR;
-                    echo CSV_HEADING_FIRST_NAME . CSV_SEPARATOR;
-                    echo TABLE_HEADING_NUM_PRODUCTS . CSV_SEPARATOR;
-                    echo TABLE_HEADING_TOTAL_GOODS . CSV_SEPARATOR;
-                    if ($display_tax) {
-                        echo TABLE_HEADING_TAX . CSV_SEPARATOR;
-                        echo TABLE_HEADING_ORDER_RECORDED_TAX . CSV_SEPARATOR;
-                    }
-                    echo TABLE_HEADING_SHIPPING . CSV_SEPARATOR;
-                    echo TABLE_HEADING_DISCOUNTS . CSV_SEPARATOR;
-                    echo TABLE_HEADING_GC_SOLD . CSV_SEPARATOR;
-                    echo TABLE_HEADING_GC_USED . CSV_SEPARATOR;
-                    echo TABLE_HEADING_ORDER_TOTAL . CSV_NEWLINE;
+                    $line[] = TABLE_HEADING_SHIPPING;
+                    $line[] = TABLE_HEADING_DISCOUNTS;
+                    $line[] = TABLE_HEADING_GC_SOLD;
+                    $line[] = TABLE_HEADING_GC_USED;
+                    $line[] = TABLE_HEADING_TOTAL;
                     break;
                 case 'product':
-                    echo CSV_HEADING_START_DATE . CSV_SEPARATOR;
-                    echo CSV_HEADING_END_DATE . CSV_SEPARATOR;
-                    echo TABLE_HEADING_PRODUCT_ID . CSV_SEPARATOR;
-                    echo TABLE_HEADING_PRODUCT_NAME . CSV_SEPARATOR;
-                    echo TABLE_HEADING_PRODUCT_ATTRIBUTES . CSV_SEPARATOR;
+                    $line = array(
+                        CSV_HEADING_START_DATE,
+                        CSV_HEADING_END_DATE,
+                        TABLE_HEADING_PRODUCT_ID,
+                        TABLE_HEADING_PRODUCT_NAME,
+                        TABLE_HEADING_PRODUCT_ATTRIBUTES
+                    );
                     if (DISPLAY_MANUFACTURER) {
-                        echo TABLE_HEADING_MANUFACTURER . CSV_SEPARATOR;
+                        $line[] = TABLE_HEADING_MANUFACTURER;
                     }
-                    echo TABLE_HEADING_MODEL . CSV_SEPARATOR;
-                    echo TABLE_HEADING_BASE_PRICE . CSV_SEPARATOR;
-                    echo TABLE_HEADING_FINAL_PRICE . CSV_SEPARATOR;
-                    echo TABLE_HEADING_QUANTITY . CSV_SEPARATOR;
+                    $line[] = TABLE_HEADING_MODEL;
+                    $line[] = TABLE_HEADING_BASE_PRICE;
+                    $line[] = TABLE_HEADING_FINAL_PRICE;
+                    $line[] = TABLE_HEADING_QUANTITY;
                     if ($display_tax) {
-                        echo TABLE_HEADING_TAX . CSV_SEPARATOR;
+                        $line[] = TABLE_HEADING_TAX;
                     }
                     if (DISPLAY_ONE_TIME_FEES) {
-                        echo TABLE_HEADING_ONETIME_CHARGES . CSV_SEPARATOR;
+                        $line[] = TABLE_HEADING_ONETIME_CHARGES;
                     }
                     if ($display_tax) {
-                        echo TABLE_HEADING_TOTAL . CSV_SEPARATOR;
+                        $line[] = TABLE_HEADING_TOTAL;
                     }  
-                    echo TABLE_HEADING_PRODUCT_TOTAL . CSV_NEWLINE;
+                    $line[] = TABLE_HEADING_PRODUCT_TOTAL;
+                    break;
+                default:
+                    $line = array(
+                        CSV_HEADING_START_DATE,
+                        CSV_HEADING_END_DATE,
+                        TABLE_HEADING_ORDERS_ID,
+                        CSV_HEADING_LAST_NAME,
+                        CSV_HEADING_FIRST_NAME,
+                        TABLE_HEADING_NUM_PRODUCTS,
+                        TABLE_HEADING_TOTAL_GOODS
+                    );
+                    if ($display_tax) {
+                        $line[] = TABLE_HEADING_TAX;
+                        $line[] = TABLE_HEADING_ORDER_RECORDED_TAX;
+                    }
+                    $line[] = TABLE_HEADING_SHIPPING;
+                    $line[] = TABLE_HEADING_DISCOUNTS;
+                    $line[] = TABLE_HEADING_GC_SOLD;
+                    $line[] = TABLE_HEADING_GC_USED;
+                    $line[] = TABLE_HEADING_ORDER_TOTAL;
                     break;
             }
+            $this->outputCsvLine($line);
         }  // END if ($csv_header)
 
-
-        if ($timeframe_sort == 'desc') {
-            krsort($this->timeframe);
-        }
-
+        $same_sorts = ($this->li_sort_a == $this->li_sort_b);
         foreach ($this->timeframe as $id => $timeframe) {
             // format the dates
             switch ($this->timeframe_group) {
@@ -980,113 +1009,131 @@ class sales_report
             }
             switch ($this->detail_level) {
                 case 'timeframe':
-                    echo $start_date . CSV_SEPARATOR;
-                    echo $end_date . CSV_SEPARATOR;
-                    echo $timeframe['total']['num_orders'] . CSV_SEPARATOR;
-                    echo $timeframe['total']['num_products'] . CSV_SEPARATOR;
-                    //echo TEXT_DIFF . sizeof($timeframe['total']['diff_products']) . CSV_SEPARATOR;
-                    echo $timeframe['total']['goods'] . CSV_SEPARATOR;
+                    $line = array(
+                        $start_date,
+                        $end_date,
+                        $timeframe['total']['num_orders'],
+                        $timeframe['total']['num_products'],
+                        $timeframe['total']['goods']
+                    );
                     if ($display_tax) {
-                        $timeframe['total']['goods_tax'] . CSV_SEPARATOR;
-                        $timeframe['total']['order_recorded_tax'] . CSV_SEPARATOR;
+                        $line[] = $timeframe['total']['goods_tax'];
+                        $line[] = $timeframe['total']['order_recorded_tax'];
                     }
-                    echo $timeframe['total']['shipping'] . CSV_SEPARATOR;
-                    echo $timeframe['total']['discount'] . CSV_SEPARATOR;
-                    //echo TEXT_QTY . $timeframe['total']['discount_qty'] . CSV_SEPARATOR;
-                    echo $timeframe['total']['gc_sold'] . CSV_SEPARATOR;
-                    //echo TEXT_QTY . $timeframe['total']['gc_sold_qty'] . CSV_SEPARATOR;
-                    echo $timeframe['total']['gc_used'] . CSV_SEPARATOR;
-                    //echo TEXT_QTY . $timeframe['total']['gc_used_qty'] . CSV_SEPARATOR;
-                    echo $timeframe['total']['grand'] . CSV_NEWLINE;
+                    $line[] = $timeframe['total']['shipping'];
+                    $line[] = $timeframe['total']['discount'];
+                    $line[] = $timeframe['total']['gc_sold'];
+                    $line[] = $timeframe['total']['gc_used'];
+                    $line[] = $timeframe['total']['grand'];
+                    
+                    $this->outputCsvLine($line);
                     break;
 
-                case 'order':
-                    // sort the orders according to requested sort options
-                    unset($dataset1, $dataset2);
-                    if (is_null($timeframe['orders'])) {
-                    // Ignore days for which no info exists
+                case 'product':
+                    // sort the products according to requested sort options
+                    $dataset1 = $dataset2 = array();
+                    foreach ($timeframe['products'] as $pID => $p_data) {
+                        $dataset1[$pID] = $p_data[$this->li_sort_a];
+                        if (!$same_sorts) {
+                            $dataset2[$pID] = $p_data[$this->li_sort_b];
+                        }
+                    }
+
+                    $sort1 = ($this->li_sort_order_a == 'asc') ? SORT_ASC : SORT_DESC;
+                    $sort2 = ($this->li_sort_order_b == 'asc') ? SORT_ASC : SORT_DESC;
+                    if ($same_sorts) {
+                        array_multisort($dataset1, $sort1, $timeframe['products']);
+                    } else {
+                        array_multisort($dataset1, $sort1, $dataset2, $sort2, $timeframe['products']);
+                    }
+
+                    foreach ($timeframe['products'] as $key => $p_data) {
+                        $line = array(
+                            $start_date,
+                            $end_date,
+                            $p_data['pID'],
+                            str_replace(array('<small>', '</small>', '<br>'), '', $p_data['name']),
+                            str_replace(array('<small>', '</small>', '<br>'), '', $p_data['attributes']),
+                        );
+                        if (DISPLAY_MANUFACTURER) {
+                            $line[] = $p_data['manufacturer'];
+                        }
+                        $line[] = $p_data['model'];
+                        $line[] = $p_data['base_price'];
+                        $line[] = $p_data['final_price'];
+                        $line[] = $p_data['quantity'];
+                        if ($display_tax) {
+                            $line[] = $p_data['tax'];
+                        }
+                        if (DISPLAY_ONE_TIME_FEES) {
+                            $line[] = $p_data['onetime_charges'];
+                        }
+                        if ($display_tax) {
+                            $line[] = $p_data['total'];
+                        }
+                        $line[] = $p_data['grand'];
+                        
+                        $this->outputCsvLine($line);
+                    }
+                    break;
+
+                default:
+                    if (empty($timeframe['orders'])) {
                         continue;
                     }
-                    foreach($timeframe['orders'] as $oID => $o_data) {
-                        $dataset1[$oID] = $o_data[$li_sort_a];
-                        $dataset2[$oID] = $o_data[$li_sort_b];
+                    
+                    $dataset1 = $dataset2 = array();
+                    foreach ($timeframe['orders'] as $oID => $o_data) {
+                        $dataset1[$oID] = $o_data[$this->li_sort_a];
+                        if (!$same_sorts) {
+                            $dataset2[$oID] = $o_data[$this->li_sort_b];
+                        }
                     }
 
-                    $sort1 = ($li_sort_order_a == 'asc') ? SORT_ASC : SORT_DESC;
-                    $sort2 = ($li_sort_order_b == 'asc') ? SORT_ASC : SORT_DESC;
-                    array_multisort($dataset1, $sort1, $dataset2, $sort2, $timeframe['orders']);
+                    $sort1 = ($this->li_sort_order_a == 'asc') ? SORT_ASC : SORT_DESC;
+                    $sort2 = ($this->li_sort_order_b == 'asc') ? SORT_ASC : SORT_DESC;
+                    if ($same_sorts) {
+                        array_multisort($dataset1, $sort1, $timeframe['orders']);
+                    } else {
+                        array_multisort($dataset1, $sort1, $dataset2, $sort2, $timeframe['orders']);
+                    }
 
-                    foreach($timeframe['orders'] as $key => $o_data) {
+                    foreach ($timeframe['orders'] as $key => $o_data) {
                         // skip order if it has no value
                         if ($o_data['has_no_value']) {
                             continue;
                         }
 
-                        echo $start_date . CSV_SEPARATOR;
-                        echo $end_date . CSV_SEPARATOR;
-                        echo $o_data['oID'] . CSV_SEPARATOR;
-                        echo $o_data['last_name'] . CSV_SEPARATOR;
-                        echo $o_data['first_name'] . CSV_SEPARATOR;
-                        echo $o_data['num_products'] . CSV_SEPARATOR;
-                        //echo (sizeof($o_data['diff_products']) > 1 ? TEXT_DIFF . sizeof($o_data['diff_products']) : TEXT_SAME) . CSV_SEPARATOR;
-                        echo $o_data['goods'] . CSV_SEPARATOR;
+                        $line = array(
+                            $start_date,
+                            $end_date,
+                            $o_data['oID'],
+                            $o_data['last_name'],
+                            $o_data['first_name'],
+                            $o_data['num_products'],
+                            $o_data['goods']
+                        );
                         if ($display_tax) {
-                            echo $o_data['goods_tax'] . CSV_SEPARATOR;
-                            echo $o_data['order_recorded_tax'] . CSV_SEPARATOR;
+                            $line[] = $o_data['goods_tax'];
+                            $line[] = $o_data['order_recorded_tax'];
                         }
-                        echo $o_data['shipping'] . CSV_SEPARATOR;
-                        echo $o_data['discount'] . CSV_SEPARATOR;
-                        //echo TEXT_QTY . $o_data['discount_qty'] . CSV_SEPARATOR;
-                        echo $o_data['gc_sold'] . CSV_SEPARATOR;
-                        //echo TEXT_QTY . $o_data['gc_sold_qty'] . CSV_SEPARATOR;
-                        echo $o_data['gc_used'] . CSV_SEPARATOR;
-                        //echo TEXT_QTY . $o_data['gc_used_qty'] . CSV_SEPARATOR;
-                        echo $o_data['grand'] . CSV_NEWLINE;
+                        $line[] = $o_data['shipping'];
+                        $line[] = $o_data['discount'];
+                        $line[] = $o_data['gc_sold'];
+                        $line[] = $o_data['gc_used'];
+                        $line[] = $o_data['grand'];
+                        
+                        $this->outputCsvLine($line);
                     }
-                    break;
-
-                case 'product':
-                    // sort the products according to requested sort options
-                    unset($dataset1, $dataset2);
-                    foreach($timeframe['products'] as $pID => $p_data) {
-                        $dataset1[$pID] = $p_data[$li_sort_a];
-                        $dataset2[$pID] = $p_data[$li_sort_b];
-                    }
-
-                    $sort1 = ($li_sort_order_a == 'asc') ? SORT_ASC : SORT_DESC;
-                    $sort2 = ($li_sort_order_b == 'asc') ? SORT_ASC : SORT_DESC;
-                    array_multisort($dataset1, $sort1, $dataset2, $sort2, $timeframe['products']);
-
-                    foreach($timeframe['products'] as $key => $p_data) {
-                        echo $start_date . CSV_SEPARATOR;
-                        echo $end_date . CSV_SEPARATOR;
-                        echo $p_data['pID'] . CSV_SEPARATOR;
-                        echo str_replace(array('<small>', '</small>', '<br>'), '', $p_data['name']) . CSV_SEPARATOR;
-                        echo str_replace(array('<small>', '</small>', '<br>'), '', $p_data['attributes']) . CSV_SEPARATOR;
-                        if (DISPLAY_MANUFACTURER) {
-                            echo $p_data['manufacturer'] . CSV_SEPARATOR;
-                        }
-                        echo $p_data['model'] . CSV_SEPARATOR;
-                        echo $p_data['base_price'] . CSV_SEPARATOR;
-                        echo $p_data['final_price'] . CSV_SEPARATOR;
-                        echo $p_data['quantity'] . CSV_SEPARATOR;
-                        if ($display_tax) {
-                            echo $p_data['tax'] . CSV_SEPARATOR;
-                        }
-                        if (DISPLAY_ONE_TIME_FEES) {
-                            echo $p_data['onetime_charges'] . CSV_SEPARATOR;
-                        }
-                        if ($display_tax) {
-                            echo $p_data['total'] . CSV_SEPARATOR;
-                        }
-                        echo $p_data['grand'] . CSV_NEWLINE;
-                    }
-                    echo CSV_NEWLINE;
                     break;
             }  //END switch ($this->detail_level)
-
         }  // END foreach ($this->timeframe as $id => $timeframe)
-
+        session_write_close();
+        exit();
     }  // END function output_csv()
-
+    
+    protected function outputCsvLine($line)
+    {
+        echo implode(CSV_SEPARATOR, $line) . CSV_NEWLINE;
+    }
 }
