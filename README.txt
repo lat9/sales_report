@@ -310,6 +310,7 @@ Changes in 3.3.0, 2019-06-xx (lat9) ... Drops support for Zen Cart versions prio
 [CHANGE]   "Remember" admin's selection for 'Show report in a new window'.
 [BUGFIX]   Correct various PHP Notices for more recent versions of PHP
 [CHANGE]   Convert javascript to jQuery; report now outputs HTML5-compatible HTML.
+[CHANGE]   Use the customer's name from the 'order', not from their customer-record.
 
 Modified:
 /YOUR_ADMIN/stats_sales_report.php

@@ -585,18 +585,23 @@ class sales_report
                     'has_no_value' => 0
                 );
 
-                // get the customer data
+                // -----
+                // Get the customer's name from the **order**, recognizing that the order has
+                // appended the customer's last name(s) to their first name(s), so the 'unsplitting'
+                // won't work for some customers' names, but will work for the majority.
+                //
                 $c_data = $GLOBALS['db']->Execute(
-                    "SELECT c.* 
-                       FROM " . TABLE_ORDERS . " o
-                            INNER JOIN " . TABLE_CUSTOMERS . " c
-                                ON o.customers_id = c.customers_id
-                      WHERE o.orders_id = $oID
+                    "SELECT customers_id, customers_name
+                       FROM " . TABLE_ORDERS . "
+                      WHERE orders_id = $oID
                       LIMIT 1"
                 );
                 $this->timeframe[$id]['orders'][$oID]['customers_id'] = $c_data->fields['customers_id'];
-                $this->timeframe[$id]['orders'][$oID]['first_name'] = zen_db_output($c_data->fields['customers_firstname']);
-                $this->timeframe[$id]['orders'][$oID]['last_name'] = zen_db_output($c_data->fields['customers_lastname']);
+                
+                $pieces = explode(' ', $c_data->fields['customers_name']);
+                $firstname = array_shift($pieces);
+                $this->timeframe[$id]['orders'][$oID]['first_name'] = zen_db_output($firstname);
+                $this->timeframe[$id]['orders'][$oID]['last_name'] = zen_db_output(implode(' ', $pieces));
             }
 
             // add the passed $value to the passed $field in the ['orders'] array
