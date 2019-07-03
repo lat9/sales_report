@@ -303,14 +303,16 @@ Modified:
 /YOUR_ADMIN/includes/languages/english/stats_sales_report.php
 
 =====================================
-Changes in 3.3.0, 2019-06-xx (lat9) ... Drops support for Zen Cart versions prior to 1.5.5!
+Changes in 3.3.0, 2019-07-03 (lat9) ... Drops support for Zen Cart versions prior to 1.5.5!
 =====================================
 [CHANGE]   zc156 Interoperability: "Custom" date, calendar display is 'off-screen'.
 [CHANGE]   Remove "default" settings.
 [CHANGE]   "Remember" admin's selection for 'Show report in a new window'.
+[CHANGE]   Add orders' status to omit.
 [BUGFIX]   Correct various PHP Notices for more recent versions of PHP
 [CHANGE]   Convert javascript to jQuery; report now outputs HTML5-compatible HTML.
 [CHANGE]   Use the customer's name from the 'order', not from their customer-record.
+[BUGFIX]   Correct error when specific customer-/product-list indicated but not supplied.
 
 Modified:
 /YOUR_ADMIN/stats_sales_report.php
