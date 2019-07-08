@@ -1,4 +1,4 @@
-SALES REPORT Version 3.3.0
+SALES REPORT Version 3.3.1
 By Frank Koehl (PM: BlindSide), Conor Kerr Ceon, Carl Peach, Cindy Merkin (lat9)
  
 author Czech translation :  Josef Zahradník
@@ -323,6 +323,14 @@ Modified:
 No longer used/distributed:
 /YOUR_ADMIN/images/icons/custom_range.gif
 /YOUR_ADMIN/images/icons/preset_range.gif
+
+=====================================
+Changes in 3.3.1, 2019-07-xx (lat9) ... Drops support for Zen Cart versions prior to 1.5.5!
+=====================================
+[BUGFIX]   Correct PHP 7.3 warning.
+
+Modified:
+/YOUR_ADMIN/includes/classes/sales_report.php
 
 =====================================
 Sponsored by Destination ImagiNation, Inc.
