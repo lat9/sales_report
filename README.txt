@@ -325,11 +325,13 @@ No longer used/distributed:
 /YOUR_ADMIN/images/icons/preset_range.gif
 
 =====================================
-Changes in 3.3.1, 2019-07-xx (lat9) ... Drops support for Zen Cart versions prior to 1.5.5!
+Changes in 3.3.1, 2019-07-xx (lat9)
 =====================================
 [BUGFIX]   Correct PHP 7.3 warning.
+[BUGFIX]   Custom date-selection not 'remembered'.
 
 Modified:
+/YOUR_ADMIN/stats_sales_report.php
 /YOUR_ADMIN/includes/classes/sales_report.php
 
 =====================================
