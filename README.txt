@@ -325,7 +325,7 @@ No longer used/distributed:
 /YOUR_ADMIN/images/icons/preset_range.gif
 
 =====================================
-Changes in 3.3.1, 2019-07-xx (lat9)
+Changes in 3.3.1, 2019-08-25 (lat9)
 =====================================
 [BUGFIX]   Correct PHP 7.3 warning.
 [BUGFIX]   Custom date-selection not 'remembered'.
