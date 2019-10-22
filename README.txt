@@ -1,4 +1,4 @@
-SALES REPORT Version 3.3.1
+SALES REPORT Version 3.3.2
 By Frank Koehl (PM: BlindSide), Conor Kerr Ceon, Carl Peach, Cindy Merkin (lat9)
  
 author Czech translation :  Josef Zahradník
@@ -333,6 +333,16 @@ Changes in 3.3.1, 2019-08-25 (lat9)
 Modified:
 /YOUR_ADMIN/stats_sales_report.php
 /YOUR_ADMIN/includes/classes/sales_report.php
+
+=====================================
+Changes in 3.3.2, 2019-10-22 (lat9)
+=====================================
+[BUGFIX]   Correct PHP notices during products-purchased CSV output.
+[BUGFIX]   (Interoperation) Don't load extra-functions until an admin is logged in.
+
+Modified:
+/YOUR_ADMIN/includes/classes/sales_report.php
+/YOUR_ADMIN/includes/functions/extra_functions/stats_sales_report.php
 
 =====================================
 Sponsored by Destination ImagiNation, Inc.
