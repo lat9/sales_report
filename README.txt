@@ -1,4 +1,4 @@
-SALES REPORT Version 3.3.2
+SALES REPORT Version 3.3.3
 By Frank Koehl (PM: BlindSide), Conor Kerr Ceon, Carl Peach, Cindy Merkin (lat9)
  
 author Czech translation :  Josef Zahradník
@@ -342,6 +342,14 @@ Changes in 3.3.2, 2019-10-22 (lat9)
 
 Modified:
 /YOUR_ADMIN/includes/classes/sales_report.php
+/YOUR_ADMIN/includes/functions/extra_functions/stats_sales_report.php
+
+=====================================
+Changes in 3.3.3, 2019-11-02 (lat9)
+=====================================
+[BUGFIX]   Correct no admin-menu entry on a "fresh" install.
+
+Modified:
 /YOUR_ADMIN/includes/functions/extra_functions/stats_sales_report.php
 
 =====================================
