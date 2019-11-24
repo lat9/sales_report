@@ -348,8 +348,10 @@ Modified:
 Changes in 3.3.3, 2019-11-02 (lat9)
 =====================================
 [BUGFIX]   Correct no admin-menu entry on a "fresh" install.
+[BUGFIX]   Correct 'goods' value when the store doesn't display prices with tax (the tax was incorrectly being removed from the price).
 
 Modified:
+/YOUR_ADMIN/includes/classes/sales_report.php
 /YOUR_ADMIN/includes/functions/extra_functions/stats_sales_report.php
 
 =====================================

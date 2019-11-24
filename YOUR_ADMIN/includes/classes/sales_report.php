@@ -384,7 +384,7 @@ class sales_report
               
                 // Calculate the subtotal inc tax in the same way that the order class does
                 $product_price_inc_tax = (zen_add_tax($final_price, $tax) * $quantity) + zen_add_tax($onetime_charges, $tax);
-                $product_price_exc_tax = ($product_price_inc_tax - $product_tax);
+                $product_price_exc_tax = (DISPLAY_PRICE_WITH_TAX_ADMIN == 'true') ? ($product_price_inc_tax - $product_tax) : $product_price_inc_tax;
                 $order_goods += $product_price_exc_tax;
               
                 $this->timeframe[$id]['total']['goods'] += $product_price_exc_tax;
