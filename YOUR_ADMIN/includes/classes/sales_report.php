@@ -528,7 +528,7 @@ class sales_report
 
             // add up stored values for order grand total
             // (goods + tax + shipping + gc_sold) - (discount + gc_used)
-            $order_total = ($order_goods + $order_goods_tax + $order_shipping + $order_gc_sold) - ($order_discount + $order_gc_used);
+            $order_total = ($order_goods + $order_recorded_tax + $order_shipping + $order_gc_sold) - ($order_discount + $order_gc_used);
 
             if ($this->detail_level == 'order' || $this->detail_level == 'matrix') {
                 $this->build_li_orders($oID, 'grand', $order_total);
