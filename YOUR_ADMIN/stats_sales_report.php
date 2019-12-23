@@ -43,10 +43,10 @@ $currencies = new currencies();
 // given that that version has changed the loading order of admin language files.
 //
 $time_display = (strtolower(DATE_FORMAT) == 'd/m/y') ? 'n-j-Y' : 'jS-M-y';
-define('TIME_DISPLAY_DAY', $time_display);
-define('TIME_DISPLAY_WEEK', $time_display);
-define('TIME_DISPLAY_MONTH', $time_display);
-define('TIME_DISPLAY_YEAR', $time_display);
+if (!defined('TIME_DISPLAY_DAY')) define('TIME_DISPLAY_DAY', $time_display);
+if (!defined('TIME_DISPLAY_WEEK')) define('TIME_DISPLAY_WEEK', $time_display);
+if (!defined('TIME_DISPLAY_MONTH')) define('TIME_DISPLAY_MONTH', $time_display);
+if (!defined('TIME_DISPLAY_YEAR')) define('TIME_DISPLAY_YEAR', $time_display);
   
 // we ramp up the execution time to make sure those
 // really big reports don't time out

@@ -351,8 +351,10 @@ Changes in 3.3.3, 2019-12-23 (lat9)
 [BUGFIX]   Correct 'goods' value when the store doesn't display prices with tax (the tax was incorrectly being removed from the price).
 [BUGFIX]   Correct suggested CSV-download filename (didn't include the .csv extension).
 [BUGFIX]   Move admin-menu name to a language-based sub-directory.
+[CHANGE]   Enable date-format overrides (without throwing PHP notices).
 
 Modified:
+/YOUR_ADMIN/stats_sales_report.php
 /YOUR_ADMIN/includes/classes/sales_report.php
 /YOUR_ADMIN/includes/extra_datafiles/sales_report_filenames.php
 /YOUR_ADMIN/includes/functions/extra_functions/stats_sales_report.php
