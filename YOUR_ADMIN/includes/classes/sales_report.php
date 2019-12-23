@@ -909,7 +909,7 @@ class sales_report
         $filename = CSV_FILENAME_PREFIX . date('Ymd', $this->sd_raw) . "-" . date('Ymd', $this->ed_raw);
         if (preg_match('/MSIE/', $_SERVER['HTTP_USER_AGENT'])) {
             header('Content-Type: application/octetstream');
-            header('Content-Disposition: attachment; filename=' . $filename);
+            header('Content-Disposition: attachment; filename=' . $filename . '.csv');
             header("Expires: Mon, 26 Jul 2001 05:00:00 GMT");
             header("Last-Modified: " . gmdate("D, d M Y H:i:s") . " GMT");
             header("Cache-Control: must_revalidate, post-check=0, pre-check=0");
@@ -917,7 +917,7 @@ class sales_report
             header("Cache-control: private");
         } else {
             header('Content-Type: application/x-octet-stream');
-            header('Content-Disposition: attachment; filename=' . $filename);
+            header('Content-Disposition: attachment; filename=' . $filename . '.csv');
             header("Expires: Mon, 26 Jul 2001 05:00:00 GMT");
             header("Last-Modified: " . gmdate("D, d M Y H:i:s") . " GMT");
             header("Pragma: no-cache");
