@@ -474,8 +474,33 @@ class sales_report
                 case 'ot_coupon':
                 case 'ot_group_pricing':
                 case 'ot_better_together':
+                case 'ot_big_chooser':
+                case 'ot_bigspender_discount':
+                case 'ot_bogo_discount':
+                case 'ot_case_discounts':
+                case 'ot_combination_discounts':
+                case 'ot_freegift_chooser':
+                case 'ot_freegift_spender':
+                case 'ot_frequency_discount':
+                case 'ot_giftwrap_checkout':
+                case 'ot_manufacturer_discount':
+                case 'ot_military_discount':
+                case 'ot_newsletter_discount':
+                case 'ot_quantity_discount':
+                case 'ot_table_discounts':
+                case 'ot_rewards':
                     $order_discount += $value;
                     $this->timeframe[$id]['total']['discount'] += $value;
+                    $this->build_li_orders($oID, 'discount', $value);
+                    $this->timeframe[$id]['total']['discount_qty']++;
+                    $this->build_li_orders($oID, 'discount_qty', 1);
+                    break;
+
+                case 'ot_roundup':
+                case 'ot_cod_fee':
+                case 'ot_loworderfee':
+                    $order_discount -= $value;
+                    $this->timeframe[$id]['total']['discount'] -= $value;
                     $this->build_li_orders($oID, 'discount', $value);
                     $this->timeframe[$id]['total']['discount_qty']++;
                     $this->build_li_orders($oID, 'discount_qty', 1);
