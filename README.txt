@@ -361,6 +361,16 @@ Modified:
 /YOUR_ADMIN/includes/languages/english/extra_definitions/sales_report_menu_name.php (added)
 
 =====================================
+Changes in 3.4.0, 2021-01-29 (lat9, swguy)
+=====================================
+[CHANGE]   Additional discount- and fee-related order-totals.
+[BUGFIX]   Correct 'payment-methods' and 'payment_methods_omit' filters.
+
+Modified:
+/YOUR_ADMIN/stats_sales_report.php
+/YOUR_ADMIN/includes/classes/sales_report.php
+
+=====================================
 Sponsored by Destination ImagiNation, Inc.
 www.destinationimagination.org
 

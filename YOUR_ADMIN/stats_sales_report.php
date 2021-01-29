@@ -1,6 +1,6 @@
 <?php
 /**
- * SALES REPORT 3.3.3
+ * SALES REPORT 3.4.0
  *
  * This is where everything starts and ends. This file builds the HTML display, calls the class file
  * to build the data, then displays that data for the user.
@@ -222,8 +222,8 @@ if ($date_target == 'status') {
     $date_status = false;
 }
 
-$payment_method = (isset($_GET['payment_method']) && in_array($_GET['payment_method'], $payment_key)) ? $_GET['payment_method'] : '0';
-$payment_method_omit = (isset($_GET['payment_method_omit']) && in_array($_GET['payment_method_omit'], $payment_key)) ? $_GET['payment_method_omit'] : '0';
+$payment_method = (isset($_GET['payment_method']) && array_key_exists($_GET['payment_method'], $payment_key)) ? $_GET['payment_method'] : '0';
+$payment_method_omit = (isset($_GET['payment_method_omit']) && array_key_exists($_GET['payment_method_omit'], $payment_key)) ? $_GET['payment_method_omit'] : '0';
 $current_status = (isset($_GET['current_status']) && array_key_exists((int)$_GET['current_status'], $status_key)) ? (int)$_GET['current_status'] : 0;
 $excluded_status = (isset($_GET['excluded_status']) && array_key_exists((int)$_GET['excluded_status'], $status_key)) ? (int)$_GET['excluded_status'] : 0;
 $manufacturer = (isset($_GET['manufacturer']) && in_array((int)$_GET['manufacturer'], $manufacturer_key)) ? (int)$_GET['manufacturer'] : 0;
