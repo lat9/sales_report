@@ -193,6 +193,8 @@ define('TABLE_FOOTER_TIMEFRAMES', ' Timeframes');
 // Order Line Items
 define('TABLE_HEADING_ORDERS_ID', 'Order ID');
 define('TABLE_HEADING_CUSTOMER', 'Customer');
+define('TABLE_HEADING_COUNTRY', 'Country');
+define('TABLE_HEADING_STATE', 'State');
 define('TABLE_HEADING_ORDER_TOTAL', 'Order Total');
 define('TABLE_HEADING_ORDER_TOTAL_VALIDATION', 'OT Valid');
 
@@ -236,6 +238,8 @@ define('CSV_HEADING_START_DATE', 'Start Date');
 define('CSV_HEADING_END_DATE', 'End Date');
 define('CSV_HEADING_LAST_NAME', 'Last Name');
 define('CSV_HEADING_FIRST_NAME', 'First Name');
+define('CSV_HEADING_COUNTRY', 'Country');
+define('CSV_HEADING_STATE', 'State');
 define('CSV_SEPARATOR', ',');
 define('CSV_NEWLINE', "\n");
 
