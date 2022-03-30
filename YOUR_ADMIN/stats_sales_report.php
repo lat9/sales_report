@@ -1,6 +1,6 @@
 <?php
 /**
- * SALES REPORT 3.4.0
+ * SALES REPORT 3.5.0
  *
  * This is where everything starts and ends. This file builds the HTML display, calls the class file
  * to build the data, then displays that data for the user.

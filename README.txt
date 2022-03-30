@@ -1,5 +1,5 @@
-SALES REPORT Version 3.3.3
-By Frank Koehl (PM: BlindSide), Conor Kerr Ceon, Carl Peach, Cindy Merkin (lat9)
+SALES REPORT Version 3.5.0
+By Frank Koehl (PM: BlindSide), Conor Kerr Ceon, Carl Peach, Cindy Merkin (lat9), Scott C. Wilson (swguy)
  
 author Czech translation :  Josef Zahradník
 web:                        www.magic-shop.cz   
@@ -369,6 +369,17 @@ Changes in 3.4.0, 2021-01-29 (lat9, swguy)
 Modified:
 /YOUR_ADMIN/stats_sales_report.php
 /YOUR_ADMIN/includes/classes/sales_report.php
+
+=====================================
+Changes in 3.5.0, 2022-03-30 (lat9, swguy)
+=====================================
+[CHANGE]   Add shipping country and state to CSV output; can be included in display with modifications.
+[BUGFIX]   Correct missing '>' to close a '<td>' tag.
+
+Modified:
+/YOUR_ADMIN/stats_sales_report.php
+/YOUR_ADMIN/includes/classes/sales_report.php
+/YOUR_ADMIN/includes/languages/stats_sales_report.php
 
 =====================================
 Sponsored by Destination ImagiNation, Inc.
