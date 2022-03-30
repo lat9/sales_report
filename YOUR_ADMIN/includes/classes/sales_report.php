@@ -616,7 +616,8 @@ class sales_report
                 // won't work for some customers' names, but will work for the majority.
                 //
                 $c_data = $GLOBALS['db']->Execute(
-                    "SELECT customers_id, customers_name
+                    "SELECT customers_id, customers_name, 
+                            delivery_country, delivery_state 
                        FROM " . TABLE_ORDERS . "
                       WHERE orders_id = $oID
                       LIMIT 1"
@@ -627,6 +628,8 @@ class sales_report
                 $firstname = array_shift($pieces);
                 $this->timeframe[$id]['orders'][$oID]['first_name'] = zen_db_output($firstname);
                 $this->timeframe[$id]['orders'][$oID]['last_name'] = zen_db_output(implode(' ', $pieces));
+                $this->timeframe[$id]['orders'][$oID]['country'] = $c_data->fields['delivery_country'];
+                $this->timeframe[$id]['orders'][$oID]['state'] = $c_data->fields['delivery_state'];
             }
 
             // add the passed $value to the passed $field in the ['orders'] array
@@ -1003,6 +1006,8 @@ class sales_report
                         TABLE_HEADING_ORDERS_ID,
                         CSV_HEADING_LAST_NAME,
                         CSV_HEADING_FIRST_NAME,
+                        CSV_HEADING_COUNTRY, 
+                        CSV_HEADING_STATE, 
                         TABLE_HEADING_NUM_PRODUCTS,
                         TABLE_HEADING_TOTAL_GOODS
                     );
@@ -1152,6 +1157,8 @@ class sales_report
                             $o_data['oID'],
                             $o_data['last_name'],
                             $o_data['first_name'],
+                            $o_data['country'],
+                            $o_data['state'],
                             $o_data['num_products'],
                             $o_data['goods']
                         );
