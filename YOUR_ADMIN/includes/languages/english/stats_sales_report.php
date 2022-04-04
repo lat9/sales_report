@@ -1,6 +1,6 @@
 <?php
 /**
- * SALES REPORT 3.5.0
+ * SALES REPORT 3.5.1
  *
  * The language file contains all the text that appears on the report. The first set of
  * configuration defines actually impact the report's output and behavior.
@@ -203,7 +203,7 @@ define('TABLE_HEADING_PRODUCT_ID', 'Prod ID');
 define('TABLE_HEADING_PRODUCT_NAME', 'Product Name');
 define('TABLE_HEADING_PRODUCT_ATTRIBUTES', 'Attributes');
 define('TABLE_HEADING_MANUFACTURER', 'Manufacturer');
-define('TABLE_HEADING_MODEL', 'Model No.');
+define('TABLE_HEADING_MODEL_NO', 'Model No.');
 define('TABLE_HEADING_BASE_PRICE', 'Base Price');
 define('TABLE_HEADING_FINAL_PRICE', 'Final Price');
 define('TABLE_HEADING_QUANTITY', 'Qty.');

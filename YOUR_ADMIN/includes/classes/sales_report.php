@@ -984,7 +984,7 @@ class sales_report
                     if (DISPLAY_MANUFACTURER) {
                         $line[] = TABLE_HEADING_MANUFACTURER;
                     }
-                    $line[] = TABLE_HEADING_MODEL;
+                    $line[] = TABLE_HEADING_MODEL_NO;
                     $line[] = TABLE_HEADING_BASE_PRICE;
                     $line[] = TABLE_HEADING_FINAL_PRICE;
                     $line[] = TABLE_HEADING_QUANTITY;

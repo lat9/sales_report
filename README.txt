@@ -1,4 +1,4 @@
-SALES REPORT Version 3.5.0
+SALES REPORT Version 3.5.1
 By Frank Koehl (PM: BlindSide), Conor Kerr Ceon, Carl Peach, Cindy Merkin (lat9), Scott C. Wilson (swguy)
  
 author Czech translation :  Josef Zahradník
@@ -378,6 +378,15 @@ Changes in 3.5.0, 2022-03-30 (lat9, swguy)
 
 Modified:
 /YOUR_ADMIN/stats_sales_report.php
+/YOUR_ADMIN/includes/classes/sales_report.php
+/YOUR_ADMIN/includes/languages/stats_sales_report.php
+
+=====================================
+Changes in 3.5.1, 2022-04-03 (lat9)
+=====================================
+[BUGFIX]   Correct duplicate constant warning.
+
+Modified:
 /YOUR_ADMIN/includes/classes/sales_report.php
 /YOUR_ADMIN/includes/languages/stats_sales_report.php
 
