@@ -650,7 +650,7 @@ class sales_report
     function build_li_products($product) 
     {
         $id = $this->timeframe_id;
-        $pID = $product['id'];
+        $pID = $product['uprid'];
 
         // initialize the array for this products_id if it doesn't exist yet
         if (!isset($this->timeframe[$id]['products'][$pID]) ) {
