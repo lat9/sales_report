@@ -382,9 +382,10 @@ Modified:
 /YOUR_ADMIN/includes/languages/stats_sales_report.php
 
 =====================================
-Changes in 3.5.1, 2022-04-03 (lat9)
+Changes in 3.5.1, 2022-07-17 (lat9, dennisns73)
 =====================================
 [BUGFIX]   Correct duplicate constant warning.
+[BUGFIX]   Correct attributed-products were being aggregated into a single line item.
 
 Modified:
 /YOUR_ADMIN/includes/classes/sales_report.php
