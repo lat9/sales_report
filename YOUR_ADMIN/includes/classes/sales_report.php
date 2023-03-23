@@ -355,7 +355,7 @@ class sales_report
             $quantity = $products->fields['products_quantity'];
             $tax = $products->fields['products_tax'];
             $onetime_charges = $products->fields['onetime_charges'];
-            $model = zen_db_output($products->fields['products_model']);
+            $model = zen_output_string_protected($products->fields['products_model']);
 
             // do the math
 
@@ -626,8 +626,8 @@ class sales_report
                 
                 $pieces = explode(' ', $c_data->fields['customers_name']);
                 $firstname = array_shift($pieces);
-                $this->timeframe[$id]['orders'][$oID]['first_name'] = zen_db_output($firstname);
-                $this->timeframe[$id]['orders'][$oID]['last_name'] = zen_db_output(implode(' ', $pieces));
+                $this->timeframe[$id]['orders'][$oID]['first_name'] = zen_output_string_protected($firstname);
+                $this->timeframe[$id]['orders'][$oID]['last_name'] = zen_output_string_protected(implode(' ', $pieces));
                 $this->timeframe[$id]['orders'][$oID]['country'] = $c_data->fields['delivery_country'];
                 $this->timeframe[$id]['orders'][$oID]['state'] = $c_data->fields['delivery_state'];
             }
