@@ -125,6 +125,7 @@ define('SEARCH_DATE_YESTERDAY', ' Yesterday (%s)');
 define('SEARCH_DATE_LAST_MONTH', ' Last Month (%s)');
 define('SEARCH_DATE_THIS_MONTH', ' This Month (%s)');
 define('SEARCH_DATE_LAST_YEAR', ' Last Year (%s)');
+define('SEARCH_DATE_LAST_12_MONTHS', ' Last 12 Months');
 define('SEARCH_DATE_YTD', ' YTD (%s)');
 define('SEARCH_START_DATE', 'Start Date');
 define('SEARCH_END_DATE', 'End Date (inclusive)');

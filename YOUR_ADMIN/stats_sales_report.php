@@ -202,6 +202,10 @@ switch ($date_preset) {
         $start_date = date(DATE_FORMAT, strtotime('last year January 1st', $today_timestamp));
         $end_date = date(DATE_FORMAT, strtotime('last year December 31st', $today_timestamp));
         break;
+    case 'last_12_months':
+        $start_date = date(DATE_FORMAT, strtotime('1 year ago', $today_timestamp));
+        $end_date = date(DATE_FORMAT, $today_timestamp);
+        break;
     default:
         $_GET['date_preset'] = 'YTD';
         $start_date = date(DATE_FORMAT, strtotime('first day of January this year', $today_timestamp));
@@ -568,6 +572,9 @@ if ($output_format == 'print') {
                             </tr>
                             <tr>
                                 <td class="smallText" id="td_last_year"><?php echo zen_draw_radio_field('date_preset', 'last_year', ($date_preset == 'last_year')) . sprintf(SEARCH_DATE_LAST_YEAR, date("Y") - 1); ?></td>
+                            </tr>
+                            <tr>
+                                <td class="smallText" id="td_last_12_months"><?php echo zen_draw_radio_field('date_preset', 'last_12_months', ($date_preset == 'last_12_months')) . SEARCH_DATE_LAST_12_MONTHS; ?></td>
                             </tr>
                             <tr>
                                 <td class="smallText" id="td_YTD"><?php echo zen_draw_radio_field('date_preset', 'YTD', ($date_preset == 'YTD' || !empty($date_custom))) . sprintf(SEARCH_DATE_YTD, "Jan 1 to " . date("M. j Y", mktime(0, 0, 0, date("m"), date("d"), date("Y")))); ?></td>
