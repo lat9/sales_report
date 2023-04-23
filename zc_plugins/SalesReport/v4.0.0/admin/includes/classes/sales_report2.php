@@ -1,6 +1,6 @@
 <?php
 /**
- * SALES REPORT 3.5.0
+ * Sales Report II, v4.0.0
  *
  * The class file acts as the engine in the sales report.  All the data displayed is gathered and
  * calculated in here. The logic tree provides a brief summary of the main functions at work every
@@ -16,9 +16,8 @@
  * @license    http://www.gnu.org/copyleft/gpl.html   GNU Public License V2.0
  *  
  * update:  Josef Zahradník
- * web:     www.magic-shop.cz   
+ * web:     www.magic-shop.cz
  */
-
 
 /*
 ** Logic Tree of class sales_report functions
@@ -32,15 +31,15 @@
                         uses data from build_li_orders and build_li_products
 */
 
-  //_TODO modularize time format code, allowing for other formats
+//_TODO modularize time format code, allowing for other formats
 
-class sales_report 
+class sales_report2 extends base
 {
     var $timeframe_group, $sd, $ed, $sd_raw, $ed_raw, $date_target, $date_status;
     var $payment_method, $payment_method_omit, $current_status, $manufacturer, $detail_level, $output_format;
     var $timeframe, $timeframe_id, $current_date, $product_filter;
 
-    function __construct($parms) 
+    function __construct($parms)
     {
         global $db;
 
@@ -57,16 +56,16 @@ class sales_report
         $this->detail_level = $parms['detail_level'];
         $this->output_format = $parms['output_format'];
         $this->order_total_validation = $parms['order_total_validation'];
-        
+
         $this->li_sort_a = $parms['li_sort_a'];
         $this->li_sort_order_a = $parms['li_sort_order_a'];
         $this->li_sort_b = $parms['li_sort_b'];
         $this->li_sort_order_b = $parms['li_sort_order_b'];
-        
+
         $this->doCustInc = $parms['doCustInc'];
         $this->cust_includes = $parms['cust_includes'];
         $this->customer_filter = '';
-        
+
         $this->doProdInc = $parms['doProdInc'];
         $this->prod_includes = $parms['prod_includes'];
         $this->product_filter = '';
@@ -115,7 +114,7 @@ class sales_report
         $this->current_date = $this->sd_raw;
 
         $this->timeframe_id = 0;
-        $this->timeframe = array();
+        $this->timeframe = [];
         $this->grand_total = $this->initializeTotals();
 
         while ($this->current_date <= $this->ed_raw) {
@@ -130,7 +129,6 @@ class sales_report
             $this->build_matrix();
         }
     }  // END class constructor
-
 
     //////////////////////////////////////////////////////////
     // Each time this function runs, another timeframe array element is created.
@@ -169,7 +167,7 @@ class sales_report
         }
 
         // define the timeframe array
-        $this->timeframe[$id] = array();
+        $this->timeframe[$id] = [];
 
         // store the start date and end date for this timeframe
         // timestamp format allows us to use whatever display format we want at output
@@ -189,7 +187,7 @@ class sales_report
         if ($this->doProdInc && !empty($this->prod_includes)) {
             $this->product_filter .= " AND op.products_id IN ({$this->prod_includes})" . PHP_EOL;
         }
-        
+
         if ($this->doCustInc && !empty($this->cust_includes)) {
             $this->customer_filter .= " AND o.customers_id IN ({$this->cust_includes})" . PHP_EOL;
         }
@@ -200,11 +198,11 @@ class sales_report
         if ($this->manufacturer != 0 || ($this->doProdInc && !empty($this->prod_includes))) {
             $sql .= " LEFT JOIN " . TABLE_ORDERS_PRODUCTS . " op ON o.orders_id = op.orders_id" . PHP_EOL;
         }
-        
+
         if ($this->manufacturer != 0) {
             $sql .= " LEFT JOIN " . TABLE_PRODUCTS . " p ON p.products_id = op.products_id" . PHP_EOL;
         }
-        
+
         if ($this->date_target == 'status') {
             $sql .= "LEFT JOIN " . TABLE_ORDERS_STATUS_HISTORY . " osh ON o.orders_id = osh.orders_id" . PHP_EOL;
             $sql .= " WHERE osh.date_added >= '" . date("Y-m-d H:i:s", $sd) . "' AND osh.date_added < '" . date("Y-m-d H:i:s", $ed) . "'" . PHP_EOL;
@@ -212,11 +210,11 @@ class sales_report
         } else {
             $sql .= " WHERE o.date_purchased >= '" . date("Y-m-d H:i:s", $sd) . "' AND o.date_purchased < '" . date("Y-m-d H:i:s", $ed) . "'" . PHP_EOL;
         }
-        
+
         if ($this->manufacturer != 0) {
             $sql .= "AND p.manufacturers_id = {$this->manufacturer}" . PHP_EOL;
         }
-        
+
         if ($this->payment_method) {
             $sql .= "AND o.payment_module_code LIKE '" . $this->payment_method . "'" . PHP_EOL;
         }
@@ -237,25 +235,22 @@ class sales_report
         }
         $sql .= " ORDER BY o.orders_id {$this->timeframe_sort}";
 
-        // DEBUG
-        //$this->sql[$id] = $sql;
-        
         // loop through query and build the arrays for this timeframe
         $sales = $db->Execute($sql);
         $grand_total = 0;
-        
+
         // make sure we actually have orders to process
         if ($sales->RecordCount() > 0) {
             // initialize the various timeframe arrays
             // by creating them inside the RecordCount() check, we can easily
             // check for an empty timeframe with is_array() in the report
             $totals = $this->initializeTotals();
-            $totals['diff_products'] = array();
+            $totals['diff_products'] = [];
             $this->timeframe[$id]['total'] = $totals;
             if ($this->detail_level == 'order') {
-                $this->timeframe[$id]['orders'] = array();
+                $this->timeframe[$id]['orders'] = [];
             } elseif ($this->detail_level == 'product') {
-                $this->timeframe[$id]['products'] = array();
+                $this->timeframe[$id]['products'] = [];
             }
             while (!$sales->EOF) {
                 $oID = $sales->fields['orders_id'];
@@ -282,10 +277,10 @@ class sales_report
         // increment the id number
         $this->timeframe_id++;
     }  // END function build_timeframe()
-    
+
     protected function initializeTotals()
     {
-        return array(
+        return [
             'goods' => 0,
             'num_orders' => 0,
             'num_products' => 0,
@@ -298,8 +293,8 @@ class sales_report
             'gc_sold_qty' => 0,
             'gc_used' => 0,
             'gc_used_qty' => 0,
-            'grand' => 0
-        );
+            'grand' => 0,
+        ];
     }
 
     //////////////////////////////////////////////////////////
@@ -308,9 +303,10 @@ class sales_report
     // build_timeframe().  It calls build_li_orders() and
     // build_li_products() as needed.
     //
-    function build_li_totals($oID) 
+    function build_li_totals($oID)
     {
         global $db, $currencies;
+
         $id = $this->timeframe_id;
         $oID = (int)$oID;
 
@@ -375,24 +371,24 @@ class sales_report
                 // Round up the final product price in same manner as order class - otherwise the amounts
                 // from this report will most likely not agree with the actual final order values!
                 $product_price = zen_round(($final_price * $quantity) + $onetime_charges, $currencies->currencies[$order_info->fields['currency']]['decimal_places']);
-              
+
                 // Get the amount of tax for this product
                 $product_tax = zen_calculate_tax($onetime_charges, $tax);
                 $product_tax += zen_calculate_tax($final_price * $quantity, $tax);
-              
+
                 $order_goods_tax += $product_tax;
-              
+
                 // Calculate the subtotal inc tax in the same way that the order class does
                 $product_price_inc_tax = (zen_add_tax($final_price, $tax) * $quantity) + zen_add_tax($onetime_charges, $tax);
                 $product_price_exc_tax = (DISPLAY_PRICE_WITH_TAX_ADMIN == 'true') ? ($product_price_inc_tax - $product_tax) : $product_price_inc_tax;
                 $order_goods += $product_price_exc_tax;
-              
+
                 $this->timeframe[$id]['total']['goods'] += $product_price_exc_tax;
                 $this->build_li_orders($oID, 'goods', $product_price_exc_tax);
-          
+ 
                 $this->timeframe[$id]['total']['goods_tax'] += $product_tax;
                 $this->build_li_orders($oID, 'goods_tax', $product_tax );
-          
+
                 $this->timeframe[$id]['total']['num_products'] += $quantity;
                 $this->build_li_orders($oID, 'num_products', $quantity);
             }
@@ -413,7 +409,7 @@ class sales_report
                 $product_tax = zen_calculate_tax($onetime_charges, $tax) + zen_calculate_tax($final_price * $quantity, $tax);
                 // get product's attributes to display under product name
                 $products_name_with_attributes = $products->fields['products_name'] . '<br>';
-                $products_attributes = array();
+                $products_attributes = [];
                 $products_attributes_display = '';
                 $attributes_select = $db->Execute(
                     "SELECT products_options_id, products_options_values_id, products_options, products_options_values, options_values_price, price_prefix, product_attribute_is_free
@@ -430,7 +426,7 @@ class sales_report
                 // unique id for product with attributes
                 $uprid = zen_get_uprid($pID, $products_attributes);
 
-                $this_product = array(
+                $this_product = [
                     'id' => $pID,
                     'uprid' => $uprid,
                     'name' => $products_name_with_attributes,
@@ -442,7 +438,7 @@ class sales_report
                     'tax' => $product_tax,
                     'onetime_charges' => $onetime_charges,
                     'total' => ($final_price * $quantity) + $onetime_charges
-                );
+                ];
                 $this->build_li_products($this_product);
             }
             $products->MoveNext();
@@ -461,7 +457,7 @@ class sales_report
                 case 'ot_total':
                 case 'ot_subtotal':
                     break;
-                    
+
                 case 'ot_gv':
                     $order_gc_used += $value;
                     $this->timeframe[$id]['total']['gc_used'] += $value;
@@ -470,7 +466,7 @@ class sales_report
                     $this->timeframe[$id]['total']['gc_used_qty']++;
                     $this->build_li_orders($oID, 'gc_used_qty', 1);
                     break;
-                    
+
                 case 'ot_coupon':
                 case 'ot_group_pricing':
                 case 'ot_better_together':
@@ -505,7 +501,7 @@ class sales_report
                     $this->timeframe[$id]['total']['discount_qty']++;
                     $this->build_li_orders($oID, 'discount_qty', 1);
                     break;
-                    
+
                 case 'ot_cashback':
                     $order_discount += $value;
                     $this->timeframe[$id]['total']['discount'] += $value;
@@ -514,19 +510,19 @@ class sales_report
                     $this->timeframe[$id]['total']['discount_qty']++;
                     $this->build_li_orders($oID, 'discount_qty', 1);
                     break;
-                    
+
                 case 'ot_tax':
                     $order_recorded_tax += $value;
                     $this->timeframe[$id]['total']['order_recorded_tax'] += $value;
                     $this->build_li_orders($oID, 'order_recorded_tax', $value);
                     break;
-                    
+
                 case 'ot_shipping':
                     $order_shipping += $value;
                     $this->timeframe[$id]['total']['shipping'] += $value;
                     $this->build_li_orders($oID, 'shipping', $value);
                     break;
-                    
+
                 default:
                     if ($value < 0) {
                         // this allows for a custom discount, a la Super Orders
@@ -562,7 +558,7 @@ class sales_report
                 if ($this->order_total_validation) {
                     // Get the recorded order total
                     $recorded_order_total = $order_info->fields['order_total'];
-            
+
                     if (zen_round($order_total, 2) != $recorded_order_total) {
                         $order_total_validation = "DON'T MATCH!<br />$order_total : $recorded_order_total";
                     } else {
@@ -575,27 +571,26 @@ class sales_report
         return $order_total;
     }  // END function build_li_totals($oID)
 
-
     //////////////////////////////////////////////////////////
     // build_li_orders() is called each time a value is added
     // to the 'total' array.  If the customer wishes to
     // display order line items, the value is added to the
     // corresponding 'orders' array.
     //
-    function build_li_orders($oID, $field, $value) 
+    function build_li_orders($oID, $field, $value)
     {
         $id = $this->timeframe_id;
         // first check to see if we even need to do anything
         if ($this->detail_level == 'order' || $this->detail_level == 'matrix') {
             // create the array if it doesn't already exist
             if (!isset($this->timeframe[$id]['orders'][$oID]) ) {
-                $this->timeframe[$id]['orders'][$oID] = array(
+                $this->timeframe[$id]['orders'][$oID] = [
                     'oID' => $oID,
                     // the $oID key will be reset when we sort the array at
                     // display, so we store it as a part of the array as well
                     'goods' => 0,
                     'num_products' => 0,
-                    'diff_products' => array(),
+                    'diff_products' => [],
                     'shipping' => 0,
                     'goods_tax' => 0,
                     'order_recorded_tax' => 0,
@@ -608,7 +603,7 @@ class sales_report
                     'grand' => 0,
                     'order_total_validation' => '',
                     'has_no_value' => 0
-                );
+                ];
 
                 // -----
                 // Get the customer's name from the **order**, recognizing that the order has
@@ -623,7 +618,7 @@ class sales_report
                       LIMIT 1"
                 );
                 $this->timeframe[$id]['orders'][$oID]['customers_id'] = $c_data->fields['customers_id'];
-                
+
                 $pieces = explode(' ', $c_data->fields['customers_name']);
                 $firstname = array_shift($pieces);
                 $this->timeframe[$id]['orders'][$oID]['first_name'] = zen_db_output($firstname);
@@ -647,14 +642,14 @@ class sales_report
     // once and build/increment the product array per product
     // (i.e. products are already line items, orders are not).
     //
-    function build_li_products($product) 
+    function build_li_products($product)
     {
         $id = $this->timeframe_id;
         $pID = $product['uprid'];
 
         // initialize the array for this products_id if it doesn't exist yet
         if (!isset($this->timeframe[$id]['products'][$pID]) ) {
-            $this->timeframe[$id]['products'][$pID] = array(
+            $this->timeframe[$id]['products'][$pID] = [
                 'pID' => $product['id'],
                 'name' => $product['name'],
                 'attributes' => $product['attributes'],
@@ -667,7 +662,7 @@ class sales_report
                 'total' => $product['total'], // 'total' = ( ($final_price * $quantity) + $onetime_charges ) )
                 'tax' => $product['tax'],
                 'grand' => $product['total'] + $product['tax']
-            );
+            ];
 
             // get the manufacturers_id from `products` table
             if (DISPLAY_MANUFACTURER) {
@@ -697,7 +692,7 @@ class sales_report
     // report a snap, since we can just tack it on after
     // building all the data arrays!
     //
-    function build_matrix() 
+    function build_matrix()
     {
         for ($i = 0, $n = count($this->timeframe); $i < $n; $i++) {
             // skip the current timeframe if there isn't any data
@@ -705,12 +700,12 @@ class sales_report
                 continue;
             }
 
-            $this->timeframe[$i]['matrix'] = array(
-                'diff_customers' => array(),
-                'payment_methods' => array(),
-                'shipping_methods' => array(),
-                'credit_cards' => array(),
-                'currencies' => array(),
+            $this->timeframe[$i]['matrix'] = [
+                'diff_customers' => [],
+                'payment_methods' => [],
+                'shipping_methods' => [],
+                'credit_cards' => [],
+                'currencies' => [],
                 'biggest_per_revenue' => 0,
                 'biggest_per_products' => 0,
                 'smallest_per_revenue' => 0,
@@ -719,10 +714,10 @@ class sales_report
                 'avg_products_per_order' => 0,
                 'avg_diff_products_per_order' => 0,
                 'avg_orders_per_customer' => 0,
-                'product_spread' => array(),
-                'product_revenue_ratio' => array(),
-                'product_quantity_ratio' => array() 
-            );
+                'product_spread' => [],
+                'product_revenue_ratio' => [],
+                'product_quantity_ratio' => [],
+            ];
 
             // gather statistics from orders array
             foreach ($this->timeframe[$i]['orders'] as $oID => $o_data) {
@@ -758,11 +753,11 @@ class sales_report
                     unset($c_data);
                 }
                 if ($new_customer) {
-                    $this->timeframe[$i]['matrix']['diff_customers'][$cID] = array(
+                    $this->timeframe[$i]['matrix']['diff_customers'][$cID] = [
                         'first_name' => $o_data['first_name'],
                         'last_name' => $o_data['last_name'],
                         'num_orders' => 1
-                    );
+                    ];
                 }
 
                 // Payment methods used, with count
@@ -778,11 +773,11 @@ class sales_report
                     unset($value);
                 }
                 if ($new_payment_method) {
-                    $this->timeframe[$i]['matrix']['payment_methods'][] = array(
+                    $this->timeframe[$i]['matrix']['payment_methods'][] = [
                         'method' => $payment_method,
                         'module_code' => $payment_module_code,
                         'count' => 1
-                    );
+                    ];
                 }
 
                 // Shipping methods used, with count
@@ -798,11 +793,11 @@ class sales_report
                     unset($value);
                 }
                 if ($new_shipping_method) {
-                    $this->timeframe[$i]['matrix']['shipping_methods'][] = array(
+                    $this->timeframe[$i]['matrix']['shipping_methods'][] = [
                         'method' => $shipping_method,
                         'module_code' => $shipping_module_code,
                         'count' => 1
-                    );
+                    ];
                 }
 
                 // Credit cards used, with count
@@ -818,10 +813,10 @@ class sales_report
                     unset($value);
                 }
                 if ($new_credit_card && $cc_type != '') {
-                    $this->timeframe[$i]['matrix']['credit_cards'][] = array(
+                    $this->timeframe[$i]['matrix']['credit_cards'][] = [
                         'type' => $cc_type,
                          'count' => 1
-                     );
+                    ];
                 }
 
                 // Currencies used, with count
@@ -838,10 +833,10 @@ class sales_report
                     unset($value);
                 }
                 if ($new_currency) {
-                    $this->timeframe[$i]['matrix']['currencies'][] = array(
+                    $this->timeframe[$i]['matrix']['currencies'][] = [
                         'type' => $currency,
                         'count' => 1
-                    );
+                    ];
                 }
 
                 // Biggest order by revenue (display order # and customer name)
@@ -883,7 +878,6 @@ class sales_report
                         $this->timeframe[$i]['matrix']['smallest_per_product'] = $oID;
                     }
                 }
-
             }  // END foreach($this->timeframe[$i]['orders'] as $oID => $o_data)
 
             // Avg order value
@@ -900,7 +894,6 @@ class sales_report
 
             // gather statistics from products array
             foreach ($this->timeframe[$i]['products'] as $pID => $p_data) {
-
                 // Per product "spread" (number of orders that a product is a part of)
                 foreach ($this->timeframe[$i]['orders'] as $oID => $o_data) {
                     foreach ($o_data['diff_products'] as $ordered_pID) {
@@ -920,9 +913,7 @@ class sales_report
                 // percentage of all quantity by product
                 $this->timeframe[$i]['matrix']['product_quantity_ratio'][$pID] = number_format($p_data['quantity'] / $this->timeframe[$i]['total']['num_products'] * 100, 3);
             }  // END foreach($this->timeframe[$i]['products'] as $pID => $p_data)
-
         }  // END for ($i = 0, $i < sizeof($this->timeframe); $i++)
-
     }  // END function build_matrix()
 
     //////////////////////////////////////////////////////////
@@ -932,7 +923,7 @@ class sales_report
     // but we separate it out for the sake of code clarity and
     // to allow for some differences between the 2 outputs.
     //
-    function output_csv($csv_header) 
+    function output_csv($csv_header)
     {
         $filename = CSV_FILENAME_PREFIX . date('Ymd', $this->sd_raw) . "-" . date('Ymd', $this->ed_raw);
         if (preg_match('/MSIE/', $_SERVER['HTTP_USER_AGENT'])) {
@@ -956,13 +947,13 @@ class sales_report
         if ($csv_header) {
             switch ($this->detail_level) {
                 case 'timeframe':
-                    $line = array(
+                    $line = [
                         CSV_HEADING_START_DATE,
                         CSV_HEADING_END_DATE,
                         TABLE_HEADING_NUM_ORDERS,
                         TABLE_HEADING_NUM_PRODUCTS,
                         TABLE_HEADING_TOTAL_GOODS
-                    );
+                    ];
                     if ($display_tax) {
                         $line[] = TABLE_HEADING_TAX;
                         $line[] = TABLE_HEADING_ORDER_RECORDED_TAX;
@@ -974,13 +965,13 @@ class sales_report
                     $line[] = TABLE_HEADING_TOTAL;
                     break;
                 case 'product':
-                    $line = array(
+                    $line = [
                         CSV_HEADING_START_DATE,
                         CSV_HEADING_END_DATE,
                         TABLE_HEADING_PRODUCT_ID,
                         TABLE_HEADING_PRODUCT_NAME,
                         TABLE_HEADING_PRODUCT_ATTRIBUTES
-                    );
+                    ];
                     if (DISPLAY_MANUFACTURER) {
                         $line[] = TABLE_HEADING_MANUFACTURER;
                     }
@@ -1000,7 +991,7 @@ class sales_report
                     $line[] = TABLE_HEADING_PRODUCT_TOTAL;
                     break;
                 default:
-                    $line = array(
+                    $line = [
                         CSV_HEADING_START_DATE,
                         CSV_HEADING_END_DATE,
                         TABLE_HEADING_ORDERS_ID,
@@ -1010,7 +1001,7 @@ class sales_report
                         CSV_HEADING_STATE, 
                         TABLE_HEADING_NUM_PRODUCTS,
                         TABLE_HEADING_TOTAL_GOODS
-                    );
+                    ];
                     if ($display_tax) {
                         $line[] = TABLE_HEADING_TAX;
                         $line[] = TABLE_HEADING_ORDER_RECORDED_TAX;
@@ -1048,13 +1039,13 @@ class sales_report
             }
             switch ($this->detail_level) {
                 case 'timeframe':
-                    $line = array(
+                    $line = [
                         $start_date,
                         $end_date,
                         $timeframe['total']['num_orders'],
                         $timeframe['total']['num_products'],
                         $timeframe['total']['goods']
-                    );
+                    ];
                     if ($display_tax) {
                         $line[] = $timeframe['total']['goods_tax'];
                         $line[] = $timeframe['total']['order_recorded_tax'];
@@ -1078,7 +1069,8 @@ class sales_report
                     }
                     
                     // sort the products according to requested sort options
-                    $dataset1 = $dataset2 = array();
+                    $dataset1 = [];
+                    $dataset2 = [];
                     foreach ($timeframe['products'] as $pID => $p_data) {
                         $dataset1[$pID] = $p_data[$this->li_sort_a];
                         if (!$same_sorts) {
@@ -1095,13 +1087,13 @@ class sales_report
                     }
 
                     foreach ($timeframe['products'] as $key => $p_data) {
-                        $line = array(
+                        $line = [
                             $start_date,
                             $end_date,
                             $p_data['pID'],
-                            str_replace(array('<small>', '</small>', '<br>'), '', $p_data['name']),
-                            str_replace(array('<small>', '</small>', '<br>'), '', $p_data['attributes']),
-                        );
+                            str_replace(['<small>', '</small>', '<br>'], '', $p_data['name']),
+                            str_replace(['<small>', '</small>', '<br>'], '', $p_data['attributes']),
+                        ];
                         if (DISPLAY_MANUFACTURER) {
                             $line[] = $p_data['manufacturer'];
                         }
@@ -1129,7 +1121,8 @@ class sales_report
                         break;
                     }
                     
-                    $dataset1 = $dataset2 = array();
+                    $dataset1 = [];
+                    $dataset2 = [];
                     foreach ($timeframe['orders'] as $oID => $o_data) {
                         $dataset1[$oID] = $o_data[$this->li_sort_a];
                         if (!$same_sorts) {
@@ -1151,7 +1144,7 @@ class sales_report
                             continue;
                         }
 
-                        $line = array(
+                        $line = [
                             $start_date,
                             $end_date,
                             $o_data['oID'],
@@ -1161,7 +1154,7 @@ class sales_report
                             $o_data['state'],
                             $o_data['num_products'],
                             $o_data['goods']
-                        );
+                        ];
                         if ($display_tax) {
                             $line[] = $o_data['goods_tax'];
                             $line[] = $o_data['order_recorded_tax'];
@@ -1180,7 +1173,7 @@ class sales_report
         session_write_close();
         exit();
     }  // END function output_csv()
-    
+
     protected function outputCsvLine($line)
     {
         echo implode(CSV_SEPARATOR, $line) . CSV_NEWLINE;
