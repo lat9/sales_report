@@ -18,6 +18,7 @@
 // $Id: sales_report_filenames.php 93 2006-07-24 13:32:02Z BlindSide $
 */
 // Last updated: Sales Report II, v4.0.0
-return [
-    'BOX_REPORTS_SALES_REPORT2', 'Sales Report II',
+$define = [
+    'BOX_REPORTS_SALES_REPORT2' => 'Sales Report II',
 ];
+return $define;
