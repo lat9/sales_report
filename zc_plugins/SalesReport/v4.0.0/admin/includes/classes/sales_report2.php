@@ -15,7 +15,7 @@
  * @copyright  Portions Copyright 2003 osCommerce
  * @license    http://www.gnu.org/copyleft/gpl.html   GNU Public License V2.0
  *  
- * update:  Josef Zahradník
+ * update:  Josef ZahradnÃ­k
  * web:     www.magic-shop.cz   
  */
 
