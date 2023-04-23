@@ -1,6 +1,6 @@
 <?php
 /**
- * SALES REPORT 3.5.0
+ * Sales Report II 4.0.0
  *
  * This is where everything starts and ends. This file builds the HTML display, calls the class file
  * to build the data, then displays that data for the user.
@@ -42,144 +42,144 @@ $currencies = new currencies();
 // Moved here from the report's language file for v3.2.1 to provide zc156 interoperation,
 // given that that version has changed the loading order of admin language files.
 //
-$time_display = (strtolower(DATE_FORMAT) == 'd/m/y') ? 'n-j-Y' : 'jS-M-y';
-if (!defined('TIME_DISPLAY_DAY')) define('TIME_DISPLAY_DAY', $time_display);
-if (!defined('TIME_DISPLAY_WEEK')) define('TIME_DISPLAY_WEEK', $time_display);
-if (!defined('TIME_DISPLAY_MONTH')) define('TIME_DISPLAY_MONTH', $time_display);
-if (!defined('TIME_DISPLAY_YEAR')) define('TIME_DISPLAY_YEAR', $time_display);
+$time_display = (strtolower(DATE_FORMAT) === 'd/m/y') ? 'n-j-Y' : 'jS-M-y';
+zen_define_default('TIME_DISPLAY_DAY', $time_display);
+zen_define_default('TIME_DISPLAY_WEEK', $time_display);
+zen_define_default('TIME_DISPLAY_MONTH', $time_display);
+zen_define_default('TIME_DISPLAY_YEAR', $time_display);
   
 // we ramp up the execution time to make sure those
 // really big reports don't time out
-ini_set('max_execution_time', '300');
+ini_set('max_execution_time', 300);
 
 // possible scenarios: open clean             ($output_format = false)
 //                     display report         ($output_format = 'display')
 //                     print report           ($output_format = 'print')
 //                     csv report             ($output_format = 'csv')
 //                     criteria but no search ($output_format = 'none')
-$output_format = (isset($_GET['output_format'])) ? $_GET['output_format'] : false;
+$output_format = $_GET['output_format'] ?? false;
 
-$status_array = array();
-$status_key = array();
+$status_array = [];
+$status_key = [];
 $orders_status = $db->Execute(
     "SELECT orders_status_id AS `id`, orders_status_name AS `text`
        FROM " . TABLE_ORDERS_STATUS . "
       WHERE language_id = " . (int)$_SESSION['languages_id'] . "
    ORDER BY orders_status_id ASC"
 );
-while (!$orders_status->EOF) {
-    $status_array[] = array(
-        'id' => $orders_status->fields['id'],
-        'text' => $orders_status->fields['text'] . ' [' . $orders_status->fields['id'] . ']'
-    );
-    $status_key[$orders_status->fields['id']] = $orders_status->fields['text'];
-    $orders_status->MoveNext();
+foreach ($orders_status as $next_status) {
+    $status_array[] = [
+        'id' => $next_status['id'],
+        'text' => $next_status['text'] . ' [' . $next_status['id'] . ']'
+    ];
+    $status_key[$next_status['id']] = $next_status['text'];
 }
+unset($orders_status, $next_status);
 
-$payment_key = array();
-$payments_array[] = array(
+$payment_key = [];
+$payments_array[] = [
     'id' => '0',
     'text' => TEXT_EMPTY_SELECT
-);
+];
 $payments = $db->Execute(
     "SELECT DISTINCT payment_method, payment_module_code 
        FROM " . TABLE_ORDERS
 );
-while (!$payments->EOF) {
-    $payments_array[] = array(
-        'id' => $payments->fields['payment_module_code'],
-        'text' => $payments->fields['payment_method'] . ' [' . $payments->fields['payment_module_code'] . ']'
-    );
-    $payment_key[$payments->fields['payment_module_code']] = $payments->fields['payment_method'];
-    $payments->MoveNext();
+foreach ($payments as $next_payment) {
+    $payments_array[] = [
+        'id' => $next_payment['payment_module_code'],
+        'text' => $next_payment['payment_method'] . ' [' . $next_payment['payment_module_code'] . ']'
+    ];
+    $payment_key[$next_payment['payment_module_code']] = $next_payment['payment_method'];
 }
+unset($payments, $next_payment);
 
 $show_country_and_state = false; 
 
 // -----
 // Build arrays for dropdowns in search menu
 //
-if ($output_format != 'print') {
+if ($output_format !== 'print') {
     $manufacturers = $db->Execute(
         "SELECT * 
            FROM " . TABLE_MANUFACTURERS . " 
        ORDER BY manufacturers_name ASC"
     );
-    $manufacturer_array = array();
-    $manufacturer_key = array();
+    $manufacturer_array = [];
+    $manufacturer_key = [];
     if (!$manufacturers->EOF) {
-        $manufacturer_array[] = array(
+        $manufacturer_array[] = [
             'id' => 0,
             'text' => TEXT_EMPTY_SELECT
-        );
-        while (!$manufacturers->EOF) {
-            $manufacturer_array[] = array(
-                'id' => $manufacturers->fields['manufacturers_id'],
-                'text' => $manufacturers->fields['manufacturers_name']
-            );
-            $manufacturer_key[] = $manufacturers->fields['manufacturers_id'];
-            $manufacturers->MoveNext();
+        ];
+        foreach ($manufacturers as $next_manufacturer) {
+            $manufacturer_array[] = [
+                'id' => $next_manufacturer['manufacturers_id'],
+                'text' => $next_manufacturer['manufacturers_name']
+            ];
+            $manufacturer_key[] = $next_manufacturer['manufacturers_id'];
         }
     }
+    unset($manufacturers, $next_manufacturer);
 
-    $output_array = array(
-        array('id' => 'display', 'text' => SELECT_OUTPUT_DISPLAY),
-        array('id' => 'print', 'text' => SELECT_OUTPUT_PRINT),
-        array('id' => 'csv', 'text' => SELECT_OUTPUT_CSV),
-    );
+    $output_array = [
+        ['id' => 'display', 'text' => SELECT_OUTPUT_DISPLAY],
+        ['id' => 'print', 'text' => SELECT_OUTPUT_PRINT],
+        ['id' => 'csv', 'text' => SELECT_OUTPUT_CSV],
+    ];
 } else {
-    $manufacturer_key = array();
-    $detail_key = array(
+    $manufacturer_key = [];
+    $detail_key = [
         'timeframe' => SELECT_DETAIL_TIMEFRAME,
         'product' => SELECT_DETAIL_PRODUCT,
         'order' => SELECT_DETAIL_ORDER,
         'matrix' => SELECT_DETAIL_MATRIX,
-    );
+    ];
 
-    $timeframe_key = array(
+    $timeframe_key = [
         'day' => SEARCH_TIMEFRAME_DAY,
         'week' => SEARCH_TIMEFRAME_WEEK,
         'month' => SEARCH_TIMEFRAME_MONTH,
         'year' => SEARCH_TIMEFRAME_YEAR,
-    );
+    ];
 }
 
-$detail_types = array('timeframe', 'product', 'order', 'matrix');
-$detail_array = array(
-    array('id' => 'timeframe', 'text' => SELECT_DETAIL_TIMEFRAME),
-    array('id' => 'product', 'text' => SELECT_DETAIL_PRODUCT),
-    array('id' => 'order', 'text' => SELECT_DETAIL_ORDER),
-    array('id' => 'matrix', 'text' => SELECT_DETAIL_MATRIX),
-);
+$detail_types = ['timeframe', 'product', 'order', 'matrix'];
+$detail_array = [
+    ['id' => 'timeframe', 'text' => SELECT_DETAIL_TIMEFRAME],
+    ['id' => 'product', 'text' => SELECT_DETAIL_PRODUCT],
+    ['id' => 'order', 'text' => SELECT_DETAIL_ORDER],
+    ['id' => 'matrix', 'text' => SELECT_DETAIL_MATRIX],
+];
     
-$order_sorts = array('oID', 'last_name', 'num_products', 'goods', 'shipping', 'discount', 'gc_sold', 'gc_used', 'grand');
-$order_sorts_array = array(
-    array('id' => 'oID', 'text' => TABLE_HEADING_ORDERS_ID),
-    array('id' => 'last_name', 'text' => SELECT_LAST_NAME),
-    array('id' => 'num_products', 'text' => TABLE_HEADING_NUM_PRODUCTS),
-    array('id' => 'goods', 'text' => TABLE_HEADING_TOTAL_GOODS),
-    array('id' => 'shipping', 'text' => TABLE_HEADING_SHIPPING),
-    array('id' => 'discount', 'text' => TABLE_HEADING_DISCOUNTS),
-    array('id' => 'gc_sold', 'text' => TABLE_HEADING_GC_SOLD),
-    array('id' => 'gc_used', 'text' => TABLE_HEADING_GC_USED),
-    array('id' => 'grand', 'text' => TABLE_HEADING_ORDER_TOTAL),
-);
+$order_sorts = ['oID', 'last_name', 'num_products', 'goods', 'shipping', 'discount', 'gc_sold', 'gc_used', 'grand'];
+$order_sorts_array = [
+    ['id' => 'oID', 'text' => TABLE_HEADING_ORDERS_ID],
+    ['id' => 'last_name', 'text' => SELECT_LAST_NAME],
+    ['id' => 'num_products', 'text' => TABLE_HEADING_NUM_PRODUCTS],
+    ['id' => 'goods', 'text' => TABLE_HEADING_TOTAL_GOODS],
+    ['id' => 'shipping', 'text' => TABLE_HEADING_SHIPPING],
+    ['id' => 'discount', 'text' => TABLE_HEADING_DISCOUNTS],
+    ['id' => 'gc_sold', 'text' => TABLE_HEADING_GC_SOLD],
+    ['id' => 'gc_used', 'text' => TABLE_HEADING_GC_USED],
+    ['id' => 'grand', 'text' => TABLE_HEADING_ORDER_TOTAL],
+];
 
-$product_sorts = array('pID', 'name', 'manufacturer', 'model', 'base_price', 'quantity', 'onetime_charges', 'grand');
-$product_sorts_array = array(
-    array('id' => 'pID', 'text' => SELECT_PRODUCT_ID),
-    array('id' => 'name', 'text' => TABLE_HEADING_PRODUCT_NAME),
-    array('id' => 'manufacturer', 'text' => TABLE_HEADING_MANUFACTURER),
-    array('id' => 'model', 'text' => TABLE_HEADING_MODEL),
-    array('id' => 'base_price', 'text' => TABLE_HEADING_BASE_PRICE),
-    array('id' => 'quantity', 'text' => SELECT_QUANTITY),
-    array('id' => 'onetime_charges', 'text' => TABLE_HEADING_ONETIME_CHARGES),
-    array('id' => 'grand', 'text' => TABLE_HEADING_PRODUCT_TOTAL),
-);
+$product_sorts = ['pID', 'name', 'manufacturer', 'model', 'base_price', 'quantity', 'onetime_charges', 'grand'];
+$product_sorts_array = [
+    ['id' => 'pID', 'text' => SELECT_PRODUCT_ID],
+    ['id' => 'name', 'text' => TABLE_HEADING_PRODUCT_NAME],
+    ['id' => 'manufacturer', 'text' => TABLE_HEADING_MANUFACTURER],
+    ['id' => 'model', 'text' => TABLE_HEADING_MODEL],
+    ['id' => 'base_price', 'text' => TABLE_HEADING_BASE_PRICE],
+    ['id' => 'quantity', 'text' => SELECT_QUANTITY],
+    ['id' => 'onetime_charges', 'text' => TABLE_HEADING_ONETIME_CHARGES],
+    ['id' => 'grand', 'text' => TABLE_HEADING_PRODUCT_TOTAL],
+];
 
 // the sheer number of options for date range requires some extra checking...
 $date_preset = (!empty($_GET['date_preset'])) ? $_GET['date_preset'] : 'YTD';
-$date_custom = (isset($_GET['date_custom']) && $_GET['date_custom'] == '1') ? '1' : '0';
+$date_custom = (isset($_GET['date_custom']) && $_GET['date_custom'] === '1') ? '1' : '0';
 $today_timestamp = strtotime('today midnight');
 switch ($date_preset) {
     case 'today':
@@ -209,16 +209,16 @@ switch ($date_preset) {
         break;
 }
 
-if ($date_custom == '1') {
+if ($date_custom === '1') {
     // defaults to beginning of the month when not set
-    $start_date = (isset($_GET['start_date'])) ? $_GET['start_date'] : date(DATE_FORMAT, strtotime('first day of this month', $today_timestamp));
+    $start_date = $_GET['start_date'] ?? date(DATE_FORMAT, strtotime('first day of this month', $today_timestamp));
 
     // defaults to start date when not set (only have to enter a single day just once)
-    $end_date = (isset($_GET['end_date'])) ? $_GET['end_date'] : $start_date;
+    $end_date = $_GET['end_date'] ?? $start_date;
 }
 
-$date_target = (isset($_GET['date_target']) && in_array($_GET['date_target'], array('purchased', 'status'))) ? $_GET['date_target'] : 'purchased';
-if ($date_target == 'status') {
+$date_target = (isset($_GET['date_target']) && in_array($_GET['date_target'], ['purchased', 'status'])) ? $_GET['date_target'] : 'purchased';
+if ($date_target === 'status') {
     $date_status = (isset($_GET['date_status']) && array_key_exists((int)$_GET['date_status'], $status_key)) ? (int)$_GET['date_status'] : DEFAULT_ORDERS_STATUS_ID;
 } else {
     $date_status = false;
@@ -233,16 +233,20 @@ $detail_level = (isset($_GET['detail_level']) && in_array($_GET['detail_level'],
 switch ($detail_level) {
     case 'order':
         $valid_sorts = $order_sorts;
-        $li_sort_a = $li_sort_a_order = (isset($_GET['li_sort_a']) && in_array($_GET['li_sort_a'], $valid_sorts)) ? $_GET['li_sort_a'] : 'oID';
-        $li_sort_b = $li_sort_b_order = (isset($_GET['li_sort_b']) && in_array($_GET['li_sort_a'], $valid_sorts)) ? $_GET['li_sort_b'] : 'oID';
+        $li_sort_a =  (isset($_GET['li_sort_a']) && in_array($_GET['li_sort_a'], $valid_sorts)) ? $_GET['li_sort_a'] : 'oID';
+        $li_sort_a_order = $li_sort_a;
+        $li_sort_b = (isset($_GET['li_sort_b']) && in_array($_GET['li_sort_a'], $valid_sorts)) ? $_GET['li_sort_b'] : 'oID';
+        $li_sort_b_order = $li_sort_b;
         $li_sort_a_product = 'pID';
         $li_sort_b_product = 'pID';
         $sort_default = 'oID';
         break;
     case 'product':
         $valid_sorts = $product_sorts;
-        $li_sort_a = $li_sort_a_product = (isset($_GET['li_sort_a']) && in_array($_GET['li_sort_a'], $valid_sorts)) ? $_GET['li_sort_a'] : 'pID';
-        $li_sort_b = $li_sort_b_product = (isset($_GET['li_sort_b']) && in_array($_GET['li_sort_a'], $valid_sorts)) ? $_GET['li_sort_b'] : 'pID';
+        $li_sort_a = (isset($_GET['li_sort_a']) && in_array($_GET['li_sort_a'], $valid_sorts)) ? $_GET['li_sort_a'] : 'pID';
+        $li_sort_a_product = $li_sort_a;
+        $li_sort_b = (isset($_GET['li_sort_b']) && in_array($_GET['li_sort_a'], $valid_sorts)) ? $_GET['li_sort_b'] : 'pID';
+        $li_sort_b_product = $li_sort_b;
         $li_sort_a_order = 'oID';
         $li_sort_b_order = 'oID';
         $sort_default = 'pID';
@@ -253,12 +257,12 @@ switch ($detail_level) {
         // by the report's jQuery processing, but just in case the output format will be changed to 'order' and the
         // report's form-entry re-entered with message.
         //
-        if ($detail_level == 'matrix' && $output_format == 'csv') {
+        if ($detail_level === 'matrix' && $output_format === 'csv') {
             $_GET['output_format'] = 'order';
             $messageStack->add_session(ERROR_CSV_CONFLICT, 'error');
-            zen_redirect(zen_href_link(FILENAME_STATS_SALES_REPORT, zen_get_all_get_params()));
+            zen_redirect(zen_href_link(FILENAME_STATS_SALES_REPORT2, zen_get_all_get_params()));
         }
-        $valid_sorts = array();
+        $valid_sorts = [];
         $sort_default = false;
         $li_sort_a = $li_sort_a_order = 'oID';
         $li_sort_b = $li_sort_b_order = 'oID';
@@ -270,10 +274,10 @@ switch ($detail_level) {
 // -----
 // Initialize variables for the report and/or display, sanitizing where needed.
 //
-$valid_sort_orders = array('asc', 'desc');
+$valid_sort_orders = ['asc', 'desc'];
 
 // process the search criteria
-$timeframe = (isset($_GET['timeframe']) && in_array($_GET['timeframe'], array('year', 'month', 'week', 'day'))) ? $_GET['timeframe'] : 'year';
+$timeframe = (isset($_GET['timeframe']) && in_array($_GET['timeframe'], ['year', 'month', 'week', 'day'])) ? $_GET['timeframe'] : 'year';
 $timeframe_sort = (isset($_GET['timeframe_sort']) && in_array($_GET['timeframe_sort'], $valid_sort_orders)) ? $_GET['timeframe_sort'] : 'asc';
 
 $li_sort_a = (isset($_GET['li_sort_a']) && in_array($_GET['li_sort_a'], $valid_sorts)) ? $_GET['li_sort_a'] : $sort_default;
@@ -287,32 +291,34 @@ $csv_header = !empty($_GET['csv_header']);
 
 $doCustInc = !empty($_GET['doCustInc']);
 $cust_includes = (isset($_GET['cust_includes'])) ? (string)$_GET['cust_includes'] : '';
-if ($cust_includes != '') {
-    $cia = array();
+if ($cust_includes !== '') {
+    $cia = [];
     $ci = explode(',', str_replace(' ', '', $cust_includes));
     foreach ($ci as $c) {
         $c = (int)$c;
-        if ($c == 0) {
+        if ($c === 0) {
             continue;
         }
         $cia[] = $c;
     }
-    $_GET['cust_includes'] = $cust_includes = implode(',', array_unique($cia));
+    $cust_includes = implode(',', array_unique($cia));
+    $_GET['cust_includes'] = $cust_includes;
     unset($cia, $ci, $c);
 }
 $doProdInc = !empty($_GET['doProdInc']);
-$prod_includes = (isset($_GET['prod_includes'])) ? (string)$_GET['prod_includes'] : '';
-if ($prod_includes != '') {
-    $pia = array();
+$prod_includes = $_GET['prod_includes'] ?? '';
+if ($prod_includes !== '') {
+    $pia = [];
     $pi = explode(',', str_replace(' ', '', $prod_includes));
     foreach ($pi as $p) {
         $p = (int)$p;
-        if ($p == 0) {
+        if ($p === 0) {
             continue;
         }
         $pia[] = $p;
     }
-    $_GET['prod_includes'] = $prod_includes = implode(',', array_unique($pia));
+    $prod_includes = implode(',', array_unique($pia));
+    $_GET['prod_includes'] = $prod_includes;
     unset($pia, $pi, $p);
 }
 
@@ -323,7 +329,7 @@ $order_total_validation = (isset($_GET['order_total_validation']));
 // selection in the session once they've requested a report to be generated.
 //
 if ($output_format === false) {
-    $new_window = (isset($_SESSION['sales_report_new_window'])) ? $_SESSION['sales_report_new_window'] : true;
+    $new_window = $_SESSION['sales_report_new_window'] ?? true;
 
 // -----
 // If this is not the initial page-entry for the report, i.e. the admin has chosen some
@@ -343,14 +349,14 @@ if ($output_format === false) {
     // JavaScript checks should usually catch these, this is "just in case"
     if (!$start_date || !$end_date || !$date_target || !$detail_level || !$output_format) {
         $messageStack->add_session(ERROR_MISSING_REQ_INFO . '<br />' . $_GET['start_date'] . '<br />' . $_GET['end_date'], 'error');
-        zen_redirect(zen_href_link(FILENAME_STATS_SALES_REPORT, zen_get_all_get_params(array('output_format')), 'NONSSL'));
+        zen_redirect(zen_href_link(FILENAME_STATS_SALES_REPORT2, zen_get_all_get_params(['output_format']), 'NONSSL'));
     }
 
     // build the report array
-    if ($output_format != 'none') {
-        require DIR_WS_CLASSES . 'sales_report.php';
+    if ($output_format !== 'none') {
+        require DIR_WS_CLASSES . 'sales_report2.php';
 
-        $sr_parms = array(
+        $sr_parms = [
             'timeframe' => $timeframe,
             'timeframe_sort' => $timeframe_sort,
             'start_date' => $start_date,
@@ -372,18 +378,18 @@ if ($output_format === false) {
             'doCustInc' => $doCustInc,
             'cust_includes' => $cust_includes,
             'doProdInc' => $doProdInc,
-            'prod_includes' => $prod_includes
-        );
-        $sr = new sales_report($sr_parms);
+            'prod_includes' => $prod_includes,
+        ];
+        $sr = new sales_report2($sr_parms);
     
-        if ($output_format == 'csv') {
+        if ($output_format === 'csv') {
             // we have to pass the sorting values of the form since
             // the class instantiation does not require them
             $sr->output_csv($csv_header);
             exit;
         }
     }  // END if ($output_format != 'none')
-}  
+}
 ?>
 <!doctype html>
 <html <?php echo HTML_PARAMS; ?>>
@@ -391,8 +397,7 @@ if ($output_format === false) {
 <meta charset="<?php echo CHARSET; ?>">
 <title><?php echo TITLE; ?></title>
 <link rel="stylesheet" type="text/css" href="includes/stylesheet.css">
-<style type="text/css">
-<!--
+<style>
 fieldset { margin: 0 auto; padding: 8px; }
 legend { background: #ffffff; border:1px solid #C96E29; color:#333333; font-size:90%; padding:0.2em 0.5em; text-align:right; }
 .totalHeadingRow { background-color:#7f7979; }
@@ -417,30 +422,24 @@ legend { background: #ffffff; border:1px solid #C96E29; color:#333333; font-size
 #span_auto_print, #span_csv_header { display: none; }
 
 #td_wait_text { font-size: 12px; visibility: hidden; }
-<?php
-if (PROJECT_VERSION_MAJOR . '.' . PROJECT_VERSION_MINOR > '1.5.6') {
-?>
 #spiffycalendar { left: 10px!important; }
 <?php
-}
-if ($detail_level != 'order') {
+if ($detail_level !== 'order') {
 ?>
 #order_total_validation_checkbox { display: none; }
 <?php
 }
 ?>
--->
 </style>
 <?php 
-if ($output_format != 'print') { 
+if ($output_format !== 'print') {
 ?>
-<link rel="stylesheet" type="text/css" href="includes/cssjsmenuhover.css" media="all" id="hoverJS">
-<link rel="stylesheet" type="text/css" href="includes/javascript/spiffyCal/spiffyCal_v2_1.css">
+<link rel="stylesheet" href="includes/cssjsmenuhover.css" media="all" id="hoverJS">
+<link rel="stylesheet" href="includes/javascript/spiffyCal/spiffyCal_v2_1.css">
 <script src="includes/javascript/spiffyCal/spiffyCal_v2_1.js"></script>
 <script src="includes/general.js"></script>
 <script src="includes/menu.js"></script>
 <script>
-  <!--
   function init()
   {
     cssjsmenu('navbar');
@@ -450,7 +449,6 @@ if ($output_format != 'print') {
       kill.disabled = true;
     }
   }
-  // -->
 </script>
 <?php 
 }
@@ -458,7 +456,7 @@ if ($output_format != 'print') {
 </head>
 <?php
 // display the print header
-if ($output_format == 'print') {
+if ($output_format === 'print') {
     if ($auto_print) {
         echo '<body onload="print();">';
     }
@@ -466,19 +464,19 @@ if ($output_format == 'print') {
 <table border="0" width="100%" cellspacing="2" cellpadding="2">
     <!-- PRINT HEADER -->
     <tr>
-        <td class="center" colspan="2"><?php echo '<a href="' . zen_href_link(FILENAME_STATS_SALES_REPORT, zen_get_all_get_params(array('output_format')) . 'output_format=none', 'NONSSL') . '"><span class="pageHeading">' . PAGE_HEADING . '</span></a><br />'; ?></td>
+        <td class="center" colspan="2"><?php echo '<a href="' . zen_href_link(FILENAME_STATS_SALES_REPORT2, zen_get_all_get_params(['output_format']) . 'output_format=none', 'NONSSL') . '"><span class="pageHeading">' . PAGE_HEADING . '</span></a><br />'; ?></td>
     </tr>
     <tr>
-        <td class="center" colspan="2"><?php echo '<a href="' . zen_href_link(FILENAME_STATS_SALES_REPORT, zen_get_all_get_params(array('output_format')) . 'output_format=none', 'NONSSL') . '"><span class="pageHeading">' . $start_date . PRINT_DATE_TO . $end_date . '</span></a><br />'; ?></td>
+        <td class="center" colspan="2"><?php echo '<a href="' . zen_href_link(FILENAME_STATS_SALES_REPORT, zen_get_all_get_params(['output_format']) . 'output_format=none', 'NONSSL') . '"><span class="pageHeading">' . $start_date . PRINT_DATE_TO . $end_date . '</span></a><br />'; ?></td>
     </tr>
     <tr class="v-top">
         <td><table>
             <tr>
 <?php
     $date_target_heading = PRINT_DATE_TARGET;
-    if ($date_target == 'purchased') {
+    if ($date_target === 'purchased') {
         $date_target_heading .= PRINT_DATE_PURCHASED;
-    } elseif ($date_target == 'status') {
+    } elseif ($date_target === 'status') {
         $date_target_heading .= (PRINT_DATE_STATUS . ' (' . $status_key[$date_status] . ')');
     }
 ?>
@@ -493,7 +491,7 @@ if ($output_format == 'print') {
         </table></td>
         <td class="right"><table>
 <?php 
-    if ($payment_method) { 
+    if ($payment_method) {
 ?>
             <tr>
                 <td class="smalltext"><?php echo PRINT_PAYMENT_METHOD; ?></td>
@@ -502,23 +500,23 @@ if ($output_format == 'print') {
 <?php 
     }
 
-    if ($payment_method_omit) { 
+    if ($payment_method_omit) {
 ?>
             <tr>
                 <td class="smalltext"><?php echo PRINT_PAYMENT_METHOD; ?></td>
                 <td class="smalltext"><?php echo $payment_key[$payment_method]; ?></td>
             </tr>
 <?php 
-    } 
+    }
     
-    if ($current_status) { 
+    if ($current_status) {
 ?>
             <tr>
                 <td class="smalltext"><?php echo PRINT_CURRENT_STATUS; ?></td>
                 <td class="smalltext"><?php echo sprintf(PRINT_ORDER_STATUS, $status_key[$current_status], $current_status); ?></td>
             </tr>
 <?php 
-} 
+}
 ?>
         </table><td/>
     </tr>
@@ -538,7 +536,7 @@ if ($output_format == 'print') {
         var StartDate = new ctlSpiffyCalendarBox("StartDate", "search", "start_date", "btnDate1", "<?php echo $start_date; ?>", scBTNMODE_CALBTN);
         var EndDate = new ctlSpiffyCalendarBox("EndDate", "search", "end_date", "btnDate2", "<?php echo $end_date; ?>", scBTNMODE_CALBTN);
     </script>
-    <?php echo zen_draw_form('search', FILENAME_STATS_SALES_REPORT, '', 'get', '', true) . zen_draw_hidden_field('date_custom', $date_custom, 'id="date-custom"'); ?>
+    <?php echo zen_draw_form('search', FILENAME_STATS_SALES_REPORT2, '', 'get', '', true) . zen_draw_hidden_field('date_custom', $date_custom, 'id="date-custom"'); ?>
     <table class="table">
         <tr>
             <td class="pageHeading"><?php echo PAGE_HEADING; ?></td>
@@ -602,8 +600,8 @@ if ($output_format == 'print') {
                             </tr>
                             <tr>
 <?php
-    $temp_prods = (!empty($_GET['prod_includes'])) ? $_GET['prod_includes'] : INCLUDE_PRODUCTS;
-    $temp_cust = (!empty($_GET['cust_includes'])) ? $_GET['cust_includes'] : INCLUDE_CUSTOMERS;
+    $temp_prods = $_GET['prod_includes'] ?? INCLUDE_PRODUCTS;
+    $temp_cust = $_GET['cust_includes'] ?? INCLUDE_CUSTOMERS;
 ?>
                                 <td class="smallText" id="td_prod_includes"><?php echo zen_draw_input_field('prod_includes', $temp_prods, 30); ?></td>
                             </tr>
@@ -622,19 +620,19 @@ if ($output_format == 'print') {
                                 <td class="smallText"><strong><?php echo SEARCH_PAYMENT_METHOD_OMIT . '</strong><br />' . zen_draw_pull_down_menu('payment_method_omit', $payments_array, $payment_method_omit, 'id="payment_method_omit"'); ?></td>
                             </tr>
                             <tr>
-                                <td class="smallText"><strong><?php echo SEARCH_CURRENT_STATUS . '</strong><br />' . zen_draw_pull_down_menu('current_status', array_merge(array(array('id' => '0', 'text' => TEXT_EMPTY_SELECT)), $status_array), $current_status, 'id="current_status"'); ?></td>
+                                <td class="smallText"><strong><?php echo SEARCH_CURRENT_STATUS . '</strong><br />' . zen_draw_pull_down_menu('current_status', array_merge([['id' => '0', 'text' => TEXT_EMPTY_SELECT]], $status_array), $current_status, 'id="current_status"'); ?></td>
                             </tr>
                             <tr>
-                                <td class="smallText"><strong><?php echo SEARCH_EXCLUDED_STATUS . '</strong><br />' . zen_draw_pull_down_menu('excluded_status', array_merge(array(array('id' => '0', 'text' => TEXT_EMPTY_SELECT)), $status_array), $excluded_status, 'id="excluded-status"'); ?></td>
+                                <td class="smallText"><strong><?php echo SEARCH_EXCLUDED_STATUS . '</strong><br />' . zen_draw_pull_down_menu('excluded_status', array_merge([['id' => '0', 'text' => TEXT_EMPTY_SELECT]], $status_array), $excluded_status, 'id="excluded-status"'); ?></td>
                             </tr>
 <?php 
-    if (count($manufacturer_array) != 0) { 
+    if (count($manufacturer_array) !== 0) {
 ?>
                             <tr>
                                 <td class="smallText"><strong><?php echo SEARCH_MANUFACTURER . '</strong><br />' . zen_draw_pull_down_menu('manufacturer', $manufacturer_array, $manufacturer, 'id="manufacturer"'); ?></td>
                             </tr>
 <?php 
-} 
+}
 ?>
                         </table></td>
                     </tr>
@@ -739,19 +737,19 @@ if ($output_format == 'print') {
 <?php 
 }  // END <?php if ( (!$output_format || $output_format = 'display') && $output_format != 'print')
     
-if ($output_format == 'print' || $output_format == 'display') {
+if ($output_format === 'print' || $output_format === 'display') {
     // timeframes are in ascending order by default, so we only
     // need to make changes if the user requests descending order
-    if ($timeframe_sort == 'desc') {
+    if ($timeframe_sort === 'desc') {
         krsort($sr->timeframe);
     }
 
     // determine whether or not there are taxes
-    $display_tax =  ($sr->grand_total['goods_tax'] > 0 ? true : false);
+    $display_tax =  ($sr->grand_total['goods_tax'] > 0);
     // DEBUG
     //$display_tax = true;
 
-    if ($output_format == 'display') {
+    if ($output_format === 'display') {
 ?>
         <tr>
 <?php 
@@ -770,7 +768,7 @@ if ($output_format == 'print' || $output_format == 'display') {
                            FROM " . TABLE_PRODUCTS_DESCRIPTION . " pd 
                           WHERE products_id = " . (int)$pID
                     );
-                    if ($i == 0) {
+                    if ($i === 0) {
                         $header_string = $tempAry->fields['products_name'] ;
                     } else {
                         $header_string .= ', ' . $tempAry->fields['products_name'];
@@ -792,7 +790,7 @@ if ($output_format == 'print' || $output_format == 'display') {
                            FROM " . TABLE_CUSTOMERS . " c 
                           WHERE customers_id = " . (int)$cID
                     );
-                    if ($i == 0) {
+                    if ($i === 0) {
                         $header_string .= TEXT_CUSTOMER_TABLE_HEADING . $tempAry->fields['customers_firstname'] . " " . $tempAry->fields['customers_lastname'];
                     } else {
                         $header_string .= ", " . $tempAry->fields['customers_firstname'] . ' ' . $tempAry->fields['customers_lastname'];
@@ -807,7 +805,7 @@ if ($output_format == 'print' || $output_format == 'display') {
         } else {
             $colspan = ' colspan="2"';
         }
-        $sr_link = zen_href_link(FILENAME_STATS_SALES_REPORT, zen_get_all_get_params(array('output_format', 'auto_print')) . 'output_format=print&auto_print=1');
+        $sr_link = zen_href_link(FILENAME_STATS_SALES_REPORT2, zen_get_all_get_params(['output_format', 'auto_print']) . 'output_format=print&auto_print=1');
         $icon_print = zen_image(DIR_WS_IMAGES . 'icons/icon_print.gif');
 ?>
             <td class="right"<?php echo $colspan; ?>>
@@ -820,7 +818,7 @@ if ($output_format == 'print' || $output_format == 'display') {
         <tr>
             <td colspan="2"><table class="table">
 <?php
-    if ($sr->detail_level == 'timeframe') {
+    if ($sr->detail_level === 'timeframe') {
       // timeframe header line is coded twice because we only call it
       // once if we're displaying just totals, but repeats when
       // displaying the line item breakouts
@@ -832,12 +830,12 @@ if ($output_format == 'print' || $output_format == 'display') {
                     <td class="totalHeadingContent center" colspan="2"><?php echo TABLE_HEADING_NUM_PRODUCTS; ?></td>
                     <td class="totalHeadingContent right"><?php echo TABLE_HEADING_TOTAL_GOODS; ?></td>
 <?php 
-        if ($display_tax) { 
+        if ($display_tax) {
 ?>
                     <td class="totalHeadingContent right"><?php echo TABLE_HEADING_GOODS_TAX; ?></td>
                     <td class="totalHeadingContent right"><?php echo TABLE_HEADING_ORDER_RECORDED_TAX; ?></td>
 <?php 
-        } 
+        }
 ?>
                     <td class="totalHeadingContent right"><?php echo TABLE_HEADING_SHIPPING; ?></td>
                     <td class="totalHeadingContent center" colspan="2"><?php echo TABLE_HEADING_DISCOUNTS; ?></td>
@@ -866,7 +864,7 @@ if ($output_format == 'print' || $output_format == 'display') {
         }
 
         // display the timeframe totals line, if necessary
-        if ($sr->detail_level != 'timeframe') {
+        if ($sr->detail_level !== 'timeframe') {
 ?>
       <!--TIMEFRAME TOTAL HEADER-->
                 <tr class="totalHeadingRow">
@@ -875,12 +873,12 @@ if ($output_format == 'print' || $output_format == 'display') {
                     <td class="totalHeadingContent center" colspan="2"><?php echo TABLE_HEADING_NUM_PRODUCTS; ?></td>
                     <td class="totalHeadingContent right"><?php echo TABLE_HEADING_TOTAL_GOODS; ?></td>
 <?php 
-            if ($display_tax) { 
+            if ($display_tax) {
 ?>
                     <td class="totalHeadingContent right"><?php echo TABLE_HEADING_GOODS_TAX; ?></td>
                     <td class="totalHeadingContent right"><?php echo TABLE_HEADING_ORDER_RECORDED_TAX; ?></td>
 <?php 
-            } 
+            }
 ?>
                     <td class="totalHeadingContent right"><?php echo TABLE_HEADING_SHIPPING; ?></td>
                     <td class="totalHeadingContent center" colspan="2"><?php echo TABLE_HEADING_DISCOUNTS; ?></td>
@@ -888,16 +886,16 @@ if ($output_format == 'print' || $output_format == 'display') {
                     <td class="totalHeadingContent center" colspan="2"><?php echo TABLE_HEADING_GC_USED; ?></td>
                     <td class="totalHeadingContent right"><?php echo TABLE_HEADING_TOTAL; ?></td>
 <?php 
-            if ($sr->detail_level == 'order' && $order_total_validation) { 
+            if ($sr->detail_level === 'order' && $order_total_validation) {
 ?>
                     <td class="totalHeadingContent right">&nbsp;</td>
 <?php 
-            }    
+            }
 ?>
                 </tr>
 <?php
         }
-        
+
         if (isset($timeframe['total'])) {
 ?>
                 <tr class="totalRow">
@@ -907,12 +905,12 @@ if ($output_format == 'print' || $output_format == 'display') {
                     <td class="totalContent no-wrap"><?php echo TEXT_DIFF . count($timeframe['total']['diff_products']); ?></td>
                     <td class="totalContent right"><?php echo $currencies->format($timeframe['total']['goods']); ?></td>
 <?php 
-            if ($display_tax) { 
+            if ($display_tax) {
 ?>
                     <td class="totalContent right"><?php echo $currencies->format($timeframe['total']['goods_tax']); ?></td>
                     <td class="totalContent right"><?php echo $currencies->format($timeframe['total']['order_recorded_tax']); ?></td>
 <?php 
-            } 
+            }
 ?>
                     <td class="totalContent right"><?php echo $currencies->format($timeframe['total']['shipping']); ?></td>
                     <td class="totalContent right"><?php echo $currencies->format($timeframe['total']['discount']); ?></td>
@@ -923,11 +921,11 @@ if ($output_format == 'print' || $output_format == 'display') {
                     <td class="totalContent no-wrap"><?php echo TEXT_QTY . $timeframe['total']['gc_used_qty']; ?></td>
                     <td class="totalContent right"><?php echo $currencies->format($timeframe['total']['grand']); ?></td>
 <?php 
-            if ($sr->detail_level == 'order' && $order_total_validation) { 
+            if ($sr->detail_level === 'order' && $order_total_validation) {
 ?>
                     <td class="totalContent right">&nbsp;</td>
 <?php 
-            } 
+            }
 ?>
                 </tr>
 <?php
@@ -951,9 +949,10 @@ if ($output_format == 'print' || $output_format == 'display') {
         }
 
         // display order line items, if necessary
-        if ($sr->detail_level == 'order' && isset($timeframe['orders']) && is_array($timeframe['orders']) ) {
+        if ($sr->detail_level === 'order' && isset($timeframe['orders']) && is_array($timeframe['orders']) ) {
             // sort the orders according to requested sort options
-            $dataset1 = $dataset2 = array();
+            $dataset1 = [];
+            $dataset2 = [];
             foreach ($timeframe['orders'] as $oID => $o_data) {
                 $dataset1[$oID] = $o_data[$li_sort_a];
                 $dataset2[$oID] = $o_data[$li_sort_b];
@@ -964,8 +963,8 @@ if ($output_format == 'print' || $output_format == 'display') {
             $dataset1 = array_map('strtolower', $dataset1);
             $dataset2 = array_map('strtolower', $dataset2);
 
-            $sort1 = ($li_sort_order_a == 'asc') ? SORT_ASC : SORT_DESC;
-            $sort2 = ($li_sort_order_b == 'asc') ? SORT_ASC : SORT_DESC;
+            $sort1 = ($li_sort_order_a === 'asc') ? SORT_ASC : SORT_DESC;
+            $sort2 = ($li_sort_order_b === 'asc') ? SORT_ASC : SORT_DESC;
             array_multisort($dataset1, $sort1, $dataset2, $sort2, $timeframe['orders']);
 ?>
       <!--ORDER LINE ITEM HEADER-->
@@ -973,19 +972,23 @@ if ($output_format == 'print' || $output_format == 'display') {
                     <td class="lineItemHeadingContent"><?php echo TABLE_HEADING_ORDERS_ID . show_arrow('oID'); ?></td>
                     <td class="lineItemHeadingContent"><?php echo TABLE_HEADING_CUSTOMER . show_arrow('last_name'); ?></td>
 
-<?php if ($show_country_and_state) { ?> 
+<?php
+            if ($show_country_and_state) {
+?>
                     <td class="lineItemHeadingContent"><?php echo TABLE_HEADING_COUNTRY . show_arrow('country'); ?></td>
                     <td class="lineItemHeadingContent"><?php echo TABLE_HEADING_STATE . show_arrow('state'); ?></td>
-<?php } ?> 
+<?php
+            }
+?>
                     <td class="lineItemHeadingContent center" colspan="2"><?php echo TABLE_HEADING_NUM_PRODUCTS . show_arrow('num_products'); ?></td>
                     <td class="lineItemHeadingContent right"><?php echo TABLE_HEADING_TOTAL_GOODS . show_arrow('goods'); ?></td>
 <?php 
-            if ($display_tax) { 
+            if ($display_tax) {
 ?>
                     <td class="lineItemHeadingContent right"><?php echo TABLE_HEADING_GOODS_TAX; ?></td>
                     <td class="lineItemHeadingContent right"><?php echo TABLE_HEADING_ORDER_RECORDED_TAX; ?></td>
 <?php 
-            } 
+            }
 ?>
                     <td class="lineItemHeadingContent right"><?php echo TABLE_HEADING_SHIPPING . show_arrow('shipping'); ?></td>
                     <td class="lineItemHeadingContent center" colspan="2"><?php echo TABLE_HEADING_DISCOUNTS . show_arrow('discount'); ?></td>
@@ -993,11 +996,11 @@ if ($output_format == 'print' || $output_format == 'display') {
                     <td class="lineItemHeadingContent center" colspan="2"><?php echo TABLE_HEADING_GC_USED . show_arrow('gc_used'); ?></td>
                     <td class="lineItemHeadingContent right"><?php echo TABLE_HEADING_ORDER_TOTAL . show_arrow('grand'); ?></td>
 <?php 
-            if ($order_total_validation) { 
+            if ($order_total_validation) {
 ?>
                     <td class="lineItemHeadingContent ValidationColumnHeader right"><?php echo TABLE_HEADING_ORDER_TOTAL_VALIDATION; ?></td>
 <?php 
-            } 
+            }
 ?>
                 </tr>
 <?php
@@ -1011,20 +1014,24 @@ if ($output_format == 'print' || $output_format == 'display') {
                 <tr class="lineItemRow">
                     <td class="lineItemContent center"><strong><a href="<?php echo zen_href_link(FILENAME_ORDERS, 'oID=' . $o_data['oID'] . '&action=edit'); ?>"><?php echo $o_data['oID']; ?></a></strong></td>
                     <td class="lineItemContent"><?php echo $o_data['last_name'] . ', ' . $o_data['first_name']; ?></td>
-<?php if ($show_country_and_state) { ?> 
+<?php
+                if ($show_country_and_state) {
+?>
                     <td class="lineItemContent"><?php echo $o_data['country']; ?></td>
                     <td class="lineItemContent"><?php echo $o_data['state']; ?></td>
-<?php } ?>
+<?php
+                }
+?>
                     <td class="lineItemContent right"><?php echo $o_data['num_products']; ?></td>
                     <td class="lineItemContent no-wrap"><?php echo (sizeof($o_data['diff_products']) > 1 ? TEXT_DIFF . sizeof($o_data['diff_products']) : ($o_data['num_products'] > 1 ? TEXT_SAME : TEXT_SAME_ONE) ); ?></td>
                     <td class="lineItemContent right"><?php echo $currencies->format($o_data['goods']); ?></td>
 <?php 
-                if ($display_tax) { 
+                if ($display_tax) {
 ?>
                     <td class="lineItemContent right"><?php echo $currencies->format($o_data['goods_tax']); ?></td>
                     <td class="lineItemContent right"><?php echo $currencies->format($o_data['order_recorded_tax']); ?></td>
 <?php 
-                } 
+                }
 ?>
                     <td class="lineItemContent right"><?php echo $currencies->format($o_data['shipping']); ?></td>
                     <td class="lineItemContent right"><?php echo $currencies->format($o_data['discount']); ?></td>
@@ -1035,18 +1042,19 @@ if ($output_format == 'print' || $output_format == 'display') {
                     <td class="lineItemContent no-wrap"><?php echo TEXT_QTY . $o_data['gc_used_qty']; ?></td>
                     <td class="lineItemContent right"><?php echo $currencies->format($o_data['grand']); ?></td>
 <?php 
-                if ($order_total_validation) { 
+                if ($order_total_validation) {
 ?>
                     <td class="lineItemContent ValidationColumnContent right" align="right"><?php echo $o_data['order_total_validation']; ?></td>
 <?php 
-                } 
+                }
 ?>
                 </tr>
 <?php
             }
-        } elseif ($sr->detail_level == 'product' && !empty($timeframe['products']) ) { // display product line items, if necessary
+        } elseif ($sr->detail_level === 'product' && !empty($timeframe['products'])) { // display product line items, if necessary
             // sort the products according to requested sort options
-            $dataset1 = $dataset2 = array();
+            $dataset1 = [];
+            $dataset2 = [];
             foreach ($timeframe['products'] as $pID => $p_data) {
                 $dataset1[$pID] = $p_data[$li_sort_a];
                 $dataset2[$pID] = $p_data[$li_sort_b];
@@ -1056,8 +1064,8 @@ if ($output_format == 'print' || $output_format == 'display') {
             $dataset1 = array_map('strtolower', $dataset1);
             $dataset2 = array_map('strtolower', $dataset2);
 
-            $sort1 = ($li_sort_order_a == 'asc') ? SORT_ASC : SORT_DESC;
-            $sort2 = ($li_sort_order_b == 'asc') ? SORT_ASC : SORT_DESC;
+            $sort1 = ($li_sort_order_a === 'asc') ? SORT_ASC : SORT_DESC;
+            $sort2 = ($li_sort_order_b === 'asc') ? SORT_ASC : SORT_DESC;
             array_multisort($dataset1, $sort1, $dataset2, $sort2, $timeframe['products']);
 
             // we have to nest tables for product line items
@@ -1079,32 +1087,32 @@ if ($output_format == 'print' || $output_format == 'display') {
                             <td class="lineItemHeadingContent"><?php echo TABLE_HEADING_PRODUCT_NAME . show_arrow('name'); ?></td>
                             <td class="lineItemHeadingContent"><?php echo TABLE_HEADING_PRODUCT_ATTRIBUTES . show_arrow('attributes'); ?></td>
 <?php 
-            if (DISPLAY_MANUFACTURER) { 
+            if (DISPLAY_MANUFACTURER) {
 ?>
                             <td class="lineItemHeadingContent"><?php echo TABLE_HEADING_MANUFACTURER . show_arrow('manufacturer'); ?></td>
 <?php 
-            } 
+            }
 ?>
                             <td class="lineItemHeadingContent"><?php echo TABLE_HEADING_MODEL . show_arrow('model'); ?></td>
                             <td class="lineItemHeadingContent right"><?php echo TABLE_HEADING_BASE_PRICE . show_arrow('base_price'); ?></td>
                             <td class="lineItemHeadingContent right"><?php echo TABLE_HEADING_FINAL_PRICE . show_arrow('final_price'); ?></td>
                             <td class="lineItemHeadingContent right"><?php echo TABLE_HEADING_QUANTITY . show_arrow('quantity'); ?></td>
 <?php 
-            if ($display_tax) { 
+            if ($display_tax) {
 ?>
                             <td class="lineItemHeadingContent right"><?php echo TABLE_HEADING_TAX; ?></td>
 <?php 
-            } 
-            if (DISPLAY_ONE_TIME_FEES) { 
+            }
+            if (DISPLAY_ONE_TIME_FEES) {
 ?>
                             <td class="lineItemHeadingContent right"><?php echo TABLE_HEADING_ONETIME_CHARGES . show_arrow('onetime_charges'); ?></td>
 <?php 
-            } 
-            if ($display_tax) { 
+            }
+            if ($display_tax) {
 ?>
                             <td class="lineItemHeadingContent right"><?php echo TABLE_HEADING_TOTAL; ?></td>
 <?php 
-            } 
+            }
 ?>
                             <td class="lineItemHeadingContent right"><?php echo TABLE_HEADING_PRODUCT_TOTAL . show_arrow('grand'); ?></td>
                         </tr>
@@ -1116,32 +1124,32 @@ if ($output_format == 'print' || $output_format == 'display') {
                             <td class="lineItemContent"><?php echo $p_data['name']; ?></td>
                             <td class="lineItemContent"><?php echo $p_data['attributes']; ?></td>
 <?php 
-                if (DISPLAY_MANUFACTURER) { 
+                if (DISPLAY_MANUFACTURER) {
 ?>
                             <td class="lineItemContent"><?php echo $p_data['manufacturer']; ?></td>
 <?php 
-                } 
+                }
 ?>
                             <td class="lineItemContent"><?php echo $p_data['model']; ?></td>
                             <td class="lineItemContent right"><?php echo $currencies->format($p_data['base_price']); ?></td>
                             <td class="lineItemContent right"><?php echo $currencies->format($p_data['final_price']); ?></td>
                             <td class="lineItemContent right"><?php echo $p_data['quantity']; ?></td>
 <?php 
-                if ($display_tax) { 
+                if ($display_tax) {
 ?>
                             <td class="lineItemContent right"><?php echo $currencies->format($p_data['tax']); ?></td>
 <?php 
-                } 
-                if (DISPLAY_ONE_TIME_FEES) { 
+                }
+                if (DISPLAY_ONE_TIME_FEES) {
 ?>
                             <td class="lineItemContent right"><?php echo $currencies->format($p_data['onetime_charges']); ?></td>
 <?php 
-                } 
-                if ($display_tax) { 
+                }
+                if ($display_tax) {
 ?>
                             <td class="lineItemContent right"><?php echo $currencies->format($p_data['total']); ?></td>
 <?php 
-                } 
+                }
 ?>
                             <td class="lineItemContent right"><?php echo $currencies->format($p_data['grand']); ?></td>
                         </tr>
@@ -1151,7 +1159,7 @@ if ($output_format == 'print' || $output_format == 'display') {
                     </table></td>
                 </tr>
 <?php
-        } elseif ($sr->detail_level == 'matrix' && isset($timeframe['orders']) && isset($timeframe['products'])) {  // display the data matrix
+        } elseif ($sr->detail_level === 'matrix' && isset($timeframe['orders']) && isset($timeframe['products'])) {  // display the data matrix
             $colspan = 13;
             if ($display_tax) {
                 $colspan += 2;
@@ -1231,7 +1239,7 @@ if ($output_format == 'print' || $output_format == 'display') {
                                     <td class="lineItemContent" colspan="3"><strong><?php echo MATRIX_TOTAL_PAYMENTS; ?></strong></td>
                                 </tr>
 <?php 
-            foreach ($timeframe['matrix']['payment_methods'] as $key => $payment) { 
+            foreach ($timeframe['matrix']['payment_methods'] as $key => $payment) {
 ?>
                                 <tr>
                                     <td class="lineItemContent"><?php echo $payment['method']; ?></td>
@@ -1239,7 +1247,7 @@ if ($output_format == 'print' || $output_format == 'display') {
                                     <td class="lineItemContent" align="right"><?php echo $payment['count']; ?></td>
                                 </tr>
 <?php 
-            } 
+            }
 ?>
                             </table></td>
                             <td><table class="table">
@@ -1247,14 +1255,14 @@ if ($output_format == 'print' || $output_format == 'display') {
                                     <td class="lineItemContent" colspan="2"><strong><?php echo MATRIX_TOTAL_CC; ?></strong></td>
                                 </tr>
  <?php 
-            foreach ($timeframe['matrix']['credit_cards'] as $key => $cc) { 
+            foreach ($timeframe['matrix']['credit_cards'] as $key => $cc) {
  ?>
                                 <tr>
                                     <td class="lineItemContent"><?php echo $cc['type']; ?></td>
                                     <td class="lineItemContent right"><?php echo $cc['count']; ?></td>
                                 </tr>
 <?php 
-            } 
+            }
 ?>
                             </table></td>
                             <td><table class="table">
@@ -1262,7 +1270,7 @@ if ($output_format == 'print' || $output_format == 'display') {
                                     <td class="lineItemContent" colspan="3"><strong><?php echo MATRIX_TOTAL_SHIPPING; ?></strong></td>
                                 </tr>
 <?php 
-            foreach ($timeframe['matrix']['shipping_methods'] as $key => $shipping) { 
+            foreach ($timeframe['matrix']['shipping_methods'] as $key => $shipping) {
 ?>
                                 <tr>
                                     <td class="lineItemContent"><?php echo $shipping['method']; ?></td>
@@ -1270,29 +1278,29 @@ if ($output_format == 'print' || $output_format == 'display') {
                                     <td class="llineItemContent right"><?php echo $shipping['count']; ?></td>
                                 </tr>
 <?php 
-            } 
+            }
 ?>
                             </table></td>
 <?php 
-            if (count($timeframe['matrix']['currencies']) > 0) { 
+            if (count($timeframe['matrix']['currencies']) !== 0) {
 ?>
                             <td><table class="table">
                                 <tr>
                                     <td class="lineItemContent" colspan="2"><strong><?php echo MATRIX_TOTAL_CURRENCIES; ?></strong></td>
                                 </tr>
 <?php 
-                foreach ($timeframe['matrix']['currencies'] as $key => $currency) { 
+                foreach ($timeframe['matrix']['currencies'] as $key => $currency) {
 ?>
                                 <tr>
                                     <td class="lineItemContent"><?php echo $currency['type']; ?></td>
                                     <td class="lineItemContent right"><?php echo $currency['count']; ?></td>
                                 </tr>
 <?php 
-                } 
+                }
 ?>
                             </table></td>
 <?php 
-            } 
+            }
 ?>
                         </tr>
                     </table></td>
@@ -1338,7 +1346,7 @@ if ($output_format == 'print' || $output_format == 'display') {
                     <td><!-- spacer cell --></td>
                 </tr>
 <?php 
-        if ($sr->detail_level != 'timeframe') { 
+        if ($sr->detail_level !== 'timeframe') {
 ?>
                 <tr class="totalHeadingRow">
                     <td class="totalHeadingContent"><?php echo TABLE_HEADING_TIMEFRAME; ?></td>
@@ -1346,12 +1354,12 @@ if ($output_format == 'print' || $output_format == 'display') {
                     <td class="totalHeadingContent center" colspan="2"><?php echo TABLE_HEADING_NUM_PRODUCTS; ?></td>
                     <td class="totalHeadingContent right"><?php echo TABLE_HEADING_TOTAL_GOODS; ?></td>
 <?php 
-            if ($display_tax) { 
+            if ($display_tax) {
 ?>
                     <td class="totalHeadingContent right"><?php echo TABLE_HEADING_GOODS_TAX; ?></td>
                     <td class="totalHeadingContent right"><?php echo TABLE_HEADING_ORDER_RECORDED_TAX; ?></td>
 <?php 
-            } 
+            }
 ?>
                     <td class="totalHeadingContent right"><?php echo TABLE_HEADING_SHIPPING; ?></td>
                     <td class="totalHeadingContent center" colspan="2"><?php echo TABLE_HEADING_DISCOUNTS; ?></td>
@@ -1359,15 +1367,15 @@ if ($output_format == 'print' || $output_format == 'display') {
                     <td class="totalHeadingContent center" colspan="2"><?php echo TABLE_HEADING_GC_USED; ?></td>
                     <td class="totalHeadingContent right"><?php echo TABLE_HEADING_TOTAL; ?></td>
 <?php 
-            if ($sr->detail_level == 'order' && $order_total_validation) { 
+            if ($sr->detail_level === 'order' && $order_total_validation) {
 ?>
                     <td class="totalHeadingContent right">&nbsp;</td>
 <?php 
-            } 
+            }
 ?>
                 </tr>
 <?php 
-        } 
+        }
 ?>
       <!-- GRAND TOTAL LINE -->
                 <tr class="footerRow">
@@ -1376,12 +1384,12 @@ if ($output_format == 'print' || $output_format == 'display') {
                     <td class="footerContent center" colspan="2"><?php echo $sr->grand_total['num_products']; ?></td>
                     <td class="footerContent right"><?php echo $currencies->format($sr->grand_total['goods']); ?></td>
 <?php 
-        if ($display_tax) { 
+        if ($display_tax) {
 ?>
                     <td class="footerContent" align="right"><?php echo $currencies->format($sr->grand_total['goods_tax']); ?></td>
                     <td class="footerContent" align="right"><?php echo $currencies->format($sr->grand_total['order_recorded_tax']); ?></td>
 <?php 
-        } 
+        }
 ?>
                     <td class="footerContent right"><?php echo $currencies->format($sr->grand_total['shipping']); ?></td>
                     <td class="footerContent right"><?php echo $currencies->format($sr->grand_total['discount']); ?></td>
@@ -1392,11 +1400,11 @@ if ($output_format == 'print' || $output_format == 'display') {
                     <td class="footerContent no-wrap"><?php echo TEXT_QTY . $sr->grand_total['gc_used_qty']; ?></td>
                     <td class="footerContent right"><?php echo $currencies->format($sr->grand_total['grand']); ?></td>
 <?php 
-        if ($sr->detail_level == 'order' && $order_total_validation) { 
+        if ($sr->detail_level === 'order' && $order_total_validation) {
 ?>
                     <td class="footerContent right">&nbsp;</td>
 <?php 
-        } 
+        }
 ?>
                 </tr>
       <!-- END GRAND TOTAL LINE -->
@@ -1406,19 +1414,19 @@ if ($output_format == 'print' || $output_format == 'display') {
             </table></td>
         </tr>
 <?php
-    if ($output_format == 'print') {
+    if ($output_format === 'print') {
 ?>
         <tr>
             <td><?php echo zen_draw_separator('pixel_trans.gif', 30, 20); ?></td>
             <td class="smallText right"><?php echo TEXT_REPORT_TIMESTAMP . zen_datetime_short(date("Y-m-d H:i:s")); ?></td>
         </tr>
 <?php
-    } elseif ($output_format == 'display') {
+    } elseif ($output_format === 'display') {
         $parse_end = get_microtime();
         $parse_time = $parse_end - $parse_start;
 ?>
         <tr>
-            <td colspan="2" class="right"><?php echo '<a href="' . zen_href_link(FILENAME_STATS_SALES_REPORT, zen_get_all_get_params(array('output_format', 'auto_print')) . 'output_format=print&auto_print=1', 'NONSSL') . '" title="' . TEXT_PRINT_FORMAT_TITLE . '"><span class="smallText">' . zen_image(DIR_WS_IMAGES . 'icons/icon_print.gif') . '&nbsp;' . TEXT_PRINT_FORMAT . '</span></a>'; ?></td>
+            <td colspan="2" class="right"><?php echo '<a href="' . zen_href_link(FILENAME_STATS_SALES_REPORT2, zen_get_all_get_params(['output_format', 'auto_print']) . 'output_format=print&auto_print=1', 'NONSSL') . '" title="' . TEXT_PRINT_FORMAT_TITLE . '"><span class="smallText">' . zen_image(DIR_WS_IMAGES . 'icons/icon_print.gif') . '&nbsp;' . TEXT_PRINT_FORMAT . '</span></a>'; ?></td>
         </tr>
         <tr>
             <td class="smallText"><?php printf(TEXT_PARSE_TIME, number_format($parse_time, 5) ); ?></td>
@@ -1430,8 +1438,7 @@ if ($output_format == 'print' || $output_format == 'display') {
 ?>
     </table></form>
 <?php 
-require DIR_WS_INCLUDES . 'javascript/sales_report.js.php'; 
-if ($output_format != 'print') {
+if ($output_format !== 'print') {
     require DIR_WS_INCLUDES . 'footer.php'; 
 }
 ?>
@@ -1442,7 +1449,7 @@ require DIR_WS_INCLUDES . 'application_bottom.php';
 
 // used to show the page parse time
 // look for $parse_start and $parse_end to see how it works
-function get_microtime() 
+function get_microtime()
 {
     list($usec, $sec) = explode(' ', microtime());
     return ((float)$usec + (float)$sec);
@@ -1450,25 +1457,25 @@ function get_microtime()
 
 // controls the sorting arrows that appear next to the sorted
 // columns with order/product line item displays
-function show_arrow($report_field) 
+function show_arrow($report_field)
 {
     global $li_sort_a, $li_sort_order_a, $li_sort_b, $li_sort_order_b, $output_format;
-    
+
     $down_arrow = DIR_WS_IMAGES . 'icons/down_arrow.gif';
     $up_arrow = DIR_WS_IMAGES . 'icons/up_arrow.gif';
-    
+
     if ($report_field == $li_sort_a) {
-        $link_parms = zen_get_all_get_params(array('li_sort_order_a')) . 'li_sort_order_a=';
+        $link_parms = zen_get_all_get_params(['li_sort_order_a']) . 'li_sort_order_a=';
         $arrow_id = 'img_sort_a';
         $span_value = '1';
         $sort_order = $li_sort_order_a;
     } elseif ($report_field == $li_sort_b) {
-        $link_parms = zen_get_all_get_params(array('li_sort_order_b')) . 'li_sort_order_b=';
+        $link_parms = zen_get_all_get_params(['li_sort_order_b']) . 'li_sort_order_b=';
         $arrow_id = 'img_sort_b';
         $span_value = '2';
         $sort_order = $li_sort_order_b;
     }
-    
+
     $formatted_arrow = null;
     if (isset($sort_order)) {
         if ($sort_order == 'asc') {
@@ -1483,11 +1490,11 @@ function show_arrow($report_field)
             $arrow_image = $down_arrow;
             $arrow_alt = ALT_TEXT_SORT_ASC;
             $link_parms .= 'asc';
-         } 
+        }
         $arrow = zen_image($arrow_image, $arrow_alt, '', '', 'align=bottom id="' . $arrow_id . '"') . ' <span class="lineItemHeadingContent">' . $span_value . '</span>';
 
-        if ($output_format == 'display') {
-            $link = '<a href="' . zen_href_link(FILENAME_STATS_SALES_REPORT, $link_parms, 'NONSSL') . "\" onmouseover=\"img_over('$arrow_id', '$mouseover');\" onmouseout=\"img_over('$arrow_id', '$mouseout');\">";
+        if ($output_format === 'display') {
+            $link = '<a href="' . zen_href_link(FILENAME_STATS_SALES_REPORT2, $link_parms, 'NONSSL') . "\" onmouseover=\"img_over('$arrow_id', '$mouseover');\" onmouseout=\"img_over('$arrow_id', '$mouseout');\">";
             $formatted_arrow = '&nbsp;' . $link . $arrow . '</a>';
         } else {
             $formatted_arrow = '&nbsp;' . $arrow;
