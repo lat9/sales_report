@@ -35,9 +35,47 @@
 
 class sales_report2 extends base
 {
-    var $timeframe_group, $sd, $ed, $sd_raw, $ed_raw, $date_target, $date_status;
-    var $payment_method, $payment_method_omit, $current_status, $manufacturer, $detail_level, $output_format;
-    var $timeframe, $timeframe_id, $current_date, $product_filter;
+    public
+        $detail_level,
+        $timeframe,
+        $timeframe_group,
+        $grand_total;
+
+    protected
+        $sd,
+        $sd_raw,
+        $ed,
+        $ed_raw,
+        $date_target,
+        $date_status,
+        $current_date,
+        $global_sd,
+
+        $payment_method,
+        $payment_method_omit,
+
+        $current_status,
+        $excluded_status,
+
+        $manufacturer,
+        $output_format,
+        $order_total_validation,
+
+        $doProdInc,
+        $prod_includes,
+        $product_filter,
+
+        $doCustInc,
+        $cust_includes,
+        $customer_filter,
+
+        $li_sort_a,
+        $li_sort_order_a,
+        $li_sort_b,
+        $li_sort_order_b,
+
+        $timeframe_id,
+        $timeframe_sort;
 
     function __construct($parms)
     {
@@ -74,15 +112,15 @@ class sales_report2 extends base
         // pulled from entered date strings using the substr function (similar to zen_date_raw)
         $sd = $parms['start_date'];
         $ed = $parms['end_date'];
-        if (strtolower(DATE_FORMAT) == 'm/d/y') {
+        if (strtolower(DATE_FORMAT) === 'm/d/y') {
             // Use US date format (m/d/Y)
             $this->sd_raw = mktime(0, 0, 0, substr($sd, 0, 2), substr($sd, 3, 2), substr($sd, 6, 4) );
             $this->ed_raw = mktime(0, 0, 0, substr($ed, 0, 2), substr($ed, 3, 2), substr($ed, 6, 4) );
-        } elseif (strtolower(DATE_FORMAT) == 'd/m/y') {
+        } elseif (strtolower(DATE_FORMAT) === 'd/m/y') {
             // Use UK date format (d/m/Y)
             $this->sd_raw = mktime(0, 0, 0, substr($sd, 3, 2), substr($sd, 0, 2), substr($sd, 6, 4) );
             $this->ed_raw = mktime(0, 0, 0, substr($ed, 3, 2), substr($ed, 0, 2), substr($ed, 6, 4) );
-        } elseif (strtolower(DATE_FORMAT) == 'd.m.y') {
+        } elseif (strtolower(DATE_FORMAT) === 'd.m.y') {
             // Use CZ, SK date format (d/m/Y)
             $this->sd_raw = mktime(0, 0, 0, substr($sd, 3, 2), substr($sd, 0, 2), substr($sd, 6, 4) );
             $this->ed_raw = mktime(0, 0, 0, substr($ed, 3, 2), substr($ed, 0, 2), substr($ed, 6, 4) );
@@ -136,9 +174,10 @@ class sales_report2 extends base
     // particular timeframe.  All other functions are called from within here to build all the requested timeframe
     // information (order line items, product line items, or data matrix).
     //
-    function build_timeframe() 
+    protected function build_timeframe()
     {
         global $db;
+
         $id = $this->timeframe_id;  // we use $id to keep arrays short, easier to read
 
         // $sd and $ed are local to this function, not to be confused with
@@ -252,8 +291,8 @@ class sales_report2 extends base
             } elseif ($this->detail_level == 'product') {
                 $this->timeframe[$id]['products'] = [];
             }
-            while (!$sales->EOF) {
-                $oID = $sales->fields['orders_id'];
+            foreach ($sales as $next_sale) {
+                $oID = $next_sale['orders_id'];
                 $grand_total += $this->build_li_totals($oID);
                 if (empty($this->timeframe[$id]['orders'])) {
                     $this->timeframe[$id]['orders'] = false;
@@ -261,7 +300,6 @@ class sales_report2 extends base
                 if (empty($this->timeframe[$id]['products'])) {
                     $this->timeframe[$id]['products'] = false;
                 }
-                $sales->MoveNext();
             }
             // calculate the total for the timeframe
             $this->timeframe[$id]['total']['grand'] = $grand_total;
@@ -303,7 +341,7 @@ class sales_report2 extends base
     // build_timeframe().  It calls build_li_orders() and
     // build_li_products() as needed.
     //
-    function build_li_totals($oID)
+    protected function build_li_totals($oID)
     {
         global $db, $currencies;
 
@@ -344,19 +382,19 @@ class sales_report2 extends base
         $order_gc_sold = 0;
         $order_gc_used = 0;
 
-        while (!$products->EOF) {
+        foreach ($products as $next_product) {
             // assign key values to shorter variables for clarity
-            $pID = $products->fields['products_id'];
-            $final_price = $products->fields['final_price'];
-            $quantity = $products->fields['products_quantity'];
-            $tax = $products->fields['products_tax'];
-            $onetime_charges = $products->fields['onetime_charges'];
-            $model = zen_db_output($products->fields['products_model']);
+            $pID = $next_product['products_id'];
+            $final_price = $next_product['final_price'];
+            $quantity = $next_product['products_quantity'];
+            $tax = $next_product['products_tax'];
+            $onetime_charges = $next_product['onetime_charges'];
+            $model = zen_output_string_protected($next_product['products_model']);
 
             // do the math
 
             // gift certificates aren't products, so we must separate those out
-            if (substr($model, 0, 4) == 'GIFT') {
+            if (strpos($model, 'GIFT') === 0) {
                 $order_gc_sold += ($final_price * $quantity);
                 $this->timeframe[$id]['total']['gc_sold'] += ($final_price * $quantity);
                 $this->build_li_orders($oID, 'gc_sold', $final_price * $quantity);
@@ -380,7 +418,7 @@ class sales_report2 extends base
 
                 // Calculate the subtotal inc tax in the same way that the order class does
                 $product_price_inc_tax = (zen_add_tax($final_price, $tax) * $quantity) + zen_add_tax($onetime_charges, $tax);
-                $product_price_exc_tax = (DISPLAY_PRICE_WITH_TAX_ADMIN == 'true') ? ($product_price_inc_tax - $product_tax) : $product_price_inc_tax;
+                $product_price_exc_tax = (DISPLAY_PRICE_WITH_TAX_ADMIN === 'true') ? ($product_price_inc_tax - $product_tax) : $product_price_inc_tax;
                 $order_goods += $product_price_exc_tax;
 
                 $this->timeframe[$id]['total']['goods'] += $product_price_exc_tax;
@@ -404,24 +442,22 @@ class sales_report2 extends base
             }
 
             // build product line items (if requested)
-            if ($this->detail_level == 'product' || $this->detail_level == 'matrix') {
+            if ($this->detail_level === 'product' || $this->detail_level === 'matrix') {
                 // build array of product info so the function already has what it needs, avoiding another query
                 $product_tax = zen_calculate_tax($onetime_charges, $tax) + zen_calculate_tax($final_price * $quantity, $tax);
                 // get product's attributes to display under product name
-                $products_name_with_attributes = $products->fields['products_name'] . '<br>';
+                $products_name_with_attributes = $next_product['products_name'] . '<br>';
                 $products_attributes = [];
                 $products_attributes_display = '';
                 $attributes_select = $db->Execute(
-                    "SELECT products_options_id, products_options_values_id, products_options, products_options_values, options_values_price, price_prefix, product_attribute_is_free
+                    "SELECT products_options_id, products_options_values_id, products_options, products_options_values
                        FROM " . TABLE_ORDERS_PRODUCTS_ATTRIBUTES . "
                       WHERE orders_id = " . (int)$oID . "
-                        AND orders_products_id = " . (int)$products->fields['orders_products_id']
+                        AND orders_products_id = " . (int)$next_product['orders_products_id']
                 );
-                while( !$attributes_select->EOF ){
-                    //$products_name_with_attributes .= '<small> - ' . $attributes_select->fields['products_options'] . ': ' . $attributes_select->fields['products_options_values'] . '</small><br>';
-                    $products_attributes_display .= '<small> - ' . $attributes_select->fields['products_options'] . ': ' . $attributes_select->fields['products_options_values'] . '</small><br>';
-                    $products_attributes[$attributes_select->fields['products_options_id']] = $attributes_select->fields['products_options_values_id'];
-                    $attributes_select->MoveNext();
+                foreach ($attributes_select as $next_attribute) {
+                    $products_attributes_display .= '<small> - ' . $next_attribute['products_options'] . ': ' . $next_attribute['products_options_values'] . '</small><br>';
+                    $products_attributes[$next_attribute['products_options_id']] = $next_attribute['products_options_values_id'];
                 }
                 // unique id for product with attributes
                 $uprid = zen_get_uprid($pID, $products_attributes);
@@ -432,7 +468,7 @@ class sales_report2 extends base
                     'name' => $products_name_with_attributes,
                     'attributes' => $products_attributes_display,
                     'model' => $model,
-                    'base_price' => $products->fields['products_price'],
+                    'base_price' => $next_product['products_price'],
                     'final_price' => $final_price,
                     'quantity' => $quantity,
                     'tax' => $product_tax,
@@ -441,7 +477,6 @@ class sales_report2 extends base
                 ];
                 $this->build_li_products($this_product);
             }
-            $products->MoveNext();
         }
 
         // pull shipping, discounts, tax, and gift certificates used from orders_total table
@@ -450,9 +485,9 @@ class sales_report2 extends base
                FROM " . TABLE_ORDERS_TOTAL . " 
               WHERE orders_id = $oID"
         );
-        while (!$totals->EOF) {
-            $class = $totals->fields['class'];
-            $value = $totals->fields['value'];
+        foreach ($totals as $next_total) {
+            $class = $next_total['class'];
+            $value = $next_total['value'];
             switch ($class) {
                 case 'ot_total':
                 case 'ot_subtotal':
@@ -535,7 +570,6 @@ class sales_report2 extends base
                     }
                     break;
             }
-            $totals->MoveNext();
         }
 
         // we want to count an order if it has a value in any category
@@ -565,7 +599,7 @@ class sales_report2 extends base
                         $order_total_validation = 'VALID';
                     }
                     $this->build_li_orders($oID, 'order_total_validation', $order_total_validation);
-                } 
+                }
             }
         }
         return $order_total;
@@ -577,7 +611,7 @@ class sales_report2 extends base
     // display order line items, the value is added to the
     // corresponding 'orders' array.
     //
-    function build_li_orders($oID, $field, $value)
+    protected function build_li_orders($oID, $field, $value)
     {
         $id = $this->timeframe_id;
         // first check to see if we even need to do anything
@@ -621,8 +655,8 @@ class sales_report2 extends base
 
                 $pieces = explode(' ', $c_data->fields['customers_name']);
                 $firstname = array_shift($pieces);
-                $this->timeframe[$id]['orders'][$oID]['first_name'] = zen_db_output($firstname);
-                $this->timeframe[$id]['orders'][$oID]['last_name'] = zen_db_output(implode(' ', $pieces));
+                $this->timeframe[$id]['orders'][$oID]['first_name'] = zen_output_string_protected($firstname);
+                $this->timeframe[$id]['orders'][$oID]['last_name'] = zen_output_string_protected(implode(' ', $pieces));
                 $this->timeframe[$id]['orders'][$oID]['country'] = $c_data->fields['delivery_country'];
                 $this->timeframe[$id]['orders'][$oID]['state'] = $c_data->fields['delivery_state'];
             }
@@ -642,7 +676,7 @@ class sales_report2 extends base
     // once and build/increment the product array per product
     // (i.e. products are already line items, orders are not).
     //
-    function build_li_products($product)
+    protected function build_li_products($product)
     {
         $id = $this->timeframe_id;
         $pID = $product['uprid'];
@@ -692,7 +726,7 @@ class sales_report2 extends base
     // report a snap, since we can just tack it on after
     // building all the data arrays!
     //
-    function build_matrix()
+    protected function build_matrix()
     {
         for ($i = 0, $n = count($this->timeframe); $i < $n; $i++) {
             // skip the current timeframe if there isn't any data
@@ -923,7 +957,7 @@ class sales_report2 extends base
     // but we separate it out for the sake of code clarity and
     // to allow for some differences between the 2 outputs.
     //
-    function output_csv($csv_header)
+    public function output_csv($csv_header)
     {
         $filename = CSV_FILENAME_PREFIX . date('Ymd', $this->sd_raw) . "-" . date('Ymd', $this->ed_raw);
         if (preg_match('/MSIE/', $_SERVER['HTTP_USER_AGENT'])) {
@@ -987,7 +1021,7 @@ class sales_report2 extends base
                     }
                     if ($display_tax) {
                         $line[] = TABLE_HEADING_TOTAL;
-                    }  
+                    }
                     $line[] = TABLE_HEADING_PRODUCT_TOTAL;
                     break;
                 default:

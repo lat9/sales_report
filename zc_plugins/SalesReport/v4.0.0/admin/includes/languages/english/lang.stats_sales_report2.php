@@ -109,7 +109,7 @@ $defines = [
     ** LANGUAGE DEFINES
     */
     // Search menu heading
-    'PAGE_HEADING' => 'Sales ReportI I',
+    'PAGE_HEADING' => 'Sales Report II',
     'HEADING_TITLE_SEARCH' => '1. Gather &amp; Filter Data',
     'HEADING_TITLE_SORT' => '2. Sort &amp; Specify Results',
     'HEADING_TITLE_PROCESS' => '3. Generate Report',
