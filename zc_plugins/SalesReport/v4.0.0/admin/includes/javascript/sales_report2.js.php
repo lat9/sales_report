@@ -13,7 +13,7 @@
  * @copyright  Portions Copyright 2003 osCommerce
  * @license    http://www.gnu.org/copyleft/gpl.html   GNU Public License V2.0
  *  
- * author Czech translation :  Josef Zahradník
+ * author Czech translation :  Josef ZahradnÃ­k
  * web:                        www.magic-shop.cz   
  */
 
