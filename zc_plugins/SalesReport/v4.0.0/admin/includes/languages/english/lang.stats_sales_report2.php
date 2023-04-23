@@ -259,12 +259,10 @@ $defines = [
     'ALERT_MSG_START' => 'There are one or more errors with your selections:',
     'ALERT_DATE_INVALID_LENGTH' => '> Dates must be 10 characters in length: ',
     'ALERT_DATE_INVALID' => '> This is not a valid date: ',
-    'ALERT_CSV_CONFLICT' => '> CSV output is not available for ' . SELECT_DETAIL_MATRIX . ' display.',
     'ALERT_MSG_FINISH' => 'Please correct the issue(s) and resubmit your search.',
 
     // Other text defines
     'ERROR_MISSING_REQ_INFO' => 'Error: Required fields are empty',
-    'ERROR_CSV_CONFLICT' => 'CSV output is not available for <em>' . SELECT_DETAIL_MATRIX . '</em> display; please re-select the report options.',
     'ALT_TEXT_SORT_ASC' => 'Re-sort in ASCENDING order',
     'ALT_TEXT_SORT_DESC' => 'Re-sort in DESCENDING order',
     'TEXT_REPORT_TIMESTAMP' => 'Report Time: ',
@@ -275,11 +273,19 @@ $defines = [
     'TEXT_SAME' => '| (same)',
     'TEXT_SAME_ONE' => '| --',
     'TEXT_PRINT_FORMAT' => 'display report in print format',
-    'TEXT_PRINT_FORMAT_TITLE' => 'TIP: click \'' . PAGE_HEADING . '\' to return to display view',
     'TEXT_NO_DATA' => '-- NO ORDERS IN TIMEFRAME --',
 
     // Buttons
     'BUTTON_TIMEFRAME_PRESET' => 'Choose Preset',
     'BUTTON_TIMEFRAME_CUSTOM' => 'Choose Custom',
 ];
+
+// -----
+// Some of the language definitions reuse the main definitions; add them separately since
+// they're not defined at this point.
+//
+$defines['ALERT_CSV_CONFLICT'] = '> CSV output is not available for ' . $defines['SELECT_DETAIL_MATRIX'] . ' display.';
+$defines['ERROR_CSV_CONFLICT'] = 'CSV output is not available for <em>' . $defines['SELECT_DETAIL_MATRIX'] . '</em> display; please re-select the report options.';
+$defines['TEXT_PRINT_FORMAT_TITLE'] = 'TIP: click \'' . $defines['PAGE_HEADING'] . '\' to return to display view';
+
 return $defines;
