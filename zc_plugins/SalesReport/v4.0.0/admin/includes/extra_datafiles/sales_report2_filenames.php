@@ -17,4 +17,4 @@
 //////////////////////////////////////////////////////////
 // $Id: sales_report_filenames.php 93 2006-07-24 13:32:02Z BlindSide $
 */
-define('FILENAME_STATS_SALES_REPORT', 'stats_sales_report');
+define('FILENAME_STATS_SALES_REPORT2', 'stats_sales_report2');
