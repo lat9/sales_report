@@ -1,6 +1,6 @@
 <?php
 /**
- * SALES REPORT 3.3.0
+ * Sales Report II, v4.0.0
  *
  * All the javascript code specific to the Sales Report resides in this file. Covers the reports
  * on-screen dynamic abilities and pre-launch form checking. 
@@ -14,11 +14,10 @@
  * @license    http://www.gnu.org/copyleft/gpl.html   GNU Public License V2.0
  *  
  * author Czech translation :  Josef Zahradník
- * web:                        www.magic-shop.cz   
+ * web:                        www.magic-shop.cz
  */
-
 ?>
-<script><!--
+<script>
 // -----
 // Main processing section, starts when the browser has finished and the page is "ready" ...
 //
@@ -31,11 +30,12 @@ $(document).ready(function(){
     {
         switch ($('#detail_level').val()) {
             case 'order':
+                $('#li-sort-a-product option, #li-sort-b-product option').prop('disabled', true);
                 $('#li-sort-title-product, #li-sort-a-product, #li-sort-b-product').hide();
                 $('#li-sort-title-order, #li-sort-a-order, #li-sort-b-order').show();
                 $('#order-total-validation').srVisible();
-                $('#li-sort-a-product, #li-sort-b-product').prop('disabled', true);
-                $('#li-sort-a-order, #li-sort-b-order').prop('disabled', false);
+                
+                $('#li-sort-a-order option, #li-sort-b-order option').prop('disabled', false);
                 $('#div_li_table_a :input, #div_li_table_b :input').prop('disabled', false);
                 $('#div_li_table_a').srVisible();
                 $('#div_li_table_b').srVisible();
@@ -44,8 +44,8 @@ $(document).ready(function(){
                 $('#li-sort-title-order, #li-sort-a-order, #li-sort-b-order').hide();
                 $('#order-total-validation').srInvisible();
                 $('#li-sort-title-product, #li-sort-a-product, #li-sort-b-product').show();
-                $('#li-sort-a-product, #li-sort-b-product').prop('disabled', false);
-                $('#li-sort-a-order, #li-sort-b-order').prop('disabled', true);
+                $('#li-sort-a-product option, #li-sort-b-product option').prop('disabled', false);
+                $('#li-sort-a-order option, #li-sort-b-order option').prop('disabled', true);
                 $('#div_li_table_a :input, #div_li_table_b :input').prop('disabled', false);
                 $('#div_li_table_a').srVisible();
                 $('#div_li_table_b').srVisible();
@@ -56,7 +56,7 @@ $(document).ready(function(){
                 break;
         }
     }
-    
+
     // -----
     // Common (onload and onchange) function to "manage" the print-/csv-specific settings.
     //
@@ -76,7 +76,7 @@ $(document).ready(function(){
                 break;
         }
     }
-    
+
     // -----
     // jQuery function overrides to enable 'easy' setting of an element's visibility.
     //
@@ -88,7 +88,7 @@ $(document).ready(function(){
             return this.css("visibility", "visible");
         };
     })(jQuery);
-    
+
     // -----
     // On initial entry, see which options have been chosen and adjust the to-be-displayed
     // portions accordingly.
@@ -98,24 +98,24 @@ $(document).ready(function(){
     } else {
         $('#tbl_date_preset').hide();
     }
-    
-    if ($('input[name=date_target]:checked').val() == 'purchased') {
+
+    if ($('input[name=date_target]:checked').val() === 'purchased') {
         $('#td_date_status').hide();
     } else {
         $('#td_date_status').show();
     }
-    
+
     if (!$('#do-prod-inc').prop('checked')) {
         $('#td_prod_includes').hide();
     }
-    
+
     if (!$('#do-cust-inc').prop('checked')) {
         $('#td_cust_includes').hide();
     }
-    
+
     updateDetailLevelSorts();
     updatePrintCsvSelections();
-    
+
     // -----
     // Start on click/change functions ...
     //
@@ -124,21 +124,21 @@ $(document).ready(function(){
         $('#tbl_date_preset').hide();
         $('#date-custom').val('1');
     });
-    
+
     $('#choose-preset').on('click', function(){
         $('#tbl_date_custom').hide();
         $('#tbl_date_preset').show();
         $('#date-custom').val('0');
     });
-    
+
     $('input[name=date_target]').on('change', function(){
-        if (this.value == 'purchased') {
+        if (this.value === 'purchased') {
             $('#td_date_status').hide();
         } else {
             $('#td_date_status').show();
         }
     });
-    
+
     $('#do-prod-inc').on('change', function(){
         if (this.checked) {
             $('#td_prod_includes').show();
@@ -146,7 +146,7 @@ $(document).ready(function(){
             $('#td_prod_includes').hide();
         }
     });
-    
+
     $('#do-cust-inc').on('change', function(){
         if (this.checked) {
             $('#td_cust_includes').show();
@@ -154,15 +154,15 @@ $(document).ready(function(){
             $('#td_cust_includes').hide();
         }
     });
-    
+
     $('#detail_level').on('change', function(){
         updateDetailLevelSorts();
     });
-    
+
     $('#output-format').on('change', function(){
         updatePrintCsvSelections();
     });
-    
+
     function isDate(day, month, year) {
         var today = new Date();
 
@@ -176,7 +176,7 @@ $(document).ready(function(){
         var test = new Date(year, month, day);
         return (year == test.getFullYear() && month == test.getMonth() && day == test.getDate());
     }
-    
+
     $('#btn-submit').on('click', function(){
         var messages = '';
         if ($('#date-custom').val() == '1') {
@@ -192,17 +192,17 @@ $(document).ready(function(){
                 date_valid = false;
                 messages += '<?php echo ALERT_DATE_INVALID_LENGTH; ?>'+ed+'\n';
             }
-            
+
             if (date_valid) {
                 var date_delim = sd.charAt(2);
                 var sd_elements = sd.split(date_delim);
                 var ed_elements = ed.split(date_delim);
 <?php
-$us_date_format = (strtolower(DATE_FORMAT) == 'm/d/y');
+$us_date_format = (strtolower(DATE_FORMAT) === 'm/d/y');
 ?>
                 var month_index = <?php echo ($us_date_format) ? 0 : 1; ?>;
                 var day_index = <?php echo ($us_date_format) ? 1 : 0; ?>;
-                
+
                 if (sd_elements.length != 3 || !isDate(sd_elements[day_index], sd_elements[month_index], sd_elements[2])) {
                     date_valid = false;
                     messages += '<?php echo ALERT_DATE_INVALID; ?>'+sd+'\n';
@@ -213,12 +213,12 @@ $us_date_format = (strtolower(DATE_FORMAT) == 'm/d/y');
                 }
             }
         }
-        
-        if ($('#detail_level').val() == 'matrix' && $('#output-format').val() == 'csv') {
+
+        if ($('#detail_level').val() === 'matrix' && $('#output-format').val() === 'csv') {
             messages += '<?php echo ALERT_CSV_CONFLICT; ?>'+'\n';
         }
-            
-        if (messages == '') {
+
+        if (messages === '') {
             if ($('#new-window').prop('checked')) {
                 $('form[name=search]').attr('target', '_blank');
             }
@@ -228,4 +228,4 @@ $us_date_format = (strtolower(DATE_FORMAT) == 'm/d/y');
         }
     });
 });
---></script>
+</script>
