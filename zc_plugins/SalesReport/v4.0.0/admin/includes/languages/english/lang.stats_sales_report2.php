@@ -240,7 +240,7 @@ $defines = [
     'CSV_HEADING_FIRST_NAME' => 'First Name',
     'CSV_HEADING_COUNTRY' => 'Country',
     'CSV_HEADING_STATE' => 'State',
-    'CSV_SEPARATOR' => ' =>',
+    'CSV_SEPARATOR' => ',',
     'CSV_NEWLINE' => "\n",
 
     // Print Format
