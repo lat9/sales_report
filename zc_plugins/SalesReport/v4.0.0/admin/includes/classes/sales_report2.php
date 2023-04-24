@@ -77,7 +77,19 @@ class sales_report2 extends base
         $timeframe_id,
         $timeframe_sort;
 
-    function __construct($parms)
+    // -----
+    // Static methods used by the report to display the up- and down-arrow icons.
+    //
+    public static function getUpArrowIcon()
+    {
+        return '<i class="fa fa-2x fa-caret-up" aria-hidden="true"></i>';
+    }
+    public static function getDownArrowIcon()
+    {
+        return '<i class="fa fa-2x fa-caret-down" aria-hidden="true"></i>';
+    }
+
+    public function __construct($parms)
     {
         global $db;
 
