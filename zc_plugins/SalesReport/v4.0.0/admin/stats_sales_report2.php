@@ -979,16 +979,14 @@ if ($output_format === 'print' || $output_format === 'display') {
 ?>
                 </tr>
 <?php
-        } elseif (DISPLAY_EMPTY_TIMEFRAMES) {
-        // don't display anything
-        } else {
+        } elseif (DISPLAY_EMPTY_TIMEFRAMES !== false) {
             // display the "no data" line
             $colspan = 12;
-            if ($display_tax) {
+            if ($display_tax === true) {
                 $colspan += 2;
             }
-            if ($order_total_validation) {
-                $colspan += 1;
+            if ($order_total_validation === true) {
+                $colspan++;
             }
 ?>
                 <tr class="totalRow">
