@@ -1571,7 +1571,7 @@ if ($output_format === 'print' || $output_format === 'display') {
                                 <?php echo $pID; ?>
                             </td>
                             <td class="lineItemContent">
-                                <?php echo $p_data['name']; ?>
+                                <?php echo $p_data['name'] . $p_data['attributes']; ?>
                             </td>
                             <td class="lineItemContent text-center">
                                 <?php echo $timeframe['matrix']['product_spread'][$pID]; ?>

@@ -448,17 +448,8 @@ class sales_report2 extends base
                 $this->build_li_orders($oID, 'num_products', $quantity);
             }
 
-            // check to see if product is unique in this timeframe
-            // add to 'diff_products' array if so
-            if (!in_array($pID, $this->timeframe[$id]['total']['diff_products'])) {
-                $this->timeframe[$id]['total']['diff_products'][] = $pID;
-            }
-
-            if (empty($this->timeframe[$id]['orders'][$oID]['diff_products']) || !in_array($pID, $this->timeframe[$id]['orders'][$oID]['diff_products'])) {
-                $this->timeframe[$id]['orders'][$oID]['diff_products'][] = $pID;
-            }
-
             // build product line items (if requested)
+            $uprid = $pID;
             if ($this->detail_level === 'product' || $this->detail_level === 'matrix') {
                 // build array of product info so the function already has what it needs, avoiding another query
                 $product_tax = zen_calculate_tax($onetime_charges, $tax) + zen_calculate_tax($final_price * $quantity, $tax);
@@ -476,6 +467,7 @@ class sales_report2 extends base
                     $products_attributes_display .= '<small> - ' . $next_attribute['products_options'] . ': ' . $next_attribute['products_options_values'] . '</small><br>';
                     $products_attributes[$next_attribute['products_options_id']] = $next_attribute['products_options_values_id'];
                 }
+
                 // unique id for product with attributes
                 $uprid = zen_get_uprid($pID, $products_attributes);
 
@@ -494,12 +486,22 @@ class sales_report2 extends base
                 ];
                 $this->build_li_products($this_product);
             }
+
+            // check to see if product is unique in this timeframe
+            // add to 'diff_products' array if so
+            if (!in_array($uprid, $this->timeframe[$id]['total']['diff_products'])) {
+                $this->timeframe[$id]['total']['diff_products'][] = $uprid;
+            }
+
+            if (empty($this->timeframe[$id]['orders'][$oID]['diff_products']) || !in_array($uprid, $this->timeframe[$id]['orders'][$oID]['diff_products'])) {
+                $this->timeframe[$id]['orders'][$oID]['diff_products'][] = $uprid;
+            }
         }
 
         // pull shipping, discounts, tax, and gift certificates used from orders_total table
         $totals = $db->Execute(
-            "SELECT * 
-               FROM " . TABLE_ORDERS_TOTAL . " 
+            "SELECT `class`, `value`
+               FROM " . TABLE_ORDERS_TOTAL . "
               WHERE orders_id = $oID"
         );
         foreach ($totals as $next_total) {
