@@ -914,7 +914,7 @@ if ($output_format === 'print' || $output_format === 'display') {
         }
 
         // display the timeframe totals line, if necessary
-        if ($sr->detail_level !== 'timeframe') {
+        if ($sr->detail_level !== 'timeframe' && (isset($timeframe['total']) || DISPLAY_EMPTY_TIMEFRAMES === true)) {
 ?>
       <!--TIMEFRAME TOTAL HEADER-->
                 <tr class="totalHeadingRow">
@@ -979,7 +979,7 @@ if ($output_format === 'print' || $output_format === 'display') {
 ?>
                 </tr>
 <?php
-        } elseif (DISPLAY_EMPTY_TIMEFRAMES !== false) {
+        } elseif (DISPLAY_EMPTY_TIMEFRAMES === true) {
             // display the "no data" line
             $colspan = 12;
             if ($display_tax === true) {
