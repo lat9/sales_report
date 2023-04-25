@@ -244,7 +244,11 @@ class sales_report2 extends base
         }
 
         // build the SQL query of order numbers within the current timeframe
-        $sql = 'SELECT DISTINCT o.orders_id FROM ' . TABLE_ORDERS . ' o' . PHP_EOL;
+        $sql =
+            'SELECT DISTINCT
+                o.orders_id, o.currency, o.order_total, o.customers_id, o.customers_name, o.delivery_country, o.delivery_state,
+                o.cc_type, o.payment_method, o.payment_module_code, o.shipping_method, o.shipping_module_code' .
+             ' FROM ' . TABLE_ORDERS . ' o' . PHP_EOL;
         
         if ($this->manufacturer !== 0 || ($this->doProdInc && !empty($this->prod_includes))) {
             $sql .= ' LEFT JOIN ' . TABLE_ORDERS_PRODUCTS . ' op ON o.orders_id = op.orders_id' . PHP_EOL;
@@ -305,8 +309,7 @@ class sales_report2 extends base
                 $this->timeframe[$id]['products'] = [];
             }
             foreach ($sales as $next_sale) {
-                $oID = $next_sale['orders_id'];
-                $grand_total += $this->build_li_totals($oID);
+                $grand_total += $this->build_li_totals($next_sale);
                 if (empty($this->timeframe[$id]['orders'])) {
                     $this->timeframe[$id]['orders'] = false;
                 }
@@ -354,19 +357,18 @@ class sales_report2 extends base
     // build_timeframe().  It calls build_li_orders() and
     // build_li_products() as needed.
     //
-    protected function build_li_totals($oID)
+    protected function build_li_totals($next_sale)
     {
         global $db, $currencies;
 
         $id = $this->timeframe_id;
-        $oID = (int)$oID;
 
-        $order_info = $db->Execute(
-            "SELECT o.currency, o.currency_value, o.order_total
-               FROM " . TABLE_ORDERS . " o
-              WHERE o.orders_id = $oID
-              LIMIT 1"
-        );
+        // -----
+        // Retrieve the information for the current order.
+        //
+        $oID = $next_sale['orders_id'];
+        $sale_currency = $next_sale['currency'];
+        $sale_currency_decimal_places = $currencies->currencies[$sale_currency]['decimal_places'] ?? 2;
 
         // if we have to filter on manufacturer, the SQL is totally different
         if ($this->manufacturer !== 0) {
@@ -414,18 +416,18 @@ class sales_report2 extends base
             if (strpos($model, 'GIFT') === 0) {
                 $order_gc_sold += ($final_price * $quantity);
                 $this->timeframe[$id]['total']['gc_sold'] += ($final_price * $quantity);
-                $this->build_li_orders($oID, 'gc_sold', $final_price * $quantity);
+                $this->build_li_orders($next_sale, 'gc_sold', $final_price * $quantity);
 
                 $this->timeframe[$id]['total']['gc_sold_qty'] += $quantity;
-                $this->build_li_orders($oID, 'gc_sold_qty', $quantity);
+                $this->build_li_orders($next_sale, 'gc_sold_qty', $quantity);
 
                 $order_goods += $onetime_charges;
                 $this->timeframe[$id]['total']['goods'] += $onetime_charges;
-                $this->build_li_orders($oID, 'goods', $onetime_charges);
+                $this->build_li_orders($next_sale, 'goods', $onetime_charges);
             } else {
                 // Round up the final product price in same manner as order class - otherwise the amounts
                 // from this report will most likely not agree with the actual final order values!
-                $product_price = zen_round(($final_price * $quantity) + $onetime_charges, $currencies->currencies[$order_info->fields['currency']]['decimal_places']);
+                $product_price = zen_round(($final_price * $quantity) + $onetime_charges, $sale_currency_decimal_places);
 
                 // Get the amount of tax for this product
                 $product_tax = zen_calculate_tax($onetime_charges, $tax);
@@ -439,13 +441,13 @@ class sales_report2 extends base
                 $order_goods += $product_price_exc_tax;
 
                 $this->timeframe[$id]['total']['goods'] += $product_price_exc_tax;
-                $this->build_li_orders($oID, 'goods', $product_price_exc_tax);
+                $this->build_li_orders($next_sale, 'goods', $product_price_exc_tax);
  
                 $this->timeframe[$id]['total']['goods_tax'] += $product_tax;
-                $this->build_li_orders($oID, 'goods_tax', $product_tax );
+                $this->build_li_orders($next_sale, 'goods_tax', $product_tax );
 
                 $this->timeframe[$id]['total']['num_products'] += $quantity;
-                $this->build_li_orders($oID, 'num_products', $quantity);
+                $this->build_li_orders($next_sale, 'num_products', $quantity);
             }
 
             // build product line items (if requested)
@@ -460,8 +462,8 @@ class sales_report2 extends base
                 $attributes_select = $db->Execute(
                     "SELECT products_options_id, products_options_values_id, products_options, products_options_values
                        FROM " . TABLE_ORDERS_PRODUCTS_ATTRIBUTES . "
-                      WHERE orders_id = " . (int)$oID . "
-                        AND orders_products_id = " . (int)$next_product['orders_products_id']
+                      WHERE orders_id = $oID
+                        AND orders_products_id = {$next_product['orders_products_id']}"
                 );
                 foreach ($attributes_select as $next_attribute) {
                     $products_attributes_display .= '<small> - ' . $next_attribute['products_options'] . ': ' . $next_attribute['products_options_values'] . '</small><br>';
@@ -515,10 +517,10 @@ class sales_report2 extends base
                 case 'ot_gv':
                     $order_gc_used += $value;
                     $this->timeframe[$id]['total']['gc_used'] += $value;
-                    $this->build_li_orders($oID, 'gc_used', $value);
+                    $this->build_li_orders($next_sale, 'gc_used', $value);
 
                     $this->timeframe[$id]['total']['gc_used_qty']++;
-                    $this->build_li_orders($oID, 'gc_used_qty', 1);
+                    $this->build_li_orders($next_sale, 'gc_used_qty', 1);
                     break;
 
                 case 'ot_coupon':
@@ -541,9 +543,9 @@ class sales_report2 extends base
                 case 'ot_rewards':
                     $order_discount += $value;
                     $this->timeframe[$id]['total']['discount'] += $value;
-                    $this->build_li_orders($oID, 'discount', $value);
+                    $this->build_li_orders($next_sale, 'discount', $value);
                     $this->timeframe[$id]['total']['discount_qty']++;
-                    $this->build_li_orders($oID, 'discount_qty', 1);
+                    $this->build_li_orders($next_sale, 'discount_qty', 1);
                     break;
 
                 case 'ot_roundup':
@@ -551,30 +553,30 @@ class sales_report2 extends base
                 case 'ot_loworderfee':
                     $order_discount -= $value;
                     $this->timeframe[$id]['total']['discount'] -= $value;
-                    $this->build_li_orders($oID, 'discount', $value);
+                    $this->build_li_orders($next_sale, 'discount', $value);
                     $this->timeframe[$id]['total']['discount_qty']++;
-                    $this->build_li_orders($oID, 'discount_qty', 1);
+                    $this->build_li_orders($next_sale, 'discount_qty', 1);
                     break;
 
                 case 'ot_cashback':
                     $order_discount += $value;
                     $this->timeframe[$id]['total']['discount'] += $value;
-                    $this->build_li_orders($oID, 'discount', $value);
+                    $this->build_li_orders($next_sale, 'discount', $value);
 
                     $this->timeframe[$id]['total']['discount_qty']++;
-                    $this->build_li_orders($oID, 'discount_qty', 1);
+                    $this->build_li_orders($next_sale, 'discount_qty', 1);
                     break;
 
                 case 'ot_tax':
                     $order_recorded_tax += $value;
                     $this->timeframe[$id]['total']['order_recorded_tax'] += $value;
-                    $this->build_li_orders($oID, 'order_recorded_tax', $value);
+                    $this->build_li_orders($next_sale, 'order_recorded_tax', $value);
                     break;
 
                 case 'ot_shipping':
                     $order_shipping += $value;
                     $this->timeframe[$id]['total']['shipping'] += $value;
-                    $this->build_li_orders($oID, 'shipping', $value);
+                    $this->build_li_orders($next_sale, 'shipping', $value);
                     break;
 
                 default:
@@ -582,10 +584,10 @@ class sales_report2 extends base
                         // this allows for a custom discount, a la Super Orders
                         $order_discount += abs($value);
                         $this->timeframe[$id]['total']['discount'] += abs($value);
-                        $this->build_li_orders($oID, 'discount', abs($value) );
+                        $this->build_li_orders($next_sale, 'discount', abs($value) );
 
                         $this->timeframe[$id]['total']['discount_qty']++;
-                        $this->build_li_orders($oID, 'discount_qty', 1);
+                        $this->build_li_orders($next_sale, 'discount_qty', 1);
                     }
                     break;
             }
@@ -595,29 +597,29 @@ class sales_report2 extends base
         $order_values = ($order_goods + $order_goods_tax + $order_shipping + $order_gc_sold + $order_discount + $order_gc_used);
         if ($order_values == 0) {
             $order_total = 0;
-            $this->build_li_orders($oID, 'has_no_value', true);
+            $this->build_li_orders($next_sale, 'has_no_value', true);
         } else {
             $this->timeframe[$id]['total']['num_orders']++;
-            $this->build_li_orders($oID, 'has_no_value', false);
+            $this->build_li_orders($next_sale, 'has_no_value', false);
 
             // add up stored values for order grand total
             // (goods + tax + shipping + gc_sold) - (discount + gc_used)
             $order_total = ($order_goods + $order_recorded_tax + $order_shipping + $order_gc_sold) - ($order_discount + $order_gc_used);
 
             if ($this->detail_level === 'order' || $this->detail_level === 'matrix') {
-                $this->build_li_orders($oID, 'grand', $order_total);
+                $this->build_li_orders($next_sale, 'grand', $order_total);
           
                 // Build order total verification column if requested
                 if ($this->order_total_validation === true) {
                     // Get the recorded order total
-                    $recorded_order_total = $order_info->fields['order_total'];
+                    $recorded_order_total = $next_sale['order_total'];
 
                     if (zen_round($order_total, 2) != $recorded_order_total) {
                         $order_total_validation = "DON'T MATCH!<br>$order_total : $recorded_order_total";
                     } else {
                         $order_total_validation = 'VALID';
                     }
-                    $this->build_li_orders($oID, 'order_total_validation', $order_total_validation);
+                    $this->build_li_orders($next_sale, 'order_total_validation', $order_total_validation);
                 }
             }
         }
@@ -630,11 +632,13 @@ class sales_report2 extends base
     // display order line items, the value is added to the
     // corresponding 'orders' array.
     //
-    protected function build_li_orders($oID, $field, $value)
+    protected function build_li_orders($next_sale, $field, $value)
     {
-        $id = $this->timeframe_id;
         // first check to see if we even need to do anything
         if ($this->detail_level === 'order' || $this->detail_level === 'matrix') {
+            $id = $this->timeframe_id;
+            $oID = $next_sale['orders_id'];
+
             // create the array if it doesn't already exist
             if (!isset($this->timeframe[$id]['orders'][$oID]) ) {
                 $this->timeframe[$id]['orders'][$oID] = [
@@ -663,21 +667,25 @@ class sales_report2 extends base
                 // appended the customer's last name(s) to their first name(s), so the 'unsplitting'
                 // won't work for some customers' names, but will work for the majority.
                 //
-                $c_data = $GLOBALS['db']->Execute(
-                    "SELECT customers_id, customers_name, 
-                            delivery_country, delivery_state 
-                       FROM " . TABLE_ORDERS . "
-                      WHERE orders_id = $oID
-                      LIMIT 1"
-                );
-                $this->timeframe[$id]['orders'][$oID]['customers_id'] = $c_data->fields['customers_id'];
+                $this->timeframe[$id]['orders'][$oID]['customers_id'] = $next_sale['customers_id'];
 
-                $pieces = explode(' ', $c_data->fields['customers_name']);
+                $pieces = explode(' ', $next_sale['customers_name']);
                 $firstname = array_shift($pieces);
                 $this->timeframe[$id]['orders'][$oID]['first_name'] = zen_output_string_protected($firstname);
                 $this->timeframe[$id]['orders'][$oID]['last_name'] = zen_output_string_protected(implode(' ', $pieces));
-                $this->timeframe[$id]['orders'][$oID]['country'] = $c_data->fields['delivery_country'];
-                $this->timeframe[$id]['orders'][$oID]['state'] = $c_data->fields['delivery_state'];
+                $this->timeframe[$id]['orders'][$oID]['country'] = $next_sale['delivery_country'];
+                $this->timeframe[$id]['orders'][$oID]['state'] = $next_sale['delivery_state'];
+
+                // -----
+                // Initialize the remaining elements of this order from the information
+                // pulled from the database.
+                //
+                $this->timeframe[$id]['orders'][$oID]['currency'] = $next_sale['currency'];
+                $this->timeframe[$id]['orders'][$oID]['cc_type'] = $next_sale['cc_type'];
+                $this->timeframe[$id]['orders'][$oID]['payment_method'] = $next_sale['payment_method'];
+                $this->timeframe[$id]['orders'][$oID]['payment_module_code'] = $next_sale['payment_module_code'];
+                $this->timeframe[$id]['orders'][$oID]['shipping_method'] = $next_sale['shipping_method'];
+                $this->timeframe[$id]['orders'][$oID]['shipping_module_code'] = $next_sale['shipping_module_code'];
             }
 
             // add the passed $value to the passed $field in the ['orders'] array
@@ -774,20 +782,13 @@ class sales_report2 extends base
 
             // gather statistics from orders array
             foreach ($this->timeframe[$i]['orders'] as $oID => $o_data) {
-                $order = $GLOBALS['db']->Execute(
-                    "SELECT cc_type, payment_method, payment_module_code, shipping_method, shipping_module_code, currency
-                       FROM " . TABLE_ORDERS . "
-                      WHERE orders_id = $oID
-                      LIMIT 1"
-                );
-
-                // place pertient data in short variables
-                $cc_type = $order->fields['cc_type'];
-                $payment_method = $order->fields['payment_method'];
-                $payment_module_code = $order->fields['payment_module_code'];
-                $shipping_method = $order->fields['shipping_method'];
-                $shipping_module_code = $order->fields['shipping_module_code'];
-                $currency = $order->fields['currency'];
+                // place pertinent data in short variables
+                $cc_type = $o_data['cc_type'];
+                $payment_method = $o_data['payment_method'];
+                $payment_module_code = $o_data['payment_module_code'];
+                $shipping_method = $o_data['shipping_method'];
+                $shipping_module_code = $o_data['shipping_module_code'];
+                $currency = $o_data['currency'];
 
                 // Format shipping method to remove the data in parentheses
                 $shipping_method = explode(' (', $shipping_method, 2);
