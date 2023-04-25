@@ -17,16 +17,19 @@
 $defines = [
     //////////////////////////////////////////////////////////
     // DISPLAY EMPTY TIMEFRAME LINES
-    // Setting this define to true will disable displaying
+    // Setting this define to false will disable displaying
     // a timeframe line if that timeframe is empty.  By
     // default, an empty timeframe displays the value of the
     // define TEXT_NO_DATA.
     //
     // Be aware, if this is enabled and your search yields
     // no results at all, the screen will look as if no search
-    // was performed (which is why this is disabled by default)
+    // was performed (which is why this is enabled by default).
     //
-    'DISPLAY_EMPTY_TIMEFRAMES' => false,
+    // Note: This is a change from previous versions where false enabled
+    // the display and true disabled the display!
+    //
+    'DISPLAY_EMPTY_TIMEFRAMES' => true,
 
     //////////////////////////////////////////////////////////
     // REPORTING A SUBSET OF CUSTOMERS / PRODUCTS
