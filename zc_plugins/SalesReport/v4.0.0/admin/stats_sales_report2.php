@@ -797,7 +797,7 @@ if ($output_format === 'print' || $output_format === 'display') {
             $i = 0;
             $header_string = '';
             if ($doProdInc === true && DISPLAY_TABLE_HEADING_PRODUCTS) {
-                $include_products = explode(',', (string)$_GET['prod_includes']);
+                $include_products = explode(',', $prod_includes);
                 foreach ($include_products as $pID) {
                     if (empty((int)$pID)) {
                         continue; 
@@ -819,7 +819,7 @@ if ($output_format === 'print' || $output_format === 'display') {
             // with the actual customer fname,lname
             $i = 0;
             if ($doCustInc === true && DISPLAY_TABLE_HEADING_CUSTOMERS) {
-                $include_customers = explode(',', (string)$_GET['cust_includes']);
+                $include_customers = explode(',', $cust_includes);
                 foreach ($include_customers as $cID) {
                     if (empty((int)$cID)) {
                         continue;

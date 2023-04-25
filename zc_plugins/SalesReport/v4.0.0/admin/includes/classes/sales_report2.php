@@ -100,23 +100,23 @@ class sales_report2 extends base
         $this->date_status = $parms['date_status'];
         $this->payment_method = $parms['payment_method'];
         $this->payment_method_omit = $parms['payment_method_omit'];
-        $this->current_status = $parms['current_status'];
-        $this->excluded_status = $parms['excluded_status'];
-        $this->manufacturer = $parms['manufacturer'];
+        $this->current_status = (int)$parms['current_status'];
+        $this->excluded_status = (int)$parms['excluded_status'];
+        $this->manufacturer = (int)$parms['manufacturer'];
         $this->detail_level = $parms['detail_level'];
         $this->output_format = $parms['output_format'];
-        $this->order_total_validation = $parms['order_total_validation'];
+        $this->order_total_validation = (bool)$parms['order_total_validation'];
 
         $this->li_sort_a = $parms['li_sort_a'];
         $this->li_sort_order_a = $parms['li_sort_order_a'];
         $this->li_sort_b = $parms['li_sort_b'];
         $this->li_sort_order_b = $parms['li_sort_order_b'];
 
-        $this->doCustInc = $parms['doCustInc'];
+        $this->doCustInc = (bool)$parms['doCustInc'];
         $this->cust_includes = $parms['cust_includes'];
         $this->customer_filter = '';
 
-        $this->doProdInc = $parms['doProdInc'];
+        $this->doProdInc = (bool)$parms['doProdInc'];
         $this->prod_includes = $parms['prod_includes'];
         $this->product_filter = '';
 
@@ -175,7 +175,7 @@ class sales_report2 extends base
         // By placing it here and adding 'matrix' to the 'if' statements
         // for building order and product line items, we have all
         // the possible data at our disposal
-        if ($this->detail_level == 'matrix') {
+        if ($this->detail_level === 'matrix') {
             $this->build_matrix();
         }
     }  // END class constructor
@@ -235,53 +235,54 @@ class sales_report2 extends base
             }
         }
 
-        if ($this->doProdInc && !empty($this->prod_includes)) {
+        if ($this->doProdInc === true && !empty($this->prod_includes)) {
             $this->product_filter .= " AND op.products_id IN ({$this->prod_includes})" . PHP_EOL;
         }
 
-        if ($this->doCustInc && !empty($this->cust_includes)) {
+        if ($this->doCustInc === true && !empty($this->cust_includes)) {
             $this->customer_filter .= " AND o.customers_id IN ({$this->cust_includes})" . PHP_EOL;
         }
 
         // build the SQL query of order numbers within the current timeframe
-        $sql = "SELECT DISTINCT o.orders_id FROM " . TABLE_ORDERS . " o" . PHP_EOL;
+        $sql = 'SELECT DISTINCT o.orders_id FROM ' . TABLE_ORDERS . ' o' . PHP_EOL;
         
-        if ($this->manufacturer != 0 || ($this->doProdInc && !empty($this->prod_includes))) {
-            $sql .= " LEFT JOIN " . TABLE_ORDERS_PRODUCTS . " op ON o.orders_id = op.orders_id" . PHP_EOL;
+        if ($this->manufacturer !== 0 || ($this->doProdInc && !empty($this->prod_includes))) {
+            $sql .= ' LEFT JOIN ' . TABLE_ORDERS_PRODUCTS . ' op ON o.orders_id = op.orders_id' . PHP_EOL;
         }
 
-        if ($this->manufacturer != 0) {
-            $sql .= " LEFT JOIN " . TABLE_PRODUCTS . " p ON p.products_id = op.products_id" . PHP_EOL;
+        if ($this->manufacturer !== 0) {
+            $sql .= ' LEFT JOIN ' . TABLE_PRODUCTS . ' p ON p.products_id = op.products_id' . PHP_EOL;
         }
 
-        if ($this->date_target == 'status') {
-            $sql .= "LEFT JOIN " . TABLE_ORDERS_STATUS_HISTORY . " osh ON o.orders_id = osh.orders_id" . PHP_EOL;
-            $sql .= " WHERE osh.date_added >= '" . date("Y-m-d H:i:s", $sd) . "' AND osh.date_added < '" . date("Y-m-d H:i:s", $ed) . "'" . PHP_EOL;
-            $sql .= " AND osh.orders_status_id = {$this->date_status}" . PHP_EOL;
+        if ($this->date_target === 'status') {
+            $sql .=
+                'LEFT JOIN ' . TABLE_ORDERS_STATUS_HISTORY . ' osh ON o.orders_id = osh.orders_id' . PHP_EOL .
+                "WHERE osh.date_added >= '" . date('Y-m-d H:i:s', $sd) . "' AND osh.date_added < '" . date('Y-m-d H:i:s', $ed) . "'" . PHP_EOL .
+                "  AND osh.orders_status_id = {$this->date_status}" . PHP_EOL;
         } else {
-            $sql .= " WHERE o.date_purchased >= '" . date("Y-m-d H:i:s", $sd) . "' AND o.date_purchased < '" . date("Y-m-d H:i:s", $ed) . "'" . PHP_EOL;
+            $sql .= " WHERE o.date_purchased >= '" . date('Y-m-d H:i:s', $sd) . "' AND o.date_purchased < '" . date('Y-m-d H:i:s', $ed) . "'" . PHP_EOL;
         }
 
-        if ($this->manufacturer != 0) {
+        if ($this->manufacturer !== 0) {
             $sql .= "AND p.manufacturers_id = {$this->manufacturer}" . PHP_EOL;
         }
 
-        if ($this->payment_method) {
-            $sql .= "AND o.payment_module_code LIKE '" . $this->payment_method . "'" . PHP_EOL;
+        if ($this->payment_method !== '0') {
+            $sql .= "AND o.payment_module_code LIKE '{$this->payment_method}'" . PHP_EOL;
         }
-        if ($this->payment_method_omit) {
-            $sql .= "AND o.payment_module_code NOT LIKE '" . $this->payment_method_omit . "'" . PHP_EOL;
+        if ($this->payment_method_omit !== '0') {
+            $sql .= "AND o.payment_module_code NOT LIKE '{$this->payment_method_omit}'" . PHP_EOL;
         }
-        if ($this->current_status) {
+        if ($this->current_status !== 0) {
             $sql .= "AND o.orders_status = {$this->current_status}" . PHP_EOL;
         }
-        if ($this->excluded_status) {
+        if ($this->excluded_status !== 0) {
             $sql .= "AND o.orders_status != {$this->excluded_status}" . PHP_EOL;
         }
-        if ($this->product_filter != '') {
+        if ($this->product_filter !== '') {
             $sql .= $this->product_filter . PHP_EOL;
         }
-        if ($this->customer_filter != '') {
+        if ($this->customer_filter !== '') {
             $sql .= $this->customer_filter . PHP_EOL;
         }
         $sql .= " ORDER BY o.orders_id {$this->timeframe_sort}";
@@ -298,9 +299,9 @@ class sales_report2 extends base
             $totals = $this->initializeTotals();
             $totals['diff_products'] = [];
             $this->timeframe[$id]['total'] = $totals;
-            if ($this->detail_level == 'order') {
+            if ($this->detail_level === 'order') {
                 $this->timeframe[$id]['orders'] = [];
-            } elseif ($this->detail_level == 'product') {
+            } elseif ($this->detail_level === 'product') {
                 $this->timeframe[$id]['products'] = [];
             }
             foreach ($sales as $next_sale) {
@@ -368,17 +369,21 @@ class sales_report2 extends base
         );
 
         // if we have to filter on manufacturer, the SQL is totally different
-        if ($this->manufacturer != 0) {
+        if ($this->manufacturer !== 0) {
             $products_sql = 
-                "SELECT op.* 
+                "SELECT op.orders_products_id, op.products_id, op.products_price,
+                        op.final_price, op.products_quantity, op.products_tax,
+                        op.onetime_charges, op.products_model, op.products_name
                    FROM " . TABLE_ORDERS_PRODUCTS . " op
                         INNER JOIN " . TABLE_PRODUCTS . " p
                             ON p.products_id = op.products_id
-                  WHERE p.manufacturers_id = " . $this->manufacturer . "
+                  WHERE p.manufacturers_id = {$this->manufacturer}
                     AND op.orders_id = $oID" . $this->product_filter;
         } else {
             $products_sql = 
-                "SELECT op.* 
+                "SELECT op.orders_products_id, op.products_id, op.products_price,
+                        op.final_price, op.products_quantity, op.products_tax,
+                        op.onetime_charges, op.products_model, op.products_name
                    FROM " . TABLE_ORDERS_PRODUCTS . " op
                   WHERE op.orders_id = $oID" . $this->product_filter;
         }
@@ -597,16 +602,16 @@ class sales_report2 extends base
             // (goods + tax + shipping + gc_sold) - (discount + gc_used)
             $order_total = ($order_goods + $order_recorded_tax + $order_shipping + $order_gc_sold) - ($order_discount + $order_gc_used);
 
-            if ($this->detail_level == 'order' || $this->detail_level == 'matrix') {
+            if ($this->detail_level === 'order' || $this->detail_level === 'matrix') {
                 $this->build_li_orders($oID, 'grand', $order_total);
           
                 // Build order total verification column if requested
-                if ($this->order_total_validation) {
+                if ($this->order_total_validation === true) {
                     // Get the recorded order total
                     $recorded_order_total = $order_info->fields['order_total'];
 
                     if (zen_round($order_total, 2) != $recorded_order_total) {
-                        $order_total_validation = "DON'T MATCH!<br />$order_total : $recorded_order_total";
+                        $order_total_validation = "DON'T MATCH!<br>$order_total : $recorded_order_total";
                     } else {
                         $order_total_validation = 'VALID';
                     }
@@ -627,7 +632,7 @@ class sales_report2 extends base
     {
         $id = $this->timeframe_id;
         // first check to see if we even need to do anything
-        if ($this->detail_level == 'order' || $this->detail_level == 'matrix') {
+        if ($this->detail_level === 'order' || $this->detail_level === 'matrix') {
             // create the array if it doesn't already exist
             if (!isset($this->timeframe[$id]['orders'][$oID]) ) {
                 $this->timeframe[$id]['orders'][$oID] = [
@@ -674,7 +679,7 @@ class sales_report2 extends base
             }
 
             // add the passed $value to the passed $field in the ['orders'] array
-            if ($field != 'order_total_validation') {
+            if ($field !== 'order_total_validation') {
                 $this->timeframe[$id]['orders'][$oID][$field] += $value;
             } else {
                 $this->timeframe[$id]['orders'][$oID][$field] = $value;
@@ -713,7 +718,7 @@ class sales_report2 extends base
             // get the manufacturers_id from `products` table
             if (DISPLAY_MANUFACTURER) {
                 $manufacturer_name = zen_get_products_manufacturers_name($pID);
-                if ($manufacturer_name == '') {
+                if ($manufacturer_name === '') {
                     $manufacturer_name = TEXT_NONE;
                 }
                 $this->timeframe[$id]['products'][$pID]['manufacturer'] = $manufacturer_name;
@@ -768,9 +773,9 @@ class sales_report2 extends base
             // gather statistics from orders array
             foreach ($this->timeframe[$i]['orders'] as $oID => $o_data) {
                 $order = $GLOBALS['db']->Execute(
-                    "SELECT * 
-                       FROM " . TABLE_ORDERS . " 
-                      WHERE orders_id = $oID 
+                    "SELECT cc_type, payment_method, payment_module_code, shipping_method, shipping_module_code, currency
+                       FROM " . TABLE_ORDERS . "
+                      WHERE orders_id = $oID
                       LIMIT 1"
                 );
 
@@ -790,15 +795,13 @@ class sales_report2 extends base
                 $cID = $o_data['customers_id'];
                 $new_customer = true;
                 foreach ($this->timeframe[$i]['matrix']['diff_customers'] as $this_cID => $c_data) {
-                    $c_data =& $this->timeframe[$i]['matrix']['diff_customers'][$this_cID];
-                    if ($cID == $this_cID) {
-                        $c_data['num_orders']++;
+                    if ($cID === $this_cID) {
+                        $this->timeframe[$i]['matrix']['diff_customers'][$this_cID]['num_orders']++;
                         $new_customer = false;
                         break;
                     }
-                    unset($c_data);
                 }
-                if ($new_customer) {
+                if ($new_customer === true) {
                     $this->timeframe[$i]['matrix']['diff_customers'][$cID] = [
                         'first_name' => $o_data['first_name'],
                         'last_name' => $o_data['last_name'],
@@ -809,16 +812,13 @@ class sales_report2 extends base
                 // Payment methods used, with count
                 $new_payment_method = true;
                 foreach ($this->timeframe[$i]['matrix']['payment_methods'] as $key => $value) {
-                    $value =& $this->timeframe[$i]['matrix']['payment_methods'][$key];
-                    if ($value['module_code'] == $payment_module_code) {
-                        $value['count']++;
+                    if ($this->timeframe[$i]['matrix']['payment_methods'][$key]['module_code'] === $payment_module_code) {
+                        $this->timeframe[$i]['matrix']['payment_methods'][$key]['count']++;
                         $new_payment_method = false;
-                        unset($value);
                         break;
                     }
-                    unset($value);
                 }
-                if ($new_payment_method) {
+                if ($new_payment_method === true) {
                     $this->timeframe[$i]['matrix']['payment_methods'][] = [
                         'method' => $payment_method,
                         'module_code' => $payment_module_code,
@@ -829,16 +829,13 @@ class sales_report2 extends base
                 // Shipping methods used, with count
                 $new_shipping_method = true;
                 foreach ($this->timeframe[$i]['matrix']['shipping_methods'] as $key => $value) {
-                    $value =& $this->timeframe[$i]['matrix']['shipping_methods'][$key];
-                    if ($value['module_code'] == $shipping_module_code) {
-                        $value['count']++;
+                    if ($this->timeframe[$i]['matrix']['shipping_methods'][$key]['module_code'] === $shipping_module_code) {
+                        $this->timeframe[$i]['matrix']['shipping_methods'][$key]['count']++;
                         $new_shipping_method = false;
-                        unset($value);
                         break;
                     }
-                    unset($value);
                 }
-                if ($new_shipping_method) {
+                if ($new_shipping_method === true) {
                     $this->timeframe[$i]['matrix']['shipping_methods'][] = [
                         'method' => $shipping_method,
                         'module_code' => $shipping_module_code,
@@ -849,19 +846,16 @@ class sales_report2 extends base
                 // Credit cards used, with count
                 $new_credit_card = true;
                 foreach ($this->timeframe[$i]['matrix']['credit_cards'] as $key => $value) {
-                    $value =& $this->timeframe[$i]['matrix']['credit_cards'][$key];
-                    if ($value['type'] == $cc_type) {
-                        $value['count']++;
+                    if ($this->timeframe[$i]['matrix']['credit_cards'][$key]['type'] === $cc_type) {
+                        $this->timeframe[$i]['matrix']['credit_cards'][$key]['count']++;
                         $new_credit_card = false;
-                        unset($value);
                         break;
                     }
-                    unset($value);
                 }
-                if ($new_credit_card && $cc_type != '') {
+                if ($new_credit_card === true && $cc_type !== '') {
                     $this->timeframe[$i]['matrix']['credit_cards'][] = [
                         'type' => $cc_type,
-                         'count' => 1
+                        'count' => 1
                     ];
                 }
 
@@ -869,16 +863,13 @@ class sales_report2 extends base
                 // eliminate display on report with "if (sizeof($timeframe['matrix']['currencies']) > 1)"
                 $new_currency = true;
                 foreach ($this->timeframe[$i]['matrix']['currencies'] as $key => $value) {
-                    $value =& $this->timeframe[$i]['matrix']['currencies'][$key];
-                    if ($value['type'] == $currency) {
-                        $value['count']++;
+                    if ($this->timeframe[$i]['matrix']['currencies'][$key]['type'] === $currency) {
+                        $this->timeframe[$i]['matrix']['currencies'][$key]['count']++;
                         $new_currency = false;
-                        unset($value);
                         break;
                     }
-                    unset($value);
                 }
-                if ($new_currency) {
+                if ($new_currency === true) {
                     $this->timeframe[$i]['matrix']['currencies'][] = [
                         'type' => $currency,
                         'count' => 1
@@ -926,17 +917,23 @@ class sales_report2 extends base
                 }
             }  // END foreach($this->timeframe[$i]['orders'] as $oID => $o_data)
 
+            $orders_in_timeframe = count($this->timeframe[$i]['orders']);
+
             // Avg order value
-            $this->timeframe[$i]['matrix']['avg_order_value'] = ($this->timeframe[$i]['total']['grand'] / count($this->timeframe[$i]['orders']));
+            $this->timeframe[$i]['matrix']['avg_order_value'] =
+                $this->timeframe[$i]['total']['grand'] / $orders_in_timeframe;
 
             // Avg number of products in an order
-            $this->timeframe[$i]['matrix']['avg_products_per_order'] = ($this->timeframe[$i]['total']['num_products'] / count($this->timeframe[$i]['orders']));
+            $this->timeframe[$i]['matrix']['avg_products_per_order'] =
+                $this->timeframe[$i]['total']['num_products'] / $orders_in_timeframe;
 
             // Avg number of unique products in an order
-            $this->timeframe[$i]['matrix']['avg_diff_products_per_order'] = (sizeof($this->timeframe[$i]['total']['diff_products']) / count($this->timeframe[$i]['orders']));
+            $this->timeframe[$i]['matrix']['avg_diff_products_per_order'] =
+                count($this->timeframe[$i]['total']['diff_products']) / $orders_in_timeframe;
 
             // Avg # orders per unique customer
-            $this->timeframe[$i]['matrix']['avg_orders_per_customer'] = (sizeof($this->timeframe[$i]['orders']) / count($this->timeframe[$i]['matrix']['diff_customers']));
+            $this->timeframe[$i]['matrix']['avg_orders_per_customer'] =
+                count($this->timeframe[$i]['orders']) / count($this->timeframe[$i]['matrix']['diff_customers']);
 
             // gather statistics from products array
             foreach ($this->timeframe[$i]['products'] as $pID => $p_data) {
@@ -954,12 +951,14 @@ class sales_report2 extends base
                 }
 
                 // percentage of all revenue by product BEFORE shipping, tax, discounts, and gc's
-                $this->timeframe[$i]['matrix']['product_revenue_ratio'][$pID] = number_format($p_data['total'] / $this->timeframe[$i]['total']['goods'] * 100, 3);
+                $this->timeframe[$i]['matrix']['product_revenue_ratio'][$pID] =
+                    number_format($p_data['total'] / $this->timeframe[$i]['total']['goods'] * 100, 3);
 
                 // percentage of all quantity by product
-                $this->timeframe[$i]['matrix']['product_quantity_ratio'][$pID] = number_format($p_data['quantity'] / $this->timeframe[$i]['total']['num_products'] * 100, 3);
-            }  // END foreach($this->timeframe[$i]['products'] as $pID => $p_data)
-        }  // END for ($i = 0, $i < sizeof($this->timeframe); $i++)
+                $this->timeframe[$i]['matrix']['product_quantity_ratio'][$pID] =
+                    number_format($p_data['quantity'] / $this->timeframe[$i]['total']['num_products'] * 100, 3);
+            }  // END gathering statistics/product for timeframe
+        }  // END gathering statistics for current timeframe
     }  // END function build_matrix()
 
     //////////////////////////////////////////////////////////
@@ -971,21 +970,21 @@ class sales_report2 extends base
     //
     public function output_csv($csv_header)
     {
-        $filename = CSV_FILENAME_PREFIX . date('Ymd', $this->sd_raw) . "-" . date('Ymd', $this->ed_raw);
+        $filename = CSV_FILENAME_PREFIX . date('Ymd', $this->sd_raw) . '-' . date('Ymd', $this->ed_raw);
         if (preg_match('/MSIE/', $_SERVER['HTTP_USER_AGENT'])) {
             header('Content-Type: application/octetstream');
             header('Content-Disposition: attachment; filename=' . $filename . '.csv');
-            header("Expires: Mon, 26 Jul 2001 05:00:00 GMT");
-            header("Last-Modified: " . gmdate("D, d M Y H:i:s") . " GMT");
-            header("Cache-Control: must_revalidate, post-check=0, pre-check=0");
-            header("Pragma: public");
-            header("Cache-control: private");
+            header('Expires: Mon, 26 Jul 2001 05:00:00 GMT');
+            header('Last-Modified: ' . gmdate('D, d M Y H:i:s') . ' GMT');
+            header('Cache-Control: must_revalidate, post-check=0, pre-check=0');
+            header('Pragma: public');
+            header('Cache-control: private');
         } else {
             header('Content-Type: application/x-octet-stream');
             header('Content-Disposition: attachment; filename=' . $filename . '.csv');
-            header("Expires: Mon, 26 Jul 2001 05:00:00 GMT");
-            header("Last-Modified: " . gmdate("D, d M Y H:i:s") . " GMT");
-            header("Pragma: no-cache");
+            header('Expires: Mon, 26 Jul 2001 05:00:00 GMT');
+            header('Last-Modified: ' . gmdate('D, d M Y H:i:s') . ' GMT');
+            header('Pragma: no-cache');
         }
 
         $display_tax = ($this->grand_total['goods_tax'] > 0);
@@ -1000,7 +999,7 @@ class sales_report2 extends base
                         TABLE_HEADING_NUM_PRODUCTS,
                         TABLE_HEADING_TOTAL_GOODS
                     ];
-                    if ($display_tax) {
+                    if ($display_tax === true) {
                         $line[] = TABLE_HEADING_TAX;
                         $line[] = TABLE_HEADING_ORDER_RECORDED_TAX;
                     }
@@ -1025,13 +1024,13 @@ class sales_report2 extends base
                     $line[] = TABLE_HEADING_BASE_PRICE;
                     $line[] = TABLE_HEADING_FINAL_PRICE;
                     $line[] = TABLE_HEADING_QUANTITY;
-                    if ($display_tax) {
+                    if ($display_tax === true) {
                         $line[] = TABLE_HEADING_TAX;
                     }
                     if (DISPLAY_ONE_TIME_FEES) {
                         $line[] = TABLE_HEADING_ONETIME_CHARGES;
                     }
-                    if ($display_tax) {
+                    if ($display_tax === true) {
                         $line[] = TABLE_HEADING_TOTAL;
                     }
                     $line[] = TABLE_HEADING_PRODUCT_TOTAL;
@@ -1048,7 +1047,7 @@ class sales_report2 extends base
                         TABLE_HEADING_NUM_PRODUCTS,
                         TABLE_HEADING_TOTAL_GOODS
                     ];
-                    if ($display_tax) {
+                    if ($display_tax === true) {
                         $line[] = TABLE_HEADING_TAX;
                         $line[] = TABLE_HEADING_ORDER_RECORDED_TAX;
                     }
@@ -1062,7 +1061,7 @@ class sales_report2 extends base
             $this->outputCsvLine($line);
         }  // END if ($csv_header)
 
-        $same_sorts = ($this->li_sort_a == $this->li_sort_b);
+        $same_sorts = ($this->li_sort_a === $this->li_sort_b);
         foreach ($this->timeframe as $id => $timeframe) {
             // format the dates
             switch ($this->timeframe_group) {
@@ -1092,7 +1091,7 @@ class sales_report2 extends base
                         $timeframe['total']['num_products'],
                         $timeframe['total']['goods']
                     ];
-                    if ($display_tax) {
+                    if ($display_tax === true) {
                         $line[] = $timeframe['total']['goods_tax'];
                         $line[] = $timeframe['total']['order_recorded_tax'];
                     }
@@ -1119,14 +1118,14 @@ class sales_report2 extends base
                     $dataset2 = [];
                     foreach ($timeframe['products'] as $pID => $p_data) {
                         $dataset1[$pID] = $p_data[$this->li_sort_a];
-                        if (!$same_sorts) {
+                        if ($same_sorts === false) {
                             $dataset2[$pID] = $p_data[$this->li_sort_b];
                         }
                     }
 
-                    $sort1 = ($this->li_sort_order_a == 'asc') ? SORT_ASC : SORT_DESC;
-                    $sort2 = ($this->li_sort_order_b == 'asc') ? SORT_ASC : SORT_DESC;
-                    if ($same_sorts) {
+                    $sort1 = ($this->li_sort_order_a === 'asc') ? SORT_ASC : SORT_DESC;
+                    $sort2 = ($this->li_sort_order_b === 'asc') ? SORT_ASC : SORT_DESC;
+                    if ($same_sorts === true) {
                         array_multisort($dataset1, $sort1, $timeframe['products']);
                     } else {
                         array_multisort($dataset1, $sort1, $dataset2, $sort2, $timeframe['products']);
@@ -1137,8 +1136,8 @@ class sales_report2 extends base
                             $start_date,
                             $end_date,
                             $p_data['pID'],
-                            str_replace(['<small>', '</small>', '<br>'], '', $p_data['name']),
-                            str_replace(['<small>', '</small>', '<br>'], '', $p_data['attributes']),
+                            str_replace(['<small>', '</small>', '<br>', '<br />'], '', $p_data['name']),
+                            str_replace(['<small>', '</small>', '<br>', '<br />'], '', $p_data['attributes']),
                         ];
                         if (DISPLAY_MANUFACTURER) {
                             $line[] = $p_data['manufacturer'];
@@ -1147,17 +1146,17 @@ class sales_report2 extends base
                         $line[] = $p_data['base_price'];
                         $line[] = $p_data['final_price'];
                         $line[] = $p_data['quantity'];
-                        if ($display_tax) {
+                        if ($display_tax === true) {
                             $line[] = $p_data['tax'];
                         }
                         if (DISPLAY_ONE_TIME_FEES) {
                             $line[] = $p_data['onetime_charges'];
                         }
-                        if ($display_tax) {
+                        if ($display_tax === true) {
                             $line[] = $p_data['total'];
                         }
                         $line[] = $p_data['grand'];
-                        
+
                         $this->outputCsvLine($line);
                     }
                     break;
@@ -1166,7 +1165,7 @@ class sales_report2 extends base
                     if (empty($timeframe['orders'])) {
                         break;
                     }
-                    
+
                     $dataset1 = [];
                     $dataset2 = [];
                     foreach ($timeframe['orders'] as $oID => $o_data) {
@@ -1176,8 +1175,8 @@ class sales_report2 extends base
                         }
                     }
 
-                    $sort1 = ($this->li_sort_order_a == 'asc') ? SORT_ASC : SORT_DESC;
-                    $sort2 = ($this->li_sort_order_b == 'asc') ? SORT_ASC : SORT_DESC;
+                    $sort1 = ($this->li_sort_order_a === 'asc') ? SORT_ASC : SORT_DESC;
+                    $sort2 = ($this->li_sort_order_b === 'asc') ? SORT_ASC : SORT_DESC;
                     if ($same_sorts) {
                         array_multisort($dataset1, $sort1, $timeframe['orders']);
                     } else {
@@ -1210,7 +1209,7 @@ class sales_report2 extends base
                         $line[] = $o_data['gc_sold'];
                         $line[] = $o_data['gc_used'];
                         $line[] = $o_data['grand'];
-                        
+
                         $this->outputCsvLine($line);
                     }
                     break;
