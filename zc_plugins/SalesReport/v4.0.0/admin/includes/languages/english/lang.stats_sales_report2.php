@@ -101,7 +101,7 @@ $defines = [
     // certificates, it will have a total of 0.  In this
     // situation, the order will not be displayed in the results.
     //
-    // EXAMPLE:     'EXCLUDE_PRODUCTS' => serialize(array(25, 14, 43)) );
+    // EXAMPLE:     'EXCLUDE_PRODUCTS' => serialize([25, 14, 43]) );
     //
     'EXCLUDE_PRODUCTS' => serialize([]),
 
@@ -114,10 +114,10 @@ $defines = [
     'HEADING_TITLE_SORT' => '2. Sort &amp; Specify Results',
     'HEADING_TITLE_PROCESS' => '3. Generate Report',
     'SEARCH_TIMEFRAME' => 'Timeframe',
-    'SEARCH_TIMEFRAME_DAY' => 'Daily',
-    'SEARCH_TIMEFRAME_WEEK' => 'Weekly',
-    'SEARCH_TIMEFRAME_MONTH' => 'Monthly',
-    'SEARCH_TIMEFRAME_YEAR' => 'Annually',
+    'SEARCH_TIMEFRAME_DAY' => ' Daily',
+    'SEARCH_TIMEFRAME_WEEK' => ' Weekly',
+    'SEARCH_TIMEFRAME_MONTH' => ' Monthly',
+    'SEARCH_TIMEFRAME_YEAR' => ' Annually',
     'SEARCH_TIMEFRAME_SORT' => 'Timeframe Sort',
     'SEARCH_DATE_PRESET' => 'Preset Date Range',
     'SEARCH_DATE_CUSTOM' => 'Custom Date Range',
@@ -126,6 +126,7 @@ $defines = [
     'SEARCH_DATE_LAST_MONTH' => ' Last Month (%s)',
     'SEARCH_DATE_THIS_MONTH' => ' This Month (%s)',
     'SEARCH_DATE_LAST_YEAR' => ' Last Year (%s)',
+    'SEARCH_DATE_LAST_12_MONTHS' => ' Last 12 Months',
     'SEARCH_DATE_YTD' => ' YTD (%s)',
     'SEARCH_START_DATE' => 'Start Date',
     'SEARCH_END_DATE' => 'End Date (inclusive)',
