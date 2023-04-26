@@ -181,8 +181,8 @@ $(document).ready(function(){
         var messages = '';
         if ($('#date-custom').val() == '1') {
             var date_valid = true;
-            var sd = $('input[name=start_date]').val();
-            var ed = $('input[name=end_date]').val();
+            var sd = $('#start-date').val();
+            var ed = $('#end-date').val();
 
             if (sd.length != 10) {
                 date_valid = false;
@@ -193,21 +193,21 @@ $(document).ready(function(){
                 messages += '<?php echo ALERT_DATE_INVALID_LENGTH; ?>'+ed+'\n';
             }
 
-            if (date_valid) {
-                var date_delim = sd.charAt(2);
+            if (date_valid === true) {
+                var date_delim = sd.charAt(4);
                 var sd_elements = sd.split(date_delim);
                 var ed_elements = ed.split(date_delim);
 <?php
-$us_date_format = (strtolower(DATE_FORMAT) === 'm/d/y');
+$us_date_format = (strtolower(DATE_FORMAT_DATE_PICKER) === 'yy-mm-dd');
 ?>
-                var month_index = <?php echo ($us_date_format) ? 0 : 1; ?>;
-                var day_index = <?php echo ($us_date_format) ? 1 : 0; ?>;
+                var month_index = <?php echo ($us_date_format) ? 1 : 2; ?>;
+                var day_index = <?php echo ($us_date_format) ? 2 : 1; ?>;
 
-                if (sd_elements.length != 3 || !isDate(sd_elements[day_index], sd_elements[month_index], sd_elements[2])) {
+                if (sd_elements.length !== 3 || !isDate(sd_elements[day_index], sd_elements[month_index], sd_elements[0])) {
                     date_valid = false;
                     messages += '<?php echo ALERT_DATE_INVALID; ?>'+sd+'\n';
                 }
-                if (ed_elements.length != 3 || !isDate(ed_elements[day_index], ed_elements[month_index], ed_elements[2])) {
+                if (ed_elements.length !== 3 || !isDate(ed_elements[day_index], ed_elements[month_index], ed_elements[0])) {
                     date_valid = false;
                     messages += '<?php echo ALERT_DATE_INVALID; ?>'+ed+'\n';
                 }

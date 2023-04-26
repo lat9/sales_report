@@ -180,45 +180,53 @@ $product_sorts_array = [
 $date_preset = (!empty($_GET['date_preset'])) ? $_GET['date_preset'] : 'YTD';
 $date_custom = (isset($_GET['date_custom']) && $_GET['date_custom'] === '1') ? '1' : '0';
 $today_timestamp = strtotime('today midnight');
-switch ($date_preset) {
-    case 'today':
-        $start_date = date(DATE_FORMAT, $today_timestamp);
-        $end_date = date(DATE_FORMAT, $today_timestamp);
-        break;
-    case 'yesterday':
-        $start_date = date(DATE_FORMAT, strtotime('yesterday', $today_timestamp));
-        $end_date = date(DATE_FORMAT, strtotime('yesterday', $today_timestamp));
-        break;
-    case 'last_month':
-        $start_date = date(DATE_FORMAT, strtotime('first day of last month', $today_timestamp));
-        $end_date = date(DATE_FORMAT, strtotime('last day of last month', $today_timestamp));
-        break;
-    case 'this_month':
-        $start_date = date(DATE_FORMAT, strtotime('first day of this month', $today_timestamp));
-        $end_date = date(DATE_FORMAT, $today_timestamp);
-        break;
-    case 'last_year':
-        $start_date = date(DATE_FORMAT, strtotime('last year January 1st', $today_timestamp));
-        $end_date = date(DATE_FORMAT, strtotime('last year December 31st', $today_timestamp));
-        break;
-    case 'last_12_months':
-        $start_date = date(DATE_FORMAT, strtotime('1 year ago', $today_timestamp));
-        $end_date = date(DATE_FORMAT, $today_timestamp);
-        break;
-    default:
-        $_GET['date_preset'] = 'YTD';
-        $start_date = date(DATE_FORMAT, strtotime('first day of January this year', $today_timestamp));
-        $end_date = date(DATE_FORMAT, $today_timestamp);
-        break;
-}
-
+$datepicker_format = zen_datepicker_format_fordate();
 if ($date_custom === '1') {
     // defaults to beginning of the month when not set
-    $start_date = $_GET['start_date'] ?? date(DATE_FORMAT, strtotime('first day of this month', $today_timestamp));
-
-    // defaults to start date when not set (only have to enter a single day just once)
-    $end_date = $_GET['end_date'] ?? $start_date;
+    $start_date = (!empty($_GET['start_date'])) ? $_GET['start_date'] : date($datepicker_format, strtotime('first day of this month', $today_timestamp));
+    $end_date = (!empty($_GET['end_date'])) ? $_GET['end_date'] : $start_date;
+} else {
+    switch ($date_preset) {
+        case 'today':
+            $start_date = date($datepicker_format, $today_timestamp);
+            $end_date = $start_date;
+            break;
+        case 'yesterday':
+            $start_date = date($datepicker_format, strtotime('yesterday', $today_timestamp));
+            $end_date = $start_date;
+            break;
+        case 'last_month':
+            $start_date = date($datepicker_format, strtotime('first day of last month', $today_timestamp));
+            $end_date = date($datepicker_format, strtotime('last day of last month', $today_timestamp));
+            break;
+        case 'this_month':
+            $start_date = date($datepicker_format, strtotime('first day of this month', $today_timestamp));
+            $end_date = date($datepicker_format, $today_timestamp);
+            break;
+        case 'last_year':
+            $start_date = date($datepicker_format, strtotime('last year January 1st', $today_timestamp));
+            $end_date = date($datepicker_format, strtotime('last year December 31st', $today_timestamp));
+            break;
+        case 'last_12_months':
+            $start_date = date($datepicker_format, strtotime('1 year ago', $today_timestamp));
+            $end_date = date($datepicker_format, $today_timestamp);
+            break;
+        default:
+            $_GET['date_preset'] = 'YTD';
+            $start_date = date($datepicker_format, strtotime('first day of January this year', $today_timestamp));
+            $end_date = date($datepicker_format, $today_timestamp);
+            break;
+    }
 }
+
+$dt = DateTime::createFromFormat($datepicker_format, $start_date);
+if ($dt === false) {
+    $dt = DateTime::createFromFormat($datepicker_format, date($datepicker_format, strtotime('first day of this month', $today_timestamp)));
+}
+$start_date = $dt->format('Y-m-d');
+
+$dt = DateTime::createFromFormat($datepicker_format, $end_date);
+$end_date = ($dt === false) ? $start_date : $dt->format('Y-m-d');
 
 $date_target = (isset($_GET['date_target']) && in_array($_GET['date_target'], ['purchased', 'status'])) ? $_GET['date_target'] : 'purchased';
 if ($date_target === 'status') {
@@ -400,14 +408,6 @@ if ($output_format === false) {
 <html <?php echo HTML_PARAMS; ?>>
 <head>
     <?php require DIR_WS_INCLUDES . 'admin_html_head.php'; ?>
-<?php
-if ($output_format !== 'print') {
-?>
-      <link rel="stylesheet" href="includes/javascript/spiffyCal/spiffyCal_v2_1.css">
-      <script src="includes/javascript/spiffyCal/spiffyCal_v2_1.js"></script>
-<?php
-}
-?>
 </head>
 <?php
 // display the print header
@@ -491,14 +491,7 @@ if ($output_format === 'print') {
 } elseif (!$output_format || $output_format !== 'print') { // display the normal search header
 ?>
 <body>
-    <div id="spiffycalendar" class="text"></div>
-<?php 
-    require DIR_WS_INCLUDES . 'header.php'; 
-?>
-    <script>
-        var StartDate = new ctlSpiffyCalendarBox("StartDate", "search", "start_date", "btnDate1", "<?php echo $start_date; ?>", scBTNMODE_CALBTN);
-        var EndDate = new ctlSpiffyCalendarBox("EndDate", "search", "end_date", "btnDate2", "<?php echo $end_date; ?>", scBTNMODE_CALBTN);
-    </script>
+    <?php require DIR_WS_INCLUDES . 'header.php'; ?>
     <?php echo zen_draw_form('search', FILENAME_STATS_SALES_REPORT2, '', 'get', '', true) .
                zen_draw_hidden_field('date_custom', $date_custom, 'id="date-custom"'); ?>
     <table class="table">
@@ -566,16 +559,20 @@ if ($output_format === 'print') {
                             </tr>
                             <tr>
                                 <td class="smallText">
-                                    <?php echo SEARCH_START_DATE ?>
-                                    <br>
-                                    <script>StartDate.writeControl(); StartDate.dateFormat="<?php echo DATE_FORMAT_SPIFFYCAL; ?>";</script>
+                                    <?php echo SEARCH_START_DATE; ?>
+                                    <div class="date">
+                                        <?php echo zen_draw_input_field('start_date', $start_date, 'id="start-date" autocomplete="off"'); ?>
+                                    </div>
+                                    <span class="help-block errorText">(<?php echo zen_datepicker_format_full(); ?>)</span>
                                 </td>
                             </tr>
                             <tr>
                                 <td class="smallText">
                                     <?php echo SEARCH_END_DATE; ?>
-                                    <br>
-                                    <script>EndDate.writeControl(); EndDate.dateFormat="<?php echo DATE_FORMAT_SPIFFYCAL; ?>";</script>
+                                    <div class="date">
+                                        <?php echo zen_draw_input_field('end_date', $end_date, 'id="end-date" autocomplete="off"'); ?>
+                                    </div>
+                                    <span class="help-block errorText">(<?php echo zen_datepicker_format_full(); ?>)</span>
                                 </td>
                             </tr>
                         </table></td>
@@ -1760,7 +1757,15 @@ if ($output_format === 'print' || $output_format === 'display') {
     </table><?php echo '</form>'; ?>
 <?php 
 if ($output_format !== 'print') {
-    require DIR_WS_INCLUDES . 'footer.php'; 
+    require DIR_WS_INCLUDES . 'footer.php';
+?>
+    <script>
+    $(function() {
+        $('#start-date').datepicker();
+        $('#end-date').datepicker();
+    });
+    </script>
+<?php
 }
 ?>
 </body>

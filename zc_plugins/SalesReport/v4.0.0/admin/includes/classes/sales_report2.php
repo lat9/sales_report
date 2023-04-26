@@ -120,32 +120,24 @@ class sales_report2 extends base
         $this->prod_includes = $parms['prod_includes'];
         $this->product_filter = '';
 
-        // all our calculations are done using a "raw" timestamp format, which are
-        // pulled from entered date strings using the substr function (similar to zen_date_raw)
+        // -----
+        // All date-related calculations are done via timestamps.  Starting with v4.0.0,
+        // using the 'datepicker' and the main report has 'sanitized' the dates so that
+        // they're submitted to this class in yyyy-mm-dd format!
+        //
         $sd = $parms['start_date'];
         $ed = $parms['end_date'];
-        if (strtolower(DATE_FORMAT) === 'm/d/y') {
-            // Use US date format (m/d/Y)
-            $this->sd_raw = mktime(0, 0, 0, substr($sd, 0, 2), substr($sd, 3, 2), substr($sd, 6, 4) );
-            $this->ed_raw = mktime(0, 0, 0, substr($ed, 0, 2), substr($ed, 3, 2), substr($ed, 6, 4) );
-        } elseif (strtolower(DATE_FORMAT) === 'd/m/y') {
-            // Use UK date format (d/m/Y)
-            $this->sd_raw = mktime(0, 0, 0, substr($sd, 3, 2), substr($sd, 0, 2), substr($sd, 6, 4) );
-            $this->ed_raw = mktime(0, 0, 0, substr($ed, 3, 2), substr($ed, 0, 2), substr($ed, 6, 4) );
-        } elseif (strtolower(DATE_FORMAT) === 'd.m.y') {
-            // Use CZ, SK date format (d/m/Y)
-            $this->sd_raw = mktime(0, 0, 0, substr($sd, 3, 2), substr($sd, 0, 2), substr($sd, 6, 4) );
-            $this->ed_raw = mktime(0, 0, 0, substr($ed, 3, 2), substr($ed, 0, 2), substr($ed, 6, 4) );
-        }
+        $this->sd_raw = strtotime($sd . ' 00:00:00');
+        $this->ed_raw = strtotime($ed . ' 00:00:00');
 
         // run a few checks on the dates
         // avoid dates before the first order
         $first = $db->Execute("SELECT MIN(date_purchased) AS date FROM " . TABLE_ORDERS);
         $this->global_sd = strtotime(substr($first->fields['date'], 0, 10));
-        if ($this->sd_raw < $this->global_sd) {
+        if ($this->sd_raw === false || $this->sd_raw < $this->global_sd) {
             $this->sd_raw = $this->global_sd;
         }
-        if ($this->ed_raw < $this->global_sd) {
+        if ($this->ed_raw === false || $this->ed_raw < $this->global_sd) {
             $this->ed_raw = $this->global_sd;
         }
 
@@ -158,9 +150,17 @@ class sales_report2 extends base
             $this->ed_raw = $now;
         }
 
+        // -----
+        // Ensure that the ending date is not earlier than the starting date,
+        // resetting to the starting date if so.
+        //
+        if ($this->ed_raw < $this->sd_raw) {
+            $this->ed_raw = $this->sd_raw;
+        }
+
         // now that the date checks are out of the way, let's begin
-        $this->sd = date(DATE_FORMAT_SPIFFYCAL, $this->sd_raw);
-        $this->ed = date(DATE_FORMAT_SPIFFYCAL, $this->ed_raw);
+        $this->sd = date('Y-m-d', $this->sd_raw);
+        $this->ed = date('Y-m-d', $this->ed_raw);
         $this->current_date = $this->sd_raw;
 
         $this->timeframe_id = 0;
