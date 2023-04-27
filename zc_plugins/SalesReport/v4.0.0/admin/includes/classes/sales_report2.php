@@ -201,23 +201,23 @@ class sales_report2 extends base
 
         switch ($this->timeframe_group) {
             case 'year':
-                $ed = mktime(0, 0, 0, date('m', $sd), date('d', $sd), date('Y', $sd) + 1);
+                $ed = strtotime('+1 year', $sd);
                 break;
             case 'month':
-                $ed = mktime(0, 0, 0, date('m', $sd) + 1, 1, date('Y', $sd));
+                $ed = strtotime('+1 month', $sd);
                 break;
             case 'week':
-                $ed = mktime(0, 0, 0, date('m', $sd), date('d', $sd) + 7, date('Y', $sd));
+                $ed = strtotime('+1 week', $sd);
                 break;
             case 'day':
-                $ed = mktime(0, 0, 0, date('m', $sd), date('d', $sd) + 1, date('Y', $sd));
+                $ed = strtotime('+1 day', $sd);
                 break;
         }
 
         // dial back $ed if it's beyond the user-specified end date
         // we go 1 day beyond specified end date because end date is exclusive in the query
         if ($ed > $this->ed_raw) {
-            $ed = mktime(0, 0, 0, date('m', $this->ed_raw), date('d', $this->ed_raw) + 1, date('Y', $this->ed_raw));
+            $ed = strtotime('+1 day', $this->ed_raw);
         }
 
         // define the timeframe array
@@ -227,7 +227,7 @@ class sales_report2 extends base
         // timestamp format allows us to use whatever display format we want at output
         // we subtract 1 day so that the displayed end date is the actual end date
         $this->timeframe[$id]['sd'] = $sd;
-        $this->timeframe[$id]['ed'] = mktime(0, 0, 0, date('m', $ed), date('d', $ed) - 1, date('Y', $ed));
+        $this->timeframe[$id]['ed'] = strtotime('-1 day', $ed);
 
         // build the excluded products array - not really debugged well
         $this->product_filter = '';
