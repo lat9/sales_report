@@ -69,6 +69,9 @@ class sales_report2 extends base
         $cust_includes,
         $customer_filter,
 
+        $order_total_discounts,
+        $order_total_surcharges,
+
         $li_sort_a,
         $li_sort_order_a,
         $li_sort_b,
@@ -500,6 +503,46 @@ class sales_report2 extends base
             }
         }
 
+        // -----
+        // If the class arrays that contain the discount/surcharge order-totals haven't yet
+        // been created, create them now.
+        //
+        if (!isset($this->order_total_discounts)) {
+            $this->order_total_discounts = [
+                'ot_coupon',
+                'ot_group_pricing',
+                'ot_better_together',
+                'ot_big_chooser',
+                'ot_bigspender_discount',
+                'ot_bogo_discount',
+                'ot_case_discounts',
+                'ot_combination_discounts',
+                'ot_freegift_chooser',
+                'ot_freegift_spender',
+                'ot_frequency_discount',
+                'ot_giftwrap_checkout',
+                'ot_manufacturer_discount',
+                'ot_military_discount',
+                'ot_newsletter_discount',
+                'ot_quantity_discount',
+                'ot_table_discounts',
+                'ot_rewards',
+                'ot_cashback',
+            ];
+            if (isset($GLOBALS['stats_sales_reports_discounts'])) {
+                $this->order_total_discounts = array_merge($this->order_total_discounts, $GLOBALS['stats_sales_reports_discounts']);
+            }
+
+            $this->order_total_surcharges = [
+                'ot_roundup',
+                'ot_cod_fee',
+                'ot_loworderfee',
+            ];
+            if (isset($GLOBALS['stats_sales_reports_surcharges'])) {
+                $this->order_total_surcharges = array_merge($this->order_total_surcharges, $GLOBALS['stats_sales_reports_surcharges']);
+            }
+        }
+
         // pull shipping, discounts, tax, and gift certificates used from orders_total table
         $totals = $db->Execute(
             "SELECT `class`, `value`
@@ -523,50 +566,6 @@ class sales_report2 extends base
                     $this->build_li_orders($next_sale, 'gc_used_qty', 1);
                     break;
 
-                case 'ot_coupon':
-                case 'ot_group_pricing':
-                case 'ot_better_together':
-                case 'ot_big_chooser':
-                case 'ot_bigspender_discount':
-                case 'ot_bogo_discount':
-                case 'ot_case_discounts':
-                case 'ot_combination_discounts':
-                case 'ot_freegift_chooser':
-                case 'ot_freegift_spender':
-                case 'ot_frequency_discount':
-                case 'ot_giftwrap_checkout':
-                case 'ot_manufacturer_discount':
-                case 'ot_military_discount':
-                case 'ot_newsletter_discount':
-                case 'ot_quantity_discount':
-                case 'ot_table_discounts':
-                case 'ot_rewards':
-                    $order_discount += $value;
-                    $this->timeframe[$id]['total']['discount'] += $value;
-                    $this->build_li_orders($next_sale, 'discount', $value);
-                    $this->timeframe[$id]['total']['discount_qty']++;
-                    $this->build_li_orders($next_sale, 'discount_qty', 1);
-                    break;
-
-                case 'ot_roundup':
-                case 'ot_cod_fee':
-                case 'ot_loworderfee':
-                    $order_discount -= $value;
-                    $this->timeframe[$id]['total']['discount'] -= $value;
-                    $this->build_li_orders($next_sale, 'discount', $value);
-                    $this->timeframe[$id]['total']['discount_qty']++;
-                    $this->build_li_orders($next_sale, 'discount_qty', 1);
-                    break;
-
-                case 'ot_cashback':
-                    $order_discount += $value;
-                    $this->timeframe[$id]['total']['discount'] += $value;
-                    $this->build_li_orders($next_sale, 'discount', $value);
-
-                    $this->timeframe[$id]['total']['discount_qty']++;
-                    $this->build_li_orders($next_sale, 'discount_qty', 1);
-                    break;
-
                 case 'ot_tax':
                     $order_recorded_tax += $value;
                     $this->timeframe[$id]['total']['order_recorded_tax'] += $value;
@@ -580,12 +579,27 @@ class sales_report2 extends base
                     break;
 
                 default:
+                    if (in_array($class, $this->order_total_discounts)) {
+                        $order_discount += $value;
+                        $this->timeframe[$id]['total']['discount'] += $value;
+                        $this->build_li_orders($next_sale, 'discount', $value);
+                        $this->timeframe[$id]['total']['discount_qty']++;
+                        $this->build_li_orders($next_sale, 'discount_qty', 1);
+                        break;
+                    }
+                    if (in_array($class, $this->order_total_surcharges)) {
+                        $order_discount -= $value;
+                        $this->timeframe[$id]['total']['discount'] -= $value;
+                        $this->build_li_orders($next_sale, 'discount', $value);
+                        $this->timeframe[$id]['total']['discount_qty']++;
+                        $this->build_li_orders($next_sale, 'discount_qty', 1);
+                        break;
+                    }
                     if ($value < 0) {
                         // this allows for a custom discount, a la Super Orders
                         $order_discount += abs($value);
                         $this->timeframe[$id]['total']['discount'] += abs($value);
                         $this->build_li_orders($next_sale, 'discount', abs($value) );
-
                         $this->timeframe[$id]['total']['discount_qty']++;
                         $this->build_li_orders($next_sale, 'discount_qty', 1);
                     }
