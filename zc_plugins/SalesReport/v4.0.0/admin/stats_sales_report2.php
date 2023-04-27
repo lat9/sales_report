@@ -223,10 +223,9 @@ $dt = DateTime::createFromFormat($datepicker_format, $start_date);
 if ($dt === false) {
     $dt = DateTime::createFromFormat($datepicker_format, date($datepicker_format, strtotime('first day of this month', $today_timestamp)));
 }
-$start_date = $dt->format('Y-m-d');
 
 $dt = DateTime::createFromFormat($datepicker_format, $end_date);
-$end_date = ($dt === false) ? $start_date : $dt->format('Y-m-d');
+$end_date = ($dt === false) ? $start_date : $end_date;
 
 $date_target = (isset($_GET['date_target']) && in_array($_GET['date_target'], ['purchased', 'status'])) ? $_GET['date_target'] : 'purchased';
 if ($date_target === 'status') {
