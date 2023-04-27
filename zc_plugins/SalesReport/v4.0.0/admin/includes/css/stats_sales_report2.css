@@ -40,7 +40,7 @@ legend {
     background-color: #f3d6ba;
     cursor: auto;
 }
-.lineItemRowOver {
+.lineItemRow:hover, .lineItemRow:hover .ValidationColumnContent {
     background-color: #ffffff;
     cursor: pointer;
 }
