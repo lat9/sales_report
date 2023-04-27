@@ -612,9 +612,9 @@ class sales_report2 extends base
                 // Build order total verification column if requested
                 if ($this->order_total_validation === true) {
                     // Get the recorded order total
-                    $recorded_order_total = $next_sale['order_total'];
+                    $recorded_order_total = number_format((float)$next_sale['order_total'], $sale_currency_decimal_places);
 
-                    if (zen_round($order_total, 2) != $recorded_order_total) {
+                    if (number_format((float)$order_total, $sale_currency_decimal_places) !== $recorded_order_total) {
                         $order_total_validation = "DON'T MATCH!<br>$order_total : $recorded_order_total";
                     } else {
                         $order_total_validation = 'VALID';
