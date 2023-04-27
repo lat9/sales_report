@@ -515,17 +515,17 @@ if ($output_format === 'print') {
                             </tr>
                             <tr>
                                 <td class="smallText" id="td_today">
-                                    <?php echo zen_draw_radio_field('date_preset', 'today', ($date_preset === 'today')) . sprintf(SEARCH_DATE_TODAY, date('M. j', mktime(0, 0, 0, date('m'), date('d'), date('Y')))); ?>
+                                    <?php echo zen_draw_radio_field('date_preset', 'today', ($date_preset === 'today')) . sprintf(SEARCH_DATE_TODAY, date('M. j', $today_timestamp)); ?>
                                 </td>
                             </tr>
                             <tr>
                                 <td class="smallText" id="td_yesterday">
-                                    <?php echo zen_draw_radio_field('date_preset', 'yesterday', ($date_preset === 'yesterday')) . sprintf(SEARCH_DATE_YESTERDAY, date('M. j', mktime(0, 0, 0, date('m'), date('d') - 1, date('Y')))); ?>
+                                    <?php echo zen_draw_radio_field('date_preset', 'yesterday', ($date_preset === 'yesterday')) . sprintf(SEARCH_DATE_YESTERDAY, date('M. j', strtotime('-1 day', $today_timestamp))); ?>
                                 </td>
                             </tr>
                             <tr>
                                 <td class="smallText" id="td_last_month">
-                                    <?php echo zen_draw_radio_field('date_preset', 'last_month', ($date_preset === 'last_month')) . sprintf(SEARCH_DATE_LAST_MONTH, date("F \'y", mktime(0, 0, 0, date('m') - 1))); ?>
+                                    <?php echo zen_draw_radio_field('date_preset', 'last_month', ($date_preset === 'last_month')) . sprintf(SEARCH_DATE_LAST_MONTH, date("F \'y", strtotime('-1 month', $today_timestamp))); ?>
                                 </td>
                             </tr>
                             <tr>
@@ -545,7 +545,7 @@ if ($output_format === 'print') {
                             </tr>
                             <tr>
                                 <td class="smallText" id="td_YTD">
-                                    <?php echo zen_draw_radio_field('date_preset', 'YTD', ($date_preset === 'YTD' || !empty($date_custom))) . sprintf(SEARCH_DATE_YTD, 'Jan 1 to ' . date('M. j Y', mktime(0, 0, 0, date('m'), date('d'), date('Y')))); ?>
+                                    <?php echo zen_draw_radio_field('date_preset', 'YTD', ($date_preset === 'YTD' || !empty($date_custom))) . sprintf(SEARCH_DATE_YTD, 'Jan 1 to ' . date('M. j Y', $today_timestamp)); ?>
                                 </td>
                             </tr>
                         </table>
