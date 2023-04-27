@@ -163,56 +163,8 @@ $(document).ready(function(){
         updatePrintCsvSelections();
     });
 
-    function isDate(day, month, year) {
-        var today = new Date();
-
-        year = ((!year) ? today.getFullYear() : year);
-        month = ((!month) ? today.getMonth() : month - 1);
-        // subtract 1 because date.getMonth() numbers months 0 - 11
-        if (!day) {
-            return false;
-        }
-
-        var test = new Date(year, month, day);
-        return (year == test.getFullYear() && month == test.getMonth() && day == test.getDate());
-    }
-
     $('#btn-submit').on('click', function(){
         var messages = '';
-        if ($('#date-custom').val() == '1') {
-            var date_valid = true;
-            var sd = $('#start-date').val();
-            var ed = $('#end-date').val();
-
-            if (sd.length != 10) {
-                date_valid = false;
-                messages += '<?php echo ALERT_DATE_INVALID_LENGTH; ?>'+sd+'\n';
-            }
-            if (ed.length != 10) {
-                date_valid = false;
-                messages += '<?php echo ALERT_DATE_INVALID_LENGTH; ?>'+ed+'\n';
-            }
-
-            if (date_valid === true) {
-                var date_delim = sd.charAt(4);
-                var sd_elements = sd.split(date_delim);
-                var ed_elements = ed.split(date_delim);
-<?php
-$us_date_format = (strtolower(DATE_FORMAT_DATE_PICKER) === 'yy-mm-dd');
-?>
-                var month_index = <?php echo ($us_date_format) ? 1 : 2; ?>;
-                var day_index = <?php echo ($us_date_format) ? 2 : 1; ?>;
-
-                if (sd_elements.length !== 3 || !isDate(sd_elements[day_index], sd_elements[month_index], sd_elements[0])) {
-                    date_valid = false;
-                    messages += '<?php echo ALERT_DATE_INVALID; ?>'+sd+'\n';
-                }
-                if (ed_elements.length !== 3 || !isDate(ed_elements[day_index], ed_elements[month_index], ed_elements[0])) {
-                    date_valid = false;
-                    messages += '<?php echo ALERT_DATE_INVALID; ?>'+ed+'\n';
-                }
-            }
-        }
 
         if ($('#detail_level').val() === 'matrix' && $('#output-format').val() === 'csv') {
             messages += '<?php echo ALERT_CSV_CONFLICT; ?>'+'\n';
