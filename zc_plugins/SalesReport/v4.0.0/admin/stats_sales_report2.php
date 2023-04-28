@@ -151,10 +151,11 @@ $detail_array = [
     ['id' => 'matrix', 'text' => SELECT_DETAIL_MATRIX],
 ];
     
-$order_sorts = ['oID', 'last_name', 'num_products', 'goods', 'shipping', 'discount', 'gc_sold', 'gc_used', 'grand'];
+$order_sorts = ['oID', 'last_name', 'email', 'num_products', 'goods', 'shipping', 'discount', 'gc_sold', 'gc_used', 'grand'];
 $order_sorts_array = [
     ['id' => 'oID', 'text' => TABLE_HEADING_ORDERS_ID],
     ['id' => 'last_name', 'text' => SELECT_LAST_NAME],
+    ['id' => 'email', 'text' => TABLE_HEADING_EMAIL_ADDRESS],
     ['id' => 'num_products', 'text' => TABLE_HEADING_NUM_PRODUCTS],
     ['id' => 'goods', 'text' => TABLE_HEADING_TOTAL_GOODS],
     ['id' => 'shipping', 'text' => TABLE_HEADING_SHIPPING],
@@ -335,6 +336,7 @@ if ($prod_includes !== '') {
 }
 
 $order_total_validation = (isset($_GET['order_total_validation']));
+$display_email_address = (isset($_GET['display_email']));
 
 require DIR_WS_CLASSES . 'sales_report2.php';
 
@@ -383,6 +385,7 @@ if ($output_format === false) {
             'detail_level' => $detail_level,
             'output_format' => $output_format,
             'order_total_validation' => $order_total_validation,
+            'display_email' => $display_email_address,
             'li_sort_a' => $li_sort_a,
             'li_sort_order_a' => $li_sort_order_a,
             'li_sort_b' => $li_sort_b,
@@ -764,8 +767,10 @@ if ($output_format === 'print') {
                             <span id="span-auto-print"><?php echo zen_draw_checkbox_field('auto_print', '1', false) . CHECKBOX_AUTO_PRINT; ?></span>
                             <span id="span-csv-header"><?php echo zen_draw_checkbox_field('csv_header', '1', false) . CHECKBOX_CSV_HEADER; ?></span>
                         </td>
-                        <td class="smallText text-right" id="order-total-validation">
-                            <?php echo zen_draw_checkbox_field('order_total_validation', '1', false) . CHECKBOX_VALIDATE_TOTALS; ?>
+                        <td class="smallText" id="order-total-validation">
+                            <?php echo zen_draw_checkbox_field('order_total_validation', '1', $order_total_validation) . CHECKBOX_VALIDATE_TOTALS; ?>
+                            <br>
+                            <?php echo zen_draw_checkbox_field('display_email', '1', $display_email_address, '', 'id="display-email-address"') . CHECKBOX_DISPLAY_EMAIL_ADDRESS; ?>
                         </td>
                         <td class="smallText text-right">
                             <?php echo zen_draw_checkbox_field('new_window', '1', $new_window, '', 'id="new-window"') . CHECKBOX_NEW_WINDOW; ?>
@@ -916,7 +921,7 @@ if ($output_format === 'print' || $output_format === 'display') {
                 <tr class="totalHeadingRow">
                     <td class="totalHeadingContent"><?php echo TABLE_HEADING_TIMEFRAME; ?></td>
                     <td class="totalHeadingContent"><?php echo TABLE_HEADING_NUM_ORDERS; ?></td>
-                    <td class="totalHeadingContent text-center" colspan="2"><?php echo TABLE_HEADING_NUM_PRODUCTS; ?></td>
+                    <td class="totalHeadingContent text-center" colspan="<?php echo ($display_email_address === true) ? 3 : 2; ?>"><?php echo TABLE_HEADING_NUM_PRODUCTS; ?></td>
                     <td class="totalHeadingContent text-right"><?php echo TABLE_HEADING_TOTAL_GOODS; ?></td>
 <?php 
             if ($display_tax === true) {
@@ -947,8 +952,9 @@ if ($output_format === 'print' || $output_format === 'display') {
                 <tr class="totalRow">
                     <td class="totalContent"><?php echo $time_display; ?></td>
                     <td class="totalContent"><?php echo $timeframe['total']['num_orders']; ?></td>
-                    <td class="totalContent text-right"><?php echo $timeframe['total']['num_products']; ?></td>
-                    <td class="totalContent no-wrap"><?php echo TEXT_DIFF . count($timeframe['total']['diff_products']); ?></td>
+                    <td class="totalContent text-center" colspan="<?php echo ($display_email_address === true) ? 3 : 2; ?>">
+                        <?php echo $timeframe['total']['num_products'] . TEXT_DIFF . count($timeframe['total']['diff_products']); ?>
+                    </td>
                     <td class="totalContent text-right"><?php echo $currencies->format($timeframe['total']['goods']); ?></td>
 <?php 
             if ($display_tax) {
@@ -1020,6 +1026,13 @@ if ($output_format === 'print' || $output_format === 'display') {
                         <?php echo TABLE_HEADING_CUSTOMER . show_arrow('last_name'); ?>
                     </td>
 <?php
+            if ($display_email_address === true) {
+?>
+                    <td class="lineItemHeadingContent">
+                        <?php echo TABLE_HEADING_EMAIL_ADDRESS . show_arrow('email'); ?>
+                    </td>
+<?php
+            }
             if ($show_country_and_state === true) {
 ?>
                     <td class="lineItemHeadingContent">
@@ -1094,6 +1107,14 @@ if ($output_format === 'print' || $output_format === 'display') {
                         <?php echo $o_data['last_name'] . ', ' . $o_data['first_name']; ?>
                     </td>
 <?php
+                if ($display_email_address === true) {
+?>
+                    <td class="lineItemContent">
+                        <?php echo $o_data['email']; ?>
+                    </td>
+<?php
+                }
+
                 if ($show_country_and_state === true) {
 ?>
                     <td class="lineItemContent">

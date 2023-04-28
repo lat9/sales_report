@@ -60,6 +60,7 @@ class sales_report2 extends base
         $manufacturer,
         $output_format,
         $order_total_validation,
+        $display_email_address,
 
         $doProdInc,
         $prod_includes,
@@ -109,6 +110,7 @@ class sales_report2 extends base
         $this->detail_level = $parms['detail_level'];
         $this->output_format = $parms['output_format'];
         $this->order_total_validation = (bool)$parms['order_total_validation'];
+        $this->display_email_address = (bool)$parms['display_email'];
 
         $this->li_sort_a = $parms['li_sort_a'];
         $this->li_sort_order_a = $parms['li_sort_order_a'];
@@ -250,7 +252,7 @@ class sales_report2 extends base
         $sql =
             'SELECT DISTINCT
                 o.orders_id, o.currency, o.order_total, o.customers_id, o.customers_name, o.delivery_country, o.delivery_state,
-                o.cc_type, o.payment_method, o.payment_module_code, o.shipping_method, o.shipping_module_code' .
+                o.cc_type, o.payment_method, o.payment_module_code, o.shipping_method, o.shipping_module_code, o.customers_email_address' .
              ' FROM ' . TABLE_ORDERS . ' o' . PHP_EOL;
         
         if ($this->manufacturer !== 0 || ($this->doProdInc && !empty($this->prod_includes))) {
@@ -687,6 +689,7 @@ class sales_report2 extends base
                 $firstname = array_shift($pieces);
                 $this->timeframe[$id]['orders'][$oID]['first_name'] = zen_output_string_protected($firstname);
                 $this->timeframe[$id]['orders'][$oID]['last_name'] = zen_output_string_protected(implode(' ', $pieces));
+                $this->timeframe[$id]['orders'][$oID]['email'] = $next_sale['customers_email_address'];
                 $this->timeframe[$id]['orders'][$oID]['country'] = $next_sale['delivery_country'];
                 $this->timeframe[$id]['orders'][$oID]['state'] = $next_sale['delivery_state'];
 
@@ -1059,11 +1062,15 @@ class sales_report2 extends base
                         TABLE_HEADING_ORDERS_ID,
                         CSV_HEADING_LAST_NAME,
                         CSV_HEADING_FIRST_NAME,
-                        CSV_HEADING_COUNTRY, 
-                        CSV_HEADING_STATE, 
-                        TABLE_HEADING_NUM_PRODUCTS,
-                        TABLE_HEADING_TOTAL_GOODS
                     ];
+                    if ($this->display_email_address === true) {
+                        $line[] = TABLE_HEADING_EMAIL_ADDRESS;
+                    }
+                    $line[] = CSV_HEADING_COUNTRY;
+                    $line[] = CSV_HEADING_STATE;
+                    $line[] = TABLE_HEADING_NUM_PRODUCTS;
+                    $line[] = TABLE_HEADING_TOTAL_GOODS;
+
                     if ($display_tax === true) {
                         $line[] = TABLE_HEADING_TAX;
                         $line[] = TABLE_HEADING_ORDER_RECORDED_TAX;
@@ -1212,11 +1219,15 @@ class sales_report2 extends base
                             $o_data['oID'],
                             $o_data['last_name'],
                             $o_data['first_name'],
-                            $o_data['country'],
-                            $o_data['state'],
-                            $o_data['num_products'],
-                            $o_data['goods']
                         ];
+                        if ($this->display_email_address === true) {
+                            $line[] = $o_data['email'];
+                        }
+                        $line[] = $o_data['country'];
+                        $line[] = $o_data['state'];
+                        $line[] = $o_data['num_products'];
+                        $line[] = $o_data['goods'];
+
                         if ($display_tax) {
                             $line[] = $o_data['goods_tax'];
                             $line[] = $o_data['order_recorded_tax'];

@@ -34,11 +34,12 @@ $(document).ready(function(){
                 $('#li-sort-title-product, #li-sort-a-product, #li-sort-b-product').hide();
                 $('#li-sort-title-order, #li-sort-a-order, #li-sort-b-order').show();
                 $('#order-total-validation').srVisible();
-                
+
                 $('#li-sort-a-order option, #li-sort-b-order option').prop('disabled', false);
                 $('#div_li_table_a :input, #div_li_table_b :input').prop('disabled', false);
                 $('#div_li_table_a').srVisible();
                 $('#div_li_table_b').srVisible();
+                updateEmailSorts();
                 break;
             case 'product':
                 $('#li-sort-title-order, #li-sort-a-order, #li-sort-b-order').hide();
@@ -54,6 +55,26 @@ $(document).ready(function(){
                 $('#div_li_table_a, #div_li_table_b, #order-total-validation').srInvisible();
                 $('#div_li_table_a :input, #div_li_table_a select, #div_li_table_b :input, #div_li_table_b select').prop('disabled', true);
                 break;
+        }
+    }
+
+    // -----
+    // Common (onload and onchange) function to enable/disable the order detail-level's
+    // sorting selections based on whether/not the customer's email address is to be
+    // included in the report.
+    //
+    function updateEmailSorts()
+    {
+        if ($('#display-email-address').is(':checked')) {
+            $('#li-sort-a-order option[value="email"], #li-sort-b-order option[value="email"]').show();
+        } else {
+            if ($('#li-sort-a-order option:selected').val() === 'email') {
+                $('#li-sort-a-order').val('oID');
+            }
+            if ($('#li-sort-b-order option:selected').val() === 'email') {
+                $('#li-sort-b-order').val('oID');
+            }
+            $('#li-sort-a-order option[value="email"], #li-sort-b-order option[value="email"]').hide();
         }
     }
 
@@ -161,6 +182,10 @@ $(document).ready(function(){
 
     $('#output-format').on('change', function(){
         updatePrintCsvSelections();
+    });
+    
+    $('#display-email-address').on('change', function(){
+        updateEmailSorts();
     });
 
     $('#btn-submit').on('click', function(){

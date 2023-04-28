@@ -177,6 +177,7 @@ $defines = [
     'CHECKBOX_CSV_HEADER' => ' Column titles in first row',
     'CHECKBOX_NEW_WINDOW' => ' Open results in new window',
     'CHECKBOX_VALIDATE_TOTALS' => ' Output Order Total Validation Column',
+    'CHECKBOX_DISPLAY_EMAIL_ADDRESS' => ' Display customer\'s email address?',
 
     // Report Column Headings
     // Timeframe
@@ -197,6 +198,7 @@ $defines = [
     // Order Line Items
     'TABLE_HEADING_ORDERS_ID' => 'Order ID',
     'TABLE_HEADING_CUSTOMER' => 'Customer',
+    'TABLE_HEADING_EMAIL_ADDRESS' => 'Email Address',
     'TABLE_HEADING_COUNTRY' => 'Country',
     'TABLE_HEADING_STATE' => 'State',
     'TABLE_HEADING_ORDER_TOTAL' => 'Order Total',
@@ -273,7 +275,7 @@ $defines = [
     'TEXT_PARSE_TIME' => 'Parse Time: %s sec.',
     'TEXT_EMPTY_SELECT' => '(doesn\'t matter)',
     'TEXT_QTY' => '| Qty: ',
-    'TEXT_DIFF' => '| Diff: ',
+    'TEXT_DIFF' => ' | Diff: ',
     'TEXT_SAME' => '| (same)',
     'TEXT_SAME_ONE' => '| --',
     'TEXT_PRINT_FORMAT' => 'display report in print format',
