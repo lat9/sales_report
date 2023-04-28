@@ -100,7 +100,7 @@ $show_country_and_state = false;
 //
 if ($output_format !== 'print') {
     $manufacturers = $db->Execute(
-        "SELECT * 
+        "SELECT manufacturers_id, manufacturers_name
            FROM " . TABLE_MANUFACTURERS . " 
        ORDER BY manufacturers_name ASC"
     );
