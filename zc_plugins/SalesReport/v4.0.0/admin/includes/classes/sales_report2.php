@@ -248,11 +248,19 @@ class sales_report2 extends base
             $this->customer_filter .= " AND o.customers_id IN ({$this->cust_includes})" . PHP_EOL;
         }
 
+        // -----
+        // Build conditionally-included fields for the SELECT statement.
+        //
+        $conditional_fields = '';
+        if ($this->display_email_address === true) {
+            $conditional_fields .= ', o.customers_email_address';
+        }
+
         // build the SQL query of order numbers within the current timeframe
         $sql =
             'SELECT DISTINCT
                 o.orders_id, o.currency, o.order_total, o.customers_id, o.customers_name, o.delivery_country, o.delivery_state,
-                o.cc_type, o.payment_method, o.payment_module_code, o.shipping_method, o.shipping_module_code, o.customers_email_address' .
+                o.cc_type, o.payment_method, o.payment_module_code, o.shipping_method, o.shipping_module_code' . $conditional_fields .
              ' FROM ' . TABLE_ORDERS . ' o' . PHP_EOL;
         
         if ($this->manufacturer !== 0 || ($this->doProdInc && !empty($this->prod_includes))) {
@@ -689,7 +697,7 @@ class sales_report2 extends base
                 $firstname = array_shift($pieces);
                 $this->timeframe[$id]['orders'][$oID]['first_name'] = zen_output_string_protected($firstname);
                 $this->timeframe[$id]['orders'][$oID]['last_name'] = zen_output_string_protected(implode(' ', $pieces));
-                $this->timeframe[$id]['orders'][$oID]['email'] = $next_sale['customers_email_address'];
+                $this->timeframe[$id]['orders'][$oID]['email'] = $next_sale['customers_email_address'] ?? '';
                 $this->timeframe[$id]['orders'][$oID]['country'] = $next_sale['delivery_country'];
                 $this->timeframe[$id]['orders'][$oID]['state'] = $next_sale['delivery_state'];
 
