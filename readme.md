@@ -1,4 +1,4 @@
-# Sales Report for Zen Cart 1.5.5 and later
+# Sales Report for Zen Cart 1.5.8 and later
 
 This drop-in plugin generates a _Sales Report_ for your Zen Cart store.  You choose the timeframe and many other options to generate an on-screen, printed or csv-output report for orders placed in the selected timeframe.
 
