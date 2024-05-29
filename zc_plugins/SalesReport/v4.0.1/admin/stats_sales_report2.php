@@ -1,6 +1,6 @@
 <?php
 /**
- * Sales Report II 4.0.0
+ * Sales Report II 4.0.1
  *
  * This is where everything starts and ends. This file builds the HTML display, calls the class file
  * to build the data, then displays that data for the user.
@@ -1132,7 +1132,7 @@ if ($output_format === 'print' || $output_format === 'display') {
                     <td class="lineItemContent no-wrap">
                         <?php echo (count($o_data['diff_products']) > 1 ? TEXT_DIFF . count($o_data['diff_products']) : ($o_data['num_products'] > 1 ? TEXT_SAME : TEXT_SAME_ONE)); ?>
                     </td>
-                    <td class="lineItemContent rtext-ight">
+                    <td class="lineItemContent text-right">
                         <?php echo $currencies->format($o_data['goods']); ?>
                     </td>
 <?php 
