@@ -497,7 +497,7 @@ class sales_report2 extends base
                     'quantity' => $quantity,
                     'tax' => $product_tax,
                     'onetime_charges' => $onetime_charges,
-                    'total' => ($final_price * $quantity) + $onetime_charges
+                    'total' => ($final_price * $quantity) + $onetime_charges,
                 ];
                 $this->build_li_products($this_product);
             }
@@ -683,7 +683,7 @@ class sales_report2 extends base
                     'gc_used_qty' => 0,
                     'grand' => 0,
                     'order_total_validation' => '',
-                    'has_no_value' => 0
+                    'has_no_value' => 0,
                 ];
 
                 // -----
@@ -747,7 +747,7 @@ class sales_report2 extends base
                 'onetime_charges' => $product['onetime_charges'],
                 'total' => $product['total'], // 'total' = ( ($final_price * $quantity) + $onetime_charges ) )
                 'tax' => $product['tax'],
-                'grand' => $product['total'] + $product['tax']
+                'grand' => $product['total'] + $product['tax'],
             ];
 
             // get the manufacturers_id from `products` table
@@ -850,7 +850,7 @@ class sales_report2 extends base
                     $this->timeframe[$i]['matrix']['payment_methods'][] = [
                         'method' => $payment_method,
                         'module_code' => $payment_module_code,
-                        'count' => 1
+                        'count' => 1,
                     ];
                 }
 
@@ -867,7 +867,7 @@ class sales_report2 extends base
                     $this->timeframe[$i]['matrix']['shipping_methods'][] = [
                         'method' => $shipping_method,
                         'module_code' => $shipping_module_code,
-                        'count' => 1
+                        'count' => 1,
                     ];
                 }
 
@@ -883,7 +883,7 @@ class sales_report2 extends base
                 if ($new_credit_card === true && $cc_type !== '') {
                     $this->timeframe[$i]['matrix']['credit_cards'][] = [
                         'type' => $cc_type,
-                        'count' => 1
+                        'count' => 1,
                     ];
                 }
 
@@ -900,7 +900,7 @@ class sales_report2 extends base
                 if ($new_currency === true) {
                     $this->timeframe[$i]['matrix']['currencies'][] = [
                         'type' => $currency,
-                        'count' => 1
+                        'count' => 1,
                     ];
                 }
 
@@ -1025,7 +1025,7 @@ class sales_report2 extends base
                         CSV_HEADING_END_DATE,
                         TABLE_HEADING_NUM_ORDERS,
                         TABLE_HEADING_NUM_PRODUCTS,
-                        TABLE_HEADING_TOTAL_GOODS
+                        TABLE_HEADING_TOTAL_GOODS,
                     ];
                     if ($display_tax === true) {
                         $line[] = TABLE_HEADING_TAX;
@@ -1043,7 +1043,7 @@ class sales_report2 extends base
                         CSV_HEADING_END_DATE,
                         TABLE_HEADING_PRODUCT_ID,
                         TABLE_HEADING_PRODUCT_NAME,
-                        TABLE_HEADING_PRODUCT_ATTRIBUTES
+                        TABLE_HEADING_PRODUCT_ATTRIBUTES,
                     ];
                     if (DISPLAY_MANUFACTURER) {
                         $line[] = TABLE_HEADING_MANUFACTURER;
@@ -1121,7 +1121,7 @@ class sales_report2 extends base
                         $end_date,
                         $timeframe['total']['num_orders'],
                         $timeframe['total']['num_products'],
-                        $timeframe['total']['goods']
+                        $timeframe['total']['goods'],
                     ];
                     if ($display_tax === true) {
                         $line[] = $timeframe['total']['goods_tax'];
