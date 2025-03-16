@@ -81,6 +81,12 @@ class sales_report2 extends base
         $timeframe_id,
         $timeframe_sort;
 
+    private $commonCte = 'WITH status_history AS (
+SELECT orders_id, orders_status_id, min(date_added) as date_added
+FROM ' . TABLE_ORDERS_STATUS_HISTORY . '
+GROUP BY orders_id, orders_status_id
+ORDER BY orders_id, orders_status_id, date_added) '. PHP_EOL;
+
     // -----
     // Static methods used by the report to display the up- and down-arrow icons.
     //
@@ -272,10 +278,10 @@ class sales_report2 extends base
         }
 
         if ($this->date_target === 'status') {
-            $sql .=
-                'LEFT JOIN ' . TABLE_ORDERS_STATUS_HISTORY . ' osh ON o.orders_id = osh.orders_id' . PHP_EOL .
-                "WHERE osh.date_added >= '" . date('Y-m-d H:i:s', $sd) . "' AND osh.date_added < '" . date('Y-m-d H:i:s', $ed) . "'" . PHP_EOL .
-                "  AND osh.orders_status_id = {$this->date_status}" . PHP_EOL;
+            $sql = $this->commonCte . $sql .
+                'LEFT JOIN status_history sth ON o.orders_id = sth.orders_id' . PHP_EOL .
+                "WHERE sth.date_added >= '" . date('Y-m-d H:i:s', $sd) . "' AND sth.date_added < '" . date('Y-m-d H:i:s', $ed) . "'" . PHP_EOL .
+                "  AND sth.orders_status_id = {$this->date_status}" . PHP_EOL;
         } else {
             $sql .= " WHERE o.date_purchased >= '" . date('Y-m-d H:i:s', $sd) . "' AND o.date_purchased < '" . date('Y-m-d H:i:s', $ed) . "'" . PHP_EOL;
         }
