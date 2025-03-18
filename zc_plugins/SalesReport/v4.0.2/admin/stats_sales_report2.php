@@ -93,8 +93,6 @@ foreach ($payments as $next_payment) {
 }
 unset($payments, $next_payment);
 
-$show_country_and_state = false;
-
 // -----
 // Build arrays for dropdowns in search menu
 //
@@ -251,6 +249,7 @@ switch ($detail_level) {
         $li_sort_a_product = 'pID';
         $li_sort_b_product = 'pID';
         $sort_default = 'oID';
+        $show_country_and_state = (DISPLAY_COUNTRY_AND_STATE === true);
         break;
     case 'product':
         $valid_sorts = $product_sorts;
@@ -261,6 +260,7 @@ switch ($detail_level) {
         $li_sort_a_order = 'oID';
         $li_sort_b_order = 'oID';
         $sort_default = 'pID';
+        $show_country_and_state = false;
         break;
     default:
         // -----
@@ -281,6 +281,7 @@ switch ($detail_level) {
         $li_sort_b_order = 'oID';
         $li_sort_a_product = 'pID';
         $li_sort_b_product = 'pID';
+        $show_country_and_state = false;
         break;
 }
 
@@ -921,6 +922,13 @@ if ($output_format === 'print' || $output_format === 'display') {
                 <tr class="totalHeadingRow">
                     <td class="totalHeadingContent"><?= TABLE_HEADING_TIMEFRAME ?></td>
                     <td class="totalHeadingContent"><?= TABLE_HEADING_NUM_ORDERS ?></td>
+<?php
+            if ($show_country_and_state === true) {
+?>
+                    <td class="totalHeadingContent" colspan="2"></td>
+<?php
+            }
+?>
                     <td class="totalHeadingContent text-center" colspan="<?= ($display_email_address === true) ? 3 : 2 ?>"><?= TABLE_HEADING_NUM_PRODUCTS ?></td>
                     <td class="totalHeadingContent text-right"><?= TABLE_HEADING_TOTAL_GOODS ?></td>
 <?php 
@@ -952,6 +960,13 @@ if ($output_format === 'print' || $output_format === 'display') {
                 <tr class="totalRow">
                     <td class="totalContent"><?= $time_display ?></td>
                     <td class="totalContent"><?= $timeframe['total']['num_orders'] ?></td>
+<?php
+            if ($show_country_and_state === true) {
+?>
+                    <td class="totalContent" colspan="2"></td>
+<?php
+            }
+?>
                     <td class="totalContent text-center" colspan="<?= ($display_email_address === true) ? 3 : 2 ?>">
                         <?= $timeframe['total']['num_products'] . TEXT_DIFF . count($timeframe['total']['diff_products']) ?>
                     </td>
@@ -1344,6 +1359,9 @@ if ($output_format === 'print' || $output_format === 'display') {
             if ($display_tax === true) {
                 $colspan += 2;
             }
+            if ($show_country_and_state === true) {
+                $colspan += 2;
+            }
             if ($order_total_validation === true) {
                 $colspan += 1;
             }
@@ -1480,7 +1498,7 @@ if ($output_format === 'print' || $output_format === 'display') {
                                     <td class="lineItemContent">
                                         <?= '&nbsp;[' . $payment['module_code'] . ']' ?>
                                     </td>
-                                    <td class="lineItemContent" align="text-right">
+                                    <td class="lineItemContent text-right">
                                         <?= $payment['count'] ?>
                                     </td>
                                 </tr>
@@ -1621,11 +1639,6 @@ if ($output_format === 'print' || $output_format === 'display') {
     // the totals don't change with only 1 timeframe, so we
     // require that there be more than one to display it
     if (count($sr->timeframe) > 1) {
-?>
-                <tr>
-                    <td><!-- spacer cell --></td>
-                </tr>
-<?php 
         if ($sr->detail_level !== 'timeframe') {
 ?>
                 <tr class="totalHeadingRow">

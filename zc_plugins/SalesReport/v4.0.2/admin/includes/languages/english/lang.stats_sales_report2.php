@@ -1,6 +1,6 @@
 <?php
 /**
- * Sales Report II, v4.0.0
+ * Sales Report II, v4.0.2
  *
  * The language file contains all the text that appears on the report. The first set of
  * configuration defines actually impact the report's output and behavior.
@@ -70,6 +70,13 @@ $defines = [
     // they will still be accounted for and appear in the total.
     //
     'DISPLAY_ONE_TIME_FEES' => false,
+
+    //////////////////////////////////////////////////////////
+    // COUNTRY/STATE COLUMNS
+    // If your store wants to display the country and state when
+    // displaying "Order Total Line Items", set this to (bool)true.
+    //
+    'DISPLAY_COUNTRY_AND_STATE' => false,
 
     //////////////////////////////////////////////////////////
     // DECIMAL PLACES IN AVERAGES
