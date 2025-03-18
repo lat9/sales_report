@@ -1,6 +1,6 @@
 <?php
 /**
- * Sales Report II 4.0.1
+ * Sales Report II 4.0.2
  *
  * This is where everything starts and ends. This file builds the HTML display, calls the class file
  * to build the data, then displays that data for the user.
@@ -92,8 +92,6 @@ foreach ($payments as $next_payment) {
     $payment_key[$next_payment['payment_module_code']] = $next_payment['payment_method'];
 }
 unset($payments, $next_payment);
-
-$show_country_and_state = false; 
 
 // -----
 // Build arrays for dropdowns in search menu
@@ -251,6 +249,7 @@ switch ($detail_level) {
         $li_sort_a_product = 'pID';
         $li_sort_b_product = 'pID';
         $sort_default = 'oID';
+        $show_country_and_state = (DISPLAY_COUNTRY_AND_STATE === true);
         break;
     case 'product':
         $valid_sorts = $product_sorts;
@@ -261,6 +260,7 @@ switch ($detail_level) {
         $li_sort_a_order = 'oID';
         $li_sort_b_order = 'oID';
         $sort_default = 'pID';
+        $show_country_and_state = false;
         break;
     default:
         // -----
@@ -281,6 +281,7 @@ switch ($detail_level) {
         $li_sort_b_order = 'oID';
         $li_sort_a_product = 'pID';
         $li_sort_b_product = 'pID';
+        $show_country_and_state = false;
         break;
 }
 
@@ -407,7 +408,7 @@ if ($output_format === false) {
 }
 ?>
 <!doctype html>
-<html <?php echo HTML_PARAMS; ?>>
+<html <?= HTML_PARAMS ?>>
 <head>
     <?php require DIR_WS_INCLUDES . 'admin_html_head.php'; ?>
 </head>
@@ -422,15 +423,15 @@ if ($output_format === 'print') {
     <!-- PRINT HEADER -->
     <tr>
         <td class="text-center" colspan="2">
-            <a href="<?php echo zen_href_link(FILENAME_STATS_SALES_REPORT2, zen_get_all_get_params(['output_format']) . 'output_format=none', 'NONSSL'); ?>">
-                <span class="pageHeading"><?php echo PAGE_HEADING; ?></span>
+            <a href="<?= zen_href_link(FILENAME_STATS_SALES_REPORT2, zen_get_all_get_params(['output_format']) . 'output_format=none', 'NONSSL') ?>">
+                <span class="pageHeading"><?= PAGE_HEADING ?></span>
             </a><br>
         </td>
     </tr>
     <tr>
         <td class="text-center" colspan="2">
-            <a href="<?php echo zen_href_link(FILENAME_STATS_SALES_REPORT2, zen_get_all_get_params(['output_format']) . 'output_format=none', 'NONSSL'); ?>">
-                <span class="pageHeading"><?php echo $start_date . PRINT_DATE_TO . $end_date; ?></span>
+            <a href="<?= zen_href_link(FILENAME_STATS_SALES_REPORT2, zen_get_all_get_params(['output_format']) . 'output_format=none', 'NONSSL') ?>">
+                <span class="pageHeading"><?= $start_date . PRINT_DATE_TO . $end_date ?></span>
             </a><br>
         </td>
     </tr>
@@ -445,13 +446,13 @@ if ($output_format === 'print') {
         $date_target_heading .= (PRINT_DATE_STATUS . ' (' . $status_key[$date_status] . ')');
     }
 ?>
-                <td class="smalltext"><?php echo $date_target_heading; ?></td>
+                <td class="smalltext"><?= $date_target_heading ?></td>
             </tr>
             <tr>
-                <td class="smallText"><?php echo sprintf(PRINT_TIMEFRAMES, $timeframe_key[$timeframe], $timeframe_sort); ?></td>
+                <td class="smallText"><?= sprintf(PRINT_TIMEFRAMES, $timeframe_key[$timeframe], $timeframe_sort) ?></td>
             </tr>
             <tr>
-                <td class="smalltext"><?php echo PRINT_DETAIL_LEVEL . $detail_key[$detail_level]; ?></td>
+                <td class="smalltext"><?= PRINT_DETAIL_LEVEL . $detail_key[$detail_level] ?></td>
             </tr>
         </table></td>
         <td class="text-right"><table>
@@ -459,8 +460,8 @@ if ($output_format === 'print') {
     if ($payment_method !== '0') {
 ?>
             <tr>
-                <td class="smalltext"><?php echo PRINT_PAYMENT_METHOD; ?></td>
-                <td class="smalltext"><?php echo $payment_key[$payment_method]; ?></td>
+                <td class="smalltext"><?= PRINT_PAYMENT_METHOD ?></td>
+                <td class="smalltext"><?= $payment_key[$payment_method] ?></td>
             </tr>
 <?php 
     }
@@ -468,8 +469,8 @@ if ($output_format === 'print') {
     if ($payment_method_omit !== '0') {
 ?>
             <tr>
-                <td class="smalltext"><?php echo PRINT_PAYMENT_METHOD; ?></td>
-                <td class="smalltext"><?php echo $payment_key[$payment_method]; ?></td>
+                <td class="smalltext"><?= PRINT_PAYMENT_METHOD ?></td>
+                <td class="smalltext"><?= $payment_key[$payment_method] ?></td>
             </tr>
 <?php 
     }
@@ -477,8 +478,8 @@ if ($output_format === 'print') {
     if ($current_status !== 0) {
 ?>
             <tr>
-                <td class="smalltext"><?php echo PRINT_CURRENT_STATUS; ?></td>
-                <td class="smalltext"><?php echo sprintf(PRINT_ORDER_STATUS, $status_key[$current_status], $current_status); ?></td>
+                <td class="smalltext"><?= PRINT_CURRENT_STATUS ?></td>
+                <td class="smalltext"><?= sprintf(PRINT_ORDER_STATUS, $status_key[$current_status], $current_status) ?></td>
             </tr>
 <?php 
 }
@@ -486,7 +487,7 @@ if ($output_format === 'print') {
         </table><td/>
     </tr>
     <tr>
-        <td colspan="2"><?php echo zen_black_line(); ?></td>
+        <td colspan="2"><?= zen_black_line() ?></td>
     </tr>
 <!-- END PRINT HEADER -->
 <?php
@@ -494,93 +495,93 @@ if ($output_format === 'print') {
 ?>
 <body>
     <?php require DIR_WS_INCLUDES . 'header.php'; ?>
-    <?php echo zen_draw_form('search', FILENAME_STATS_SALES_REPORT2, '', 'get', '', true) .
-               zen_draw_hidden_field('date_custom', $date_custom, 'id="date-custom"'); ?>
+    <?= zen_draw_form('search', FILENAME_STATS_SALES_REPORT2, '', 'get', '', true) .
+               zen_draw_hidden_field('date_custom', $date_custom, 'id="date-custom"') ?>
     <table class="table">
         <tr>
-            <td class="pageHeading"><?php echo PAGE_HEADING; ?></td>
+            <td class="pageHeading"><?= PAGE_HEADING ?></td>
             <td class="pageHeading text-right">
-                <?php echo zen_draw_separator('pixel_trans.gif', HEADING_IMAGE_WIDTH, HEADING_IMAGE_HEIGHT); ?>
+                <?= zen_draw_separator('pixel_trans.gif', HEADING_IMAGE_WIDTH, HEADING_IMAGE_HEIGHT) ?>
             </td>
         </tr>
 
         <tr>
             <td colspan="2">
-                <fieldset><legend><?php echo HEADING_TITLE_SEARCH; ?></legend>
+                <fieldset><legend><?= HEADING_TITLE_SEARCH ?></legend>
                 <table class="table">
                     <tr class="v-top">
                         <td><table id="tbl_date_preset">
                             <tr>
                                 <td class="smallText">
-                                    <strong><?php echo SEARCH_DATE_PRESET; ?></strong>&nbsp;
-                                    <button id="choose-custom" type="button"><?php echo BUTTON_TIMEFRAME_CUSTOM; ?></button>
+                                    <strong><?= SEARCH_DATE_PRESET ?></strong>&nbsp;
+                                    <button id="choose-custom" type="button"><?= BUTTON_TIMEFRAME_CUSTOM ?></button>
                                 </td>
                             </tr>
                             <tr>
                                 <td class="smallText" id="td_today">
-                                    <?php echo zen_draw_radio_field('date_preset', 'today', ($date_preset === 'today')) . sprintf(SEARCH_DATE_TODAY, date('M. j', $today_timestamp)); ?>
+                                    <?= zen_draw_radio_field('date_preset', 'today', ($date_preset === 'today')) . sprintf(SEARCH_DATE_TODAY, date('M. j', $today_timestamp)) ?>
                                 </td>
                             </tr>
                             <tr>
                                 <td class="smallText" id="td_yesterday">
-                                    <?php echo zen_draw_radio_field('date_preset', 'yesterday', ($date_preset === 'yesterday')) . sprintf(SEARCH_DATE_YESTERDAY, date('M. j', strtotime('-1 day', $today_timestamp))); ?>
+                                    <?= zen_draw_radio_field('date_preset', 'yesterday', ($date_preset === 'yesterday')) . sprintf(SEARCH_DATE_YESTERDAY, date('M. j', strtotime('-1 day', $today_timestamp))) ?>
                                 </td>
                             </tr>
                             <tr>
                                 <td class="smallText" id="td_last_month">
-                                    <?php echo zen_draw_radio_field('date_preset', 'last_month', ($date_preset === 'last_month')) . sprintf(SEARCH_DATE_LAST_MONTH, date("F \'y", strtotime('-1 month', $today_timestamp))); ?>
+                                    <?= zen_draw_radio_field('date_preset', 'last_month', ($date_preset === 'last_month')) . sprintf(SEARCH_DATE_LAST_MONTH, date("F \'y", strtotime('-1 month', $today_timestamp))) ?>
                                 </td>
                             </tr>
                             <tr>
                                 <td class="smallText" id="td_this_month">
-                                    <?php echo zen_draw_radio_field('date_preset', 'this_month', ($date_preset === 'this_month')) . sprintf(SEARCH_DATE_THIS_MONTH, date("F \'y")); ?>
+                                    <?= zen_draw_radio_field('date_preset', 'this_month', ($date_preset === 'this_month')) . sprintf(SEARCH_DATE_THIS_MONTH, date("F \'y")) ?>
                                 </td>
                             </tr>
                             <tr>
                                 <td class="smallText" id="td_last_year">
-                                    <?php echo zen_draw_radio_field('date_preset', 'last_year', ($date_preset === 'last_year')) . sprintf(SEARCH_DATE_LAST_YEAR, date('Y') - 1); ?>
+                                    <?= zen_draw_radio_field('date_preset', 'last_year', ($date_preset === 'last_year')) . sprintf(SEARCH_DATE_LAST_YEAR, date('Y') - 1) ?>
                                 </td>
                             </tr>
                             <tr>
                                 <td class="smallText" id="td_last_12_months">
-                                    <?php echo zen_draw_radio_field('date_preset', 'last_12_months', ($date_preset === 'last_12_months')) . SEARCH_DATE_LAST_12_MONTHS; ?>
+                                    <?= zen_draw_radio_field('date_preset', 'last_12_months', ($date_preset === 'last_12_months')) . SEARCH_DATE_LAST_12_MONTHS ?>
                                 </td>
                             </tr>
                             <tr>
                                 <td class="smallText" id="td_YTD">
-                                    <?php echo zen_draw_radio_field('date_preset', 'YTD', ($date_preset === 'YTD' || !empty($date_custom))) . sprintf(SEARCH_DATE_YTD, 'Jan 1 to ' . date('M. j Y', $today_timestamp)); ?>
+                                    <?= zen_draw_radio_field('date_preset', 'YTD', ($date_preset === 'YTD' || !empty($date_custom))) . sprintf(SEARCH_DATE_YTD, 'Jan 1 to ' . date('M. j Y', $today_timestamp)) ?>
                                 </td>
                             </tr>
                         </table>
                         <table id="tbl_date_custom">
                             <tr>
                                 <td class="smallText">
-                                    <strong><?php echo SEARCH_DATE_CUSTOM; ?></strong>&nbsp;
-                                    <button id="choose-preset" type="button"><?php echo BUTTON_TIMEFRAME_PRESET; ?></button>
+                                    <strong><?= SEARCH_DATE_CUSTOM ?></strong>&nbsp;
+                                    <button id="choose-preset" type="button"><?= BUTTON_TIMEFRAME_PRESET ?></button>
                                 </td>
                             </tr>
                             <tr>
                                 <td class="smallText">
-                                    <?php echo SEARCH_START_DATE; ?>
+                                    <?= SEARCH_START_DATE ?>
                                     <div class="date">
-                                        <?php echo zen_draw_input_field('start_date', $start_date, 'id="start-date" autocomplete="off"'); ?>
+                                        <?= zen_draw_input_field('start_date', $start_date, 'id="start-date" autocomplete="off"') ?>
                                     </div>
-                                    <span class="help-block errorText">(<?php echo zen_datepicker_format_full(); ?>)</span>
+                                    <span class="help-block errorText">(<?= zen_datepicker_format_full() ?>)</span>
                                 </td>
                             </tr>
                             <tr>
                                 <td class="smallText">
-                                    <?php echo SEARCH_END_DATE; ?>
+                                    <?= SEARCH_END_DATE ?>
                                     <div class="date">
-                                        <?php echo zen_draw_input_field('end_date', $end_date, 'id="end-date" autocomplete="off"'); ?>
+                                        <?= zen_draw_input_field('end_date', $end_date, 'id="end-date" autocomplete="off"') ?>
                                     </div>
-                                    <span class="help-block errorText">(<?php echo zen_datepicker_format_full(); ?>)</span>
+                                    <span class="help-block errorText">(<?= zen_datepicker_format_full() ?>)</span>
                                 </td>
                             </tr>
                         </table></td>
                         <td><table>
                             <tr>
-                                <td class="smallText"><strong><?php echo SEARCH_DATE_TARGET; ?></strong></td>
+                                <td class="smallText"><strong><?= SEARCH_DATE_TARGET ?></strong></td>
                             </tr>
                             <tr>
                                 <td class="smallText"><?php
@@ -590,12 +591,12 @@ if ($output_format === 'print') {
                             </tr>
                             <tr>
                                 <td class="smallText" id="td_date_status">
-                                    <?php echo zen_draw_pull_down_menu('date_status', $status_array, $date_status, 'id="date_status"'); ?>
+                                    <?= zen_draw_pull_down_menu('date_status', $status_array, $date_status, 'id="date_status"') ?>
                                 </td>
                             </tr>
                             <tr>
                                 <td class="smallText">
-                                    <?php echo zen_draw_checkbox_field('doProdInc', '1', $doProdInc, '', 'id="do-prod-inc"') . ' ' . SEARCH_SPECIFIC_PRODUCTS; ?>
+                                    <?= zen_draw_checkbox_field('doProdInc', '1', $doProdInc, '', 'id="do-prod-inc"') . ' ' . SEARCH_SPECIFIC_PRODUCTS ?>
                                 </td>
                             </tr>
                             <tr>
@@ -604,33 +605,33 @@ if ($output_format === 'print') {
     $temp_cust = $_GET['cust_includes'] ?? INCLUDE_CUSTOMERS;
 ?>
                                 <td class="smallText" id="td_prod_includes">
-                                    <?php echo zen_draw_input_field('prod_includes', $temp_prods); ?>
+                                    <?= zen_draw_input_field('prod_includes', $temp_prods) ?>
                                 </td>
                             </tr>
                             <tr>
                                 <td class="smallText">
-                                    <?php echo zen_draw_checkbox_field('doCustInc', '1', $doCustInc, '', 'id="do-cust-inc"') . ' ' . SEARCH_SPECIFIC_CUSTOMERS; ?>
+                                    <?= zen_draw_checkbox_field('doCustInc', '1', $doCustInc, '', 'id="do-cust-inc"') . ' ' . SEARCH_SPECIFIC_CUSTOMERS ?>
                                 </td>
                             </tr>
                             <tr>
                                 <td class="smallText" id="td_cust_includes">
-                                    <?php echo zen_draw_input_field('cust_includes', $temp_cust);?>
+                                    <?= zen_draw_input_field('cust_includes', $temp_cust);?>
                                 </td>
                             </tr>
                         </table></td>
                         <td><table>
                             <tr>
                                 <td class="smallText">
-                                    <strong><?php echo SEARCH_PAYMENT_METHOD; ?></strong>
+                                    <strong><?= SEARCH_PAYMENT_METHOD ?></strong>
                                     <br>
-                                    <?php echo zen_draw_pull_down_menu('payment_method', $payments_array, $payment_method, 'id="payment_method"'); ?>
+                                    <?= zen_draw_pull_down_menu('payment_method', $payments_array, $payment_method, 'id="payment_method"') ?>
                                 </td>
                             </tr>
                             <tr>
                                 <td class="smallText">
-                                    <strong><?php echo SEARCH_PAYMENT_METHOD_OMIT; ?></strong>
+                                    <strong><?= SEARCH_PAYMENT_METHOD_OMIT ?></strong>
                                     <br>
-                                    <?php echo zen_draw_pull_down_menu('payment_method_omit', $payments_array, $payment_method_omit, 'id="payment_method_omit"'); ?>
+                                    <?= zen_draw_pull_down_menu('payment_method_omit', $payments_array, $payment_method_omit, 'id="payment_method_omit"') ?>
                                 </td>
                             </tr>
 <?php
@@ -638,16 +639,16 @@ if ($output_format === 'print') {
 ?>
                             <tr>
                                 <td class="smallText">
-                                    <strong><?php echo SEARCH_CURRENT_STATUS; ?></strong>
+                                    <strong><?= SEARCH_CURRENT_STATUS ?></strong>
                                     <br>
-                                    <?php echo zen_draw_pull_down_menu('current_status', array_merge($empty_select, $status_array), $current_status, 'id="current_status"'); ?>
+                                    <?= zen_draw_pull_down_menu('current_status', array_merge($empty_select, $status_array), $current_status, 'id="current_status"') ?>
                                 </td>
                             </tr>
                             <tr>
                                 <td class="smallText">
-                                    <strong><?php echo SEARCH_EXCLUDED_STATUS; ?></strong>
+                                    <strong><?= SEARCH_EXCLUDED_STATUS ?></strong>
                                     <br>
-                                    <?php echo zen_draw_pull_down_menu('excluded_status', array_merge($empty_select, $status_array), $excluded_status, 'id="excluded-status"'); ?>
+                                    <?= zen_draw_pull_down_menu('excluded_status', array_merge($empty_select, $status_array), $excluded_status, 'id="excluded-status"') ?>
                                 </td>
                             </tr>
 <?php 
@@ -655,9 +656,9 @@ if ($output_format === 'print') {
 ?>
                             <tr>
                                 <td class="smallText">
-                                    <strong><?php echo SEARCH_MANUFACTURER; ?></strong>
+                                    <strong><?= SEARCH_MANUFACTURER ?></strong>
                                     <br>
-                                    <?php echo zen_draw_pull_down_menu('manufacturer', $manufacturer_array, $manufacturer, 'id="manufacturer"'); ?>
+                                    <?= zen_draw_pull_down_menu('manufacturer', $manufacturer_array, $manufacturer, 'id="manufacturer"') ?>
                                 </td>
                             </tr>
 <?php 
@@ -670,40 +671,40 @@ if ($output_format === 'print') {
         </tr>
         <tr>
             <td colspan="2">
-                <fieldset><legend><?php echo HEADING_TITLE_SORT; ?></legend>
+                <fieldset><legend><?= HEADING_TITLE_SORT ?></legend>
                 <table class="table">
                     <tr class="v-top">
         <!-- nested table to show/hide sort options without shifting entire row-->
                         <td><table>
                             <tr>
-                                <td class="smallText"><strong><?php echo SEARCH_TIMEFRAME; ?></strong></td>
+                                <td class="smallText"><strong><?= SEARCH_TIMEFRAME ?></strong></td>
                             </tr>
                             <tr>
-                                <td class="smallText"><?php echo
+                                <td class="smallText"><?=
                                     zen_draw_radio_field('timeframe', 'day', $timeframe === 'day') . SEARCH_TIMEFRAME_DAY . '<br>' .
                                     zen_draw_radio_field('timeframe', 'week', $timeframe === 'week') . SEARCH_TIMEFRAME_WEEK . '<br>' .
                                     zen_draw_radio_field('timeframe', 'month', $timeframe === 'month') . SEARCH_TIMEFRAME_MONTH . '<br>' .
-                                    zen_draw_radio_field('timeframe', 'year', $timeframe === 'year') . SEARCH_TIMEFRAME_YEAR; ?>
+                                    zen_draw_radio_field('timeframe', 'year', $timeframe === 'year') . SEARCH_TIMEFRAME_YEAR ?>
                                 </td>
                             </tr>
                         </table></td>
                         <td><table>
                             <tr>
-                                <td class="smallText"><strong><?php echo SEARCH_TIMEFRAME_SORT; ?></strong></td>
+                                <td class="smallText"><strong><?= SEARCH_TIMEFRAME_SORT ?></strong></td>
                             </tr>
                             <tr>
-                                <td class="smallText"><?php echo
+                                <td class="smallText"><?=
                                     zen_draw_radio_field('timeframe_sort', 'asc', $timeframe_sort === 'asc') . sales_report2::getUpArrowIcon() . RADIO_TIMEFRAME_SORT_ASC . '<br>' .
-                                    zen_draw_radio_field('timeframe_sort', 'desc', $timeframe_sort !== 'asc') . sales_report2::getDownArrowIcon() . RADIO_TIMEFRAME_SORT_DESC; ?>
+                                    zen_draw_radio_field('timeframe_sort', 'desc', $timeframe_sort !== 'asc') . sales_report2::getDownArrowIcon() . RADIO_TIMEFRAME_SORT_DESC ?>
                                 </td>
                             </tr>
                         </table></td>
                         <td><table>
                             <tr>
                                 <td class="smallText">
-                                    <strong><?php echo SEARCH_DETAIL_LEVEL; ?></strong>
+                                    <strong><?= SEARCH_DETAIL_LEVEL ?></strong>
                                     <br>
-                                    <?php echo zen_draw_pull_down_menu('detail_level', $detail_array, $detail_level, 'id="detail_level"'); ?>
+                                    <?= zen_draw_pull_down_menu('detail_level', $detail_array, $detail_level, 'id="detail_level"') ?>
                                 </td>
                             </tr>
                         </table></td>
@@ -711,18 +712,18 @@ if ($output_format === 'print') {
                         <td><div id="div_li_table_a"><table>
                             <tr class="v-top">
                                 <td class="smallText" id="li-sort-title-order">
-                                    <strong><?php echo SEARCH_SORT_ORDER; ?></strong>
+                                    <strong><?= SEARCH_SORT_ORDER ?></strong>
                                 </td>
                                 <td class="smallText" id="li-sort-title-product">
-                                    <strong><?php echo SEARCH_SORT_PRODUCT; ?></strong>
+                                    <strong><?= SEARCH_SORT_PRODUCT ?></strong>
                                 </td>
                             </tr>
                             <tr class="v-top">
                                 <td class="smallText">
-                                    <?php echo zen_draw_pull_down_menu('li_sort_a', $order_sorts_array, $li_sort_a_order, 'id="li-sort-a-order"') .
-                                               zen_draw_pull_down_menu('li_sort_a', $product_sorts_array, $li_sort_a_product, 'id="li-sort-a-product"'); ?>
+                                    <?= zen_draw_pull_down_menu('li_sort_a', $order_sorts_array, $li_sort_a_order, 'id="li-sort-a-order"') .
+                                               zen_draw_pull_down_menu('li_sort_a', $product_sorts_array, $li_sort_a_product, 'id="li-sort-a-product"') ?>
                                     <br>
-                                    <?php echo
+                                    <?=
                                         zen_draw_radio_field('li_sort_order_a', 'asc', $li_sort_order_a === 'asc') . sales_report2::getUpArrowIcon() . RADIO_LI_SORT_ASC .
                                         '<br>' .
                                         zen_draw_radio_field('li_sort_order_a', 'desc', $li_sort_order_a !== 'asc') . sales_report2::getDownArrowIcon() . RADIO_LI_SORT_DESC;
@@ -734,16 +735,16 @@ if ($output_format === 'print') {
                         </table></div></td>
                         <td><div id="div_li_table_b"><table>
                             <tr>
-                                <td class="smallText"><strong><?php echo SEARCH_SORT_THEN; ?></strong></td>
+                                <td class="smallText"><strong><?= SEARCH_SORT_THEN ?></strong></td>
                             </tr>
                             <tr>
                                 <td class="smallText">
-                                    <?php echo zen_draw_pull_down_menu('li_sort_b', $order_sorts_array, $li_sort_b_order, 'id="li-sort-b-order"') .
-                                               zen_draw_pull_down_menu('li_sort_b', $product_sorts_array, $li_sort_b_product, 'id="li-sort-b-product"'); ?>
+                                    <?= zen_draw_pull_down_menu('li_sort_b', $order_sorts_array, $li_sort_b_order, 'id="li-sort-b-order"') .
+                                        zen_draw_pull_down_menu('li_sort_b', $product_sorts_array, $li_sort_b_product, 'id="li-sort-b-product"') ?>
                                     <br>
-                                    <?php echo
+                                    <?=
                                     zen_draw_radio_field('li_sort_order_b', 'asc', $li_sort_order_b === 'asc') . sales_report2::getUpArrowIcon() . RADIO_LI_SORT_ASC . '<br>' .
-                                    zen_draw_radio_field('li_sort_order_b', 'desc', $li_sort_order_b !== 'asc') . sales_report2::getDownArrowIcon() . RADIO_LI_SORT_DESC; ?>
+                                    zen_draw_radio_field('li_sort_order_b', 'desc', $li_sort_order_b !== 'asc') . sales_report2::getDownArrowIcon() . RADIO_LI_SORT_DESC ?>
                                 </td>
                             </tr>
                         </table></div></td>
@@ -753,37 +754,37 @@ if ($output_format === 'print') {
         </tr>
         <tr>
             <td colspan="2">
-                <fieldset><legend><?php echo HEADING_TITLE_PROCESS; ?></legend>
+                <fieldset><legend><?= HEADING_TITLE_PROCESS ?></legend>
                 <table class="table">
                     <tr class="v-bot">
                         <td class="smallText">
-                            <strong><?php echo SEARCH_OUTPUT_FORMAT; ?></strong>
+                            <strong><?= SEARCH_OUTPUT_FORMAT ?></strong>
                             <br>
-                            <?php echo zen_draw_pull_down_menu('output_format', $output_array, $output_format, 'id="output-format"'); ?>
+                            <?= zen_draw_pull_down_menu('output_format', $output_array, $output_format, 'id="output-format"') ?>
                         </td>
                         <td class="smallText">
-                            <?php echo zen_draw_separator('pixel_trans.gif', 175, 1); ?>
+                            <?= zen_draw_separator('pixel_trans.gif', 175, 1) ?>
                             <br>
-                            <span id="span-auto-print"><?php echo zen_draw_checkbox_field('auto_print', '1', false) . CHECKBOX_AUTO_PRINT; ?></span>
-                            <span id="span-csv-header"><?php echo zen_draw_checkbox_field('csv_header', '1', false) . CHECKBOX_CSV_HEADER; ?></span>
+                            <span id="span-auto-print"><?= zen_draw_checkbox_field('auto_print', '1', false) . CHECKBOX_AUTO_PRINT ?></span>
+                            <span id="span-csv-header"><?= zen_draw_checkbox_field('csv_header', '1', false) . CHECKBOX_CSV_HEADER ?></span>
                         </td>
                         <td class="smallText" id="order-total-validation">
-                            <?php echo zen_draw_checkbox_field('order_total_validation', '1', $order_total_validation) . CHECKBOX_VALIDATE_TOTALS; ?>
+                            <?= zen_draw_checkbox_field('order_total_validation', '1', $order_total_validation) . CHECKBOX_VALIDATE_TOTALS ?>
                             <br>
-                            <?php echo zen_draw_checkbox_field('display_email', '1', $display_email_address, '', 'id="display-email-address"') . CHECKBOX_DISPLAY_EMAIL_ADDRESS; ?>
+                            <?= zen_draw_checkbox_field('display_email', '1', $display_email_address, '', 'id="display-email-address"') . CHECKBOX_DISPLAY_EMAIL_ADDRESS ?>
                         </td>
                         <td class="smallText text-right">
-                            <?php echo zen_draw_checkbox_field('new_window', '1', $new_window, '', 'id="new-window"') . CHECKBOX_NEW_WINDOW; ?>
+                            <?= zen_draw_checkbox_field('new_window', '1', $new_window, '', 'id="new-window"') . CHECKBOX_NEW_WINDOW ?>
                             <br>
-                            <button type="button" id="btn-submit"><?php echo BUTTON_SEARCH; ?></button>
+                            <button type="button" id="btn-submit"><?= BUTTON_SEARCH ?></button>
                         </td>
                     </tr>
                 </table></fieldset>
             </td>
         </tr>
         <tr class="v-top">
-            <td><?php echo zen_draw_separator('pixel_trans.gif', 1, 15); ?></td>
-            <td id="td_wait_text" class="alert text-right"><?php echo SEARCH_WAIT_TEXT; ?>&nbsp;&nbsp;</td>
+            <td><?= zen_draw_separator('pixel_trans.gif', 1, 15) ?></td>
+            <td id="td_wait_text" class="alert text-right"><?= SEARCH_WAIT_TEXT ?>&nbsp;&nbsp;</td>
         </tr>
 <?php 
 }  // END <?php if ( (!$output_format || $output_format = 'display') && $output_format != 'print')
@@ -848,7 +849,7 @@ if ($output_format === 'print' || $output_format === 'display') {
                 }
             }
 ?>
-            <td><?php echo $header_string; ?> </td>
+            <td><?= $header_string ?> </td>
 <?php
             $colspan = '';
         } else {
@@ -857,9 +858,9 @@ if ($output_format === 'print' || $output_format === 'display') {
         $sr_link = zen_href_link(FILENAME_STATS_SALES_REPORT2, zen_get_all_get_params(['output_format', 'auto_print']) . 'output_format=print&auto_print=1');
         $icon_print = '<i class="fa fa-2x fa-print" aria-hidden="true"></i>';
 ?>
-            <td class="text-right"<?php echo $colspan; ?>>
-                <a href="<?php echo $sr_link; ?>" title="<?php echo TEXT_PRINT_FORMAT_TITLE; ?>">
-                    <span class="smallText"><?php echo $icon_print . TEXT_PRINT_FORMAT; ?></span>
+            <td class="text-right"<?= $colspan ?>>
+                <a href="<?= $sr_link ?>" title="<?= TEXT_PRINT_FORMAT_TITLE ?>">
+                    <span class="smallText"><?= $icon_print . TEXT_PRINT_FORMAT ?></span>
                 </a>
             </td>
         </tr>
@@ -876,23 +877,23 @@ if ($output_format === 'print' || $output_format === 'display') {
 ?>
       <!--TIMEFRAME TOTAL HEADER-->
                 <tr class="totalHeadingRow">
-                    <td class="totalHeadingContent"><?php echo TABLE_HEADING_TIMEFRAME; ?></td>
-                    <td class="totalHeadingContent"><?php echo TABLE_HEADING_NUM_ORDERS; ?></td>
-                    <td class="totalHeadingContent text-center" colspan="2"><?php echo TABLE_HEADING_NUM_PRODUCTS; ?></td>
-                    <td class="totalHeadingContent text-right"><?php echo TABLE_HEADING_TOTAL_GOODS; ?></td>
+                    <td class="totalHeadingContent"><?= TABLE_HEADING_TIMEFRAME ?></td>
+                    <td class="totalHeadingContent"><?= TABLE_HEADING_NUM_ORDERS ?></td>
+                    <td class="totalHeadingContent text-center" colspan="2"><?= TABLE_HEADING_NUM_PRODUCTS ?></td>
+                    <td class="totalHeadingContent text-right"><?= TABLE_HEADING_TOTAL_GOODS ?></td>
 <?php 
         if ($display_tax === true) {
 ?>
-                    <td class="totalHeadingContent text-right"><?php echo TABLE_HEADING_GOODS_TAX; ?></td>
-                    <td class="totalHeadingContent text-right"><?php echo TABLE_HEADING_ORDER_RECORDED_TAX; ?></td>
+                    <td class="totalHeadingContent text-right"><?= TABLE_HEADING_GOODS_TAX ?></td>
+                    <td class="totalHeadingContent text-right"><?= TABLE_HEADING_ORDER_RECORDED_TAX ?></td>
 <?php 
         }
 ?>
-                    <td class="totalHeadingContent text-right"><?php echo TABLE_HEADING_SHIPPING; ?></td>
-                    <td class="totalHeadingContent text-center" colspan="2"><?php echo TABLE_HEADING_DISCOUNTS; ?></td>
-                    <td class="totalHeadingContent text-center" colspan="2"><?php echo TABLE_HEADING_GC_SOLD; ?></td>
-                    <td class="totalHeadingContent text-center" colspan="2"><?php echo TABLE_HEADING_GC_USED; ?></td>
-                    <td class="totalHeadingContent text-right"><?php echo TABLE_HEADING_TOTAL; ?></td>
+                    <td class="totalHeadingContent text-right"><?= TABLE_HEADING_SHIPPING ?></td>
+                    <td class="totalHeadingContent text-center" colspan="2"><?= TABLE_HEADING_DISCOUNTS ?></td>
+                    <td class="totalHeadingContent text-center" colspan="2"><?= TABLE_HEADING_GC_SOLD ?></td>
+                    <td class="totalHeadingContent text-center" colspan="2"><?= TABLE_HEADING_GC_USED ?></td>
+                    <td class="totalHeadingContent text-right"><?= TABLE_HEADING_TOTAL ?></td>
                 </tr>
 <?php
     }
@@ -919,23 +920,30 @@ if ($output_format === 'print' || $output_format === 'display') {
 ?>
       <!--TIMEFRAME TOTAL HEADER-->
                 <tr class="totalHeadingRow">
-                    <td class="totalHeadingContent"><?php echo TABLE_HEADING_TIMEFRAME; ?></td>
-                    <td class="totalHeadingContent"><?php echo TABLE_HEADING_NUM_ORDERS; ?></td>
-                    <td class="totalHeadingContent text-center" colspan="<?php echo ($display_email_address === true) ? 3 : 2; ?>"><?php echo TABLE_HEADING_NUM_PRODUCTS; ?></td>
-                    <td class="totalHeadingContent text-right"><?php echo TABLE_HEADING_TOTAL_GOODS; ?></td>
+                    <td class="totalHeadingContent"><?= TABLE_HEADING_TIMEFRAME ?></td>
+                    <td class="totalHeadingContent"><?= TABLE_HEADING_NUM_ORDERS ?></td>
+<?php
+            if ($show_country_and_state === true) {
+?>
+                    <td class="totalHeadingContent" colspan="2"></td>
+<?php
+            }
+?>
+                    <td class="totalHeadingContent text-center" colspan="<?= ($display_email_address === true) ? 3 : 2 ?>"><?= TABLE_HEADING_NUM_PRODUCTS ?></td>
+                    <td class="totalHeadingContent text-right"><?= TABLE_HEADING_TOTAL_GOODS ?></td>
 <?php 
             if ($display_tax === true) {
 ?>
-                    <td class="totalHeadingContent text-right"><?php echo TABLE_HEADING_GOODS_TAX; ?></td>
-                    <td class="totalHeadingContent text-right"><?php echo TABLE_HEADING_ORDER_RECORDED_TAX; ?></td>
+                    <td class="totalHeadingContent text-right"><?= TABLE_HEADING_GOODS_TAX ?></td>
+                    <td class="totalHeadingContent text-right"><?= TABLE_HEADING_ORDER_RECORDED_TAX ?></td>
 <?php 
             }
 ?>
-                    <td class="totalHeadingContent text-right"><?php echo TABLE_HEADING_SHIPPING; ?></td>
-                    <td class="totalHeadingContent text-center" colspan="2"><?php echo TABLE_HEADING_DISCOUNTS; ?></td>
-                    <td class="totalHeadingContent text-center" colspan="2"><?php echo TABLE_HEADING_GC_SOLD; ?></td>
-                    <td class="totalHeadingContent text-center" colspan="2"><?php echo TABLE_HEADING_GC_USED; ?></td>
-                    <td class="totalHeadingContent text-right"><?php echo TABLE_HEADING_TOTAL; ?></td>
+                    <td class="totalHeadingContent text-right"><?= TABLE_HEADING_SHIPPING ?></td>
+                    <td class="totalHeadingContent text-center" colspan="2"><?= TABLE_HEADING_DISCOUNTS ?></td>
+                    <td class="totalHeadingContent text-center" colspan="2"><?= TABLE_HEADING_GC_SOLD ?></td>
+                    <td class="totalHeadingContent text-center" colspan="2"><?= TABLE_HEADING_GC_USED ?></td>
+                    <td class="totalHeadingContent text-right"><?= TABLE_HEADING_TOTAL ?></td>
 <?php 
             if ($sr->detail_level === 'order' && $order_total_validation === true) {
 ?>
@@ -950,28 +958,35 @@ if ($output_format === 'print' || $output_format === 'display') {
         if (isset($timeframe['total'])) {
 ?>
                 <tr class="totalRow">
-                    <td class="totalContent"><?php echo $time_display; ?></td>
-                    <td class="totalContent"><?php echo $timeframe['total']['num_orders']; ?></td>
-                    <td class="totalContent text-center" colspan="<?php echo ($display_email_address === true) ? 3 : 2; ?>">
-                        <?php echo $timeframe['total']['num_products'] . TEXT_DIFF . count($timeframe['total']['diff_products']); ?>
+                    <td class="totalContent"><?= $time_display ?></td>
+                    <td class="totalContent"><?= $timeframe['total']['num_orders'] ?></td>
+<?php
+            if ($show_country_and_state === true) {
+?>
+                    <td class="totalContent" colspan="2"></td>
+<?php
+            }
+?>
+                    <td class="totalContent text-center" colspan="<?= ($display_email_address === true) ? 3 : 2 ?>">
+                        <?= $timeframe['total']['num_products'] . TEXT_DIFF . count($timeframe['total']['diff_products']) ?>
                     </td>
-                    <td class="totalContent text-right"><?php echo $currencies->format($timeframe['total']['goods']); ?></td>
+                    <td class="totalContent text-right"><?= $currencies->format($timeframe['total']['goods']) ?></td>
 <?php 
             if ($display_tax) {
 ?>
-                    <td class="totalContent text-right"><?php echo $currencies->format($timeframe['total']['goods_tax']); ?></td>
-                    <td class="totalContent text-right"><?php echo $currencies->format($timeframe['total']['order_recorded_tax']); ?></td>
+                    <td class="totalContent text-right"><?= $currencies->format($timeframe['total']['goods_tax']) ?></td>
+                    <td class="totalContent text-right"><?= $currencies->format($timeframe['total']['order_recorded_tax']) ?></td>
 <?php 
             }
 ?>
-                    <td class="totalContent text-right"><?php echo $currencies->format($timeframe['total']['shipping']); ?></td>
-                    <td class="totalContent text-right"><?php echo $currencies->format($timeframe['total']['discount']); ?></td>
-                    <td class="totalContent no-wrap"><?php echo TEXT_QTY . $timeframe['total']['discount_qty']; ?></td>
-                    <td class="totalContent text-right"><?php echo $currencies->format($timeframe['total']['gc_sold']); ?></td>
-                    <td class="totalContent no-wrap"><?php echo TEXT_QTY . $timeframe['total']['gc_sold_qty']; ?></td>
-                    <td class="totalContent text-right"><?php echo $currencies->format($timeframe['total']['gc_used']); ?></td>
-                    <td class="totalContent no-wrap"><?php echo TEXT_QTY . $timeframe['total']['gc_used_qty']; ?></td>
-                    <td class="totalContent text-right"><?php echo $currencies->format($timeframe['total']['grand']); ?></td>
+                    <td class="totalContent text-right"><?= $currencies->format($timeframe['total']['shipping']) ?></td>
+                    <td class="totalContent text-right"><?= $currencies->format($timeframe['total']['discount']) ?></td>
+                    <td class="totalContent no-wrap"><?= TEXT_QTY . $timeframe['total']['discount_qty'] ?></td>
+                    <td class="totalContent text-right"><?= $currencies->format($timeframe['total']['gc_sold']) ?></td>
+                    <td class="totalContent no-wrap"><?= TEXT_QTY . $timeframe['total']['gc_sold_qty'] ?></td>
+                    <td class="totalContent text-right"><?= $currencies->format($timeframe['total']['gc_used']) ?></td>
+                    <td class="totalContent no-wrap"><?= TEXT_QTY . $timeframe['total']['gc_used_qty'] ?></td>
+                    <td class="totalContent text-right"><?= $currencies->format($timeframe['total']['grand']) ?></td>
 <?php 
             if ($sr->detail_level === 'order' && $order_total_validation === true) {
 ?>
@@ -992,8 +1007,8 @@ if ($output_format === 'print' || $output_format === 'display') {
             }
 ?>
                 <tr class="totalRow">
-                    <td class="totalContent"><?php echo $time_display; ?></td>
-                    <td class="totalContent text-center" colspan="<?php echo $colspan; ?>"><?php echo TEXT_NO_DATA; ?></td>
+                    <td class="totalContent"><?= $time_display ?></td>
+                    <td class="totalContent text-center" colspan="<?= $colspan ?>"><?= TEXT_NO_DATA ?></td>
                 </tr>
 <?php
         }
@@ -1020,68 +1035,68 @@ if ($output_format === 'print' || $output_format === 'display') {
       <!--ORDER LINE ITEM HEADER-->
                 <tr class="lineItemHeadingRow">
                     <td class="lineItemHeadingContent text-center">
-                        <?php echo TABLE_HEADING_ORDERS_ID . show_arrow('oID'); ?>
+                        <?= TABLE_HEADING_ORDERS_ID . show_arrow('oID') ?>
                     </td>
                     <td class="lineItemHeadingContent">
-                        <?php echo TABLE_HEADING_CUSTOMER . show_arrow('last_name'); ?>
+                        <?= TABLE_HEADING_CUSTOMER . show_arrow('last_name') ?>
                     </td>
 <?php
             if ($display_email_address === true) {
 ?>
                     <td class="lineItemHeadingContent">
-                        <?php echo TABLE_HEADING_EMAIL_ADDRESS . show_arrow('email'); ?>
+                        <?= TABLE_HEADING_EMAIL_ADDRESS . show_arrow('email') ?>
                     </td>
 <?php
             }
             if ($show_country_and_state === true) {
 ?>
                     <td class="lineItemHeadingContent">
-                        <?php echo TABLE_HEADING_COUNTRY . show_arrow('country'); ?>
+                        <?= TABLE_HEADING_COUNTRY . show_arrow('country') ?>
                     </td>
                     <td class="lineItemHeadingContent">
-                        <?php echo TABLE_HEADING_STATE . show_arrow('state'); ?>
+                        <?= TABLE_HEADING_STATE . show_arrow('state') ?>
                     </td>
 <?php
             }
 ?>
                     <td class="lineItemHeadingContent text-center" colspan="2">
-                        <?php echo TABLE_HEADING_NUM_PRODUCTS . show_arrow('num_products'); ?>
+                        <?= TABLE_HEADING_NUM_PRODUCTS . show_arrow('num_products') ?>
                     </td>
                     <td class="lineItemHeadingContent text-right">
-                        <?php echo TABLE_HEADING_TOTAL_GOODS . show_arrow('goods'); ?>
+                        <?= TABLE_HEADING_TOTAL_GOODS . show_arrow('goods') ?>
                     </td>
 <?php 
             if ($display_tax === true) {
 ?>
                     <td class="lineItemHeadingContent text-right">
-                        <?php echo TABLE_HEADING_GOODS_TAX; ?>
+                        <?= TABLE_HEADING_GOODS_TAX ?>
                     </td>
                     <td class="lineItemHeadingContent text-right">
-                        <?php echo TABLE_HEADING_ORDER_RECORDED_TAX; ?>
+                        <?= TABLE_HEADING_ORDER_RECORDED_TAX ?>
                     </td>
 <?php 
             }
 ?>
                     <td class="lineItemHeadingContent text-right">
-                        <?php echo TABLE_HEADING_SHIPPING . show_arrow('shipping'); ?>
+                        <?= TABLE_HEADING_SHIPPING . show_arrow('shipping') ?>
                     </td>
                     <td class="lineItemHeadingContent text-center" colspan="2">
-                        <?php echo TABLE_HEADING_DISCOUNTS . show_arrow('discount'); ?>
+                        <?= TABLE_HEADING_DISCOUNTS . show_arrow('discount') ?>
                     </td>
                     <td class="lineItemHeadingContent text-center" colspan="2">
-                        <?php echo TABLE_HEADING_GC_SOLD . show_arrow('gc_sold'); ?>
+                        <?= TABLE_HEADING_GC_SOLD . show_arrow('gc_sold') ?>
                     </td>
                     <td class="lineItemHeadingContent text-center" colspan="2">
-                        <?php echo TABLE_HEADING_GC_USED . show_arrow('gc_used'); ?>
+                        <?= TABLE_HEADING_GC_USED . show_arrow('gc_used') ?>
                     </td>
                     <td class="lineItemHeadingContent text-right">
-                        <?php echo TABLE_HEADING_ORDER_TOTAL . show_arrow('grand'); ?>
+                        <?= TABLE_HEADING_ORDER_TOTAL . show_arrow('grand') ?>
                     </td>
 <?php 
             if ($order_total_validation === true) {
 ?>
                     <td class="lineItemHeadingContent ValidationColumnHeader text-right">
-                        <?php echo TABLE_HEADING_ORDER_TOTAL_VALIDATION; ?>
+                        <?= TABLE_HEADING_ORDER_TOTAL_VALIDATION ?>
                     </td>
 <?php 
             }
@@ -1098,19 +1113,19 @@ if ($output_format === 'print' || $output_format === 'display') {
                 <tr class="lineItemRow">
                     <td class="lineItemContent text-center">
                         <strong>
-                            <a href="<?php echo zen_href_link(FILENAME_ORDERS, 'oID=' . $o_data['oID'] . '&action=edit'); ?>">
-                                <?php echo $o_data['oID']; ?>
+                            <a href="<?= zen_href_link(FILENAME_ORDERS, 'oID=' . $o_data['oID'] . '&action=edit') ?>">
+                                <?= $o_data['oID'] ?>
                             </a>
                         </strong>
                     </td>
                     <td class="lineItemContent">
-                        <?php echo $o_data['last_name'] . ', ' . $o_data['first_name']; ?>
+                        <?= $o_data['last_name'] . ', ' . $o_data['first_name'] ?>
                     </td>
 <?php
                 if ($display_email_address === true) {
 ?>
                     <td class="lineItemContent">
-                        <?php echo $o_data['email']; ?>
+                        <?= $o_data['email'] ?>
                     </td>
 <?php
                 }
@@ -1118,64 +1133,64 @@ if ($output_format === 'print' || $output_format === 'display') {
                 if ($show_country_and_state === true) {
 ?>
                     <td class="lineItemContent">
-                        <?php echo $o_data['country']; ?>
+                        <?= $o_data['country'] ?>
                     </td>
                     <td class="lineItemContent">
-                        <?php echo $o_data['state']; ?>
+                        <?= $o_data['state'] ?>
                     </td>
 <?php
                 }
 ?>
                     <td class="lineItemContent text-right">
-                        <?php echo $o_data['num_products']; ?>
+                        <?= $o_data['num_products'] ?>
                     </td>
                     <td class="lineItemContent no-wrap">
-                        <?php echo (count($o_data['diff_products']) > 1 ? TEXT_DIFF . count($o_data['diff_products']) : ($o_data['num_products'] > 1 ? TEXT_SAME : TEXT_SAME_ONE)); ?>
+                        <?= (count($o_data['diff_products']) > 1 ? TEXT_DIFF . count($o_data['diff_products']) : ($o_data['num_products'] > 1 ? TEXT_SAME : TEXT_SAME_ONE)) ?>
                     </td>
                     <td class="lineItemContent text-right">
-                        <?php echo $currencies->format($o_data['goods']); ?>
+                        <?= $currencies->format($o_data['goods']) ?>
                     </td>
 <?php 
                 if ($display_tax === true) {
 ?>
                     <td class="lineItemContent text-right">
-                        <?php echo $currencies->format($o_data['goods_tax']); ?>
+                        <?= $currencies->format($o_data['goods_tax']) ?>
                     </td>
                     <td class="lineItemContent text-right">
-                        <?php echo $currencies->format($o_data['order_recorded_tax']); ?>
+                        <?= $currencies->format($o_data['order_recorded_tax']) ?>
                     </td>
 <?php 
                 }
 ?>
                     <td class="lineItemContent text-right">
-                        <?php echo $currencies->format($o_data['shipping']); ?>
+                        <?= $currencies->format($o_data['shipping']) ?>
                     </td>
                     <td class="lineItemContent text-right">
-                        <?php echo $currencies->format($o_data['discount']); ?>
+                        <?= $currencies->format($o_data['discount']) ?>
                     </td>
                     <td class="lineItemContent no-wrap">
-                        <?php echo TEXT_QTY . $o_data['discount_qty']; ?>
+                        <?= TEXT_QTY . $o_data['discount_qty'] ?>
                     </td>
                     <td class="lineItemContent text-right">
-                        <?php echo $currencies->format($o_data['gc_sold']); ?>
+                        <?= $currencies->format($o_data['gc_sold']) ?>
                     </td>
                     <td class="lineItemContent no-wrap">
-                        <?php echo TEXT_QTY . $o_data['gc_sold_qty']; ?>
+                        <?= TEXT_QTY . $o_data['gc_sold_qty'] ?>
                     </td>
                     <td class="lineItemContent text-right">
-                        <?php echo $currencies->format($o_data['gc_used']); ?>
+                        <?= $currencies->format($o_data['gc_used']) ?>
                     </td>
                     <td class="lineItemContent no-wrap">
-                        <?php echo TEXT_QTY . $o_data['gc_used_qty']; ?>
+                        <?= TEXT_QTY . $o_data['gc_used_qty'] ?>
                     </td>
                     <td class="lineItemContent text-right">
-                        <?php echo $currencies->format($o_data['grand']); ?>
+                        <?= $currencies->format($o_data['grand']) ?>
                     </td>
 <?php 
                 if ($order_total_validation === true) {
 ?>
                     <td class="lineItemContent ValidationColumnContent text-right">
-                        <?php echo $o_data['order_total_validation']; ?>
+                        <?= $o_data['order_total_validation'] ?>
                     </td>
 <?php 
                 }
@@ -1212,64 +1227,64 @@ if ($output_format === 'print' || $output_format === 'display') {
             }
 ?>
                 <tr class="lineItemHeadingRow">
-                    <td colspan="<?php echo $colspan; ?>"><table class="table">
+                    <td colspan="<?= $colspan ?>"><table class="table">
       <!--PRODUCT LINE ITEM HEADER -->
                         <tr class="lineItemHeadingRow">
                             <td class="lineItemHeadingContent">
-                                <?php echo TABLE_HEADING_PRODUCT_ID . show_arrow('pID'); ?>
+                                <?= TABLE_HEADING_PRODUCT_ID . show_arrow('pID') ?>
                             </td>
                             <td class="lineItemHeadingContent">
-                                <?php echo TABLE_HEADING_PRODUCT_NAME . show_arrow('name'); ?>
+                                <?= TABLE_HEADING_PRODUCT_NAME . show_arrow('name') ?>
                             </td>
                             <td class="lineItemHeadingContent">
-                                <?php echo TABLE_HEADING_PRODUCT_ATTRIBUTES . show_arrow('attributes'); ?>
+                                <?= TABLE_HEADING_PRODUCT_ATTRIBUTES . show_arrow('attributes') ?>
                             </td>
 <?php 
             if (DISPLAY_MANUFACTURER) {
 ?>
                             <td class="lineItemHeadingContent">
-                                <?php echo TABLE_HEADING_MANUFACTURER . show_arrow('manufacturer'); ?>
+                                <?= TABLE_HEADING_MANUFACTURER . show_arrow('manufacturer') ?>
                             </td>
 <?php 
             }
 ?>
                             <td class="lineItemHeadingContent">
-                                <?php echo TABLE_HEADING_MODEL . show_arrow('model'); ?>
+                                <?= TABLE_HEADING_MODEL . show_arrow('model') ?>
                             </td>
                             <td class="lineItemHeadingContent text-right">
-                                <?php echo TABLE_HEADING_BASE_PRICE . show_arrow('base_price'); ?>
+                                <?= TABLE_HEADING_BASE_PRICE . show_arrow('base_price') ?>
                             </td>
                             <td class="lineItemHeadingContent text-right">
-                                <?php echo TABLE_HEADING_FINAL_PRICE . show_arrow('final_price'); ?>
+                                <?= TABLE_HEADING_FINAL_PRICE . show_arrow('final_price') ?>
                             </td>
                             <td class="lineItemHeadingContent text-right">
-                                <?php echo TABLE_HEADING_QUANTITY . show_arrow('quantity'); ?>
+                                <?= TABLE_HEADING_QUANTITY . show_arrow('quantity') ?>
                             </td>
 <?php 
             if ($display_tax === true) {
 ?>
                             <td class="lineItemHeadingContent text-right">
-                                <?php echo TABLE_HEADING_TAX; ?>
+                                <?= TABLE_HEADING_TAX ?>
                             </td>
 <?php 
             }
             if (DISPLAY_ONE_TIME_FEES) {
 ?>
                             <td class="lineItemHeadingContent text-right">
-                                <?php echo TABLE_HEADING_ONETIME_CHARGES . show_arrow('onetime_charges'); ?>
+                                <?= TABLE_HEADING_ONETIME_CHARGES . show_arrow('onetime_charges') ?>
                             </td>
 <?php 
             }
             if ($display_tax === true) {
 ?>
                             <td class="lineItemHeadingContent text-right">
-                                <?php echo TABLE_HEADING_TOTAL; ?>
+                                <?= TABLE_HEADING_TOTAL ?>
                             </td>
 <?php 
             }
 ?>
                             <td class="lineItemHeadingContent text-right">
-                                <?php echo TABLE_HEADING_PRODUCT_TOTAL . show_arrow('grand'); ?>
+                                <?= TABLE_HEADING_PRODUCT_TOTAL . show_arrow('grand') ?>
                             </td>
                         </tr>
 <?php
@@ -1277,60 +1292,60 @@ if ($output_format === 'print' || $output_format === 'display') {
 ?>
                         <tr class="lineItemRow">
                             <td class="lineItemContent">
-                                <strong><?php echo $p_data['pID']; ?></strong>
+                                <strong><?= $p_data['pID'] ?></strong>
                             </td>
                             <td class="lineItemContent">
-                                <?php echo $p_data['name']; ?>
+                                <?= $p_data['name'] ?>
                             </td>
                             <td class="lineItemContent">
-                                <?php echo $p_data['attributes']; ?>
+                                <?= $p_data['attributes'] ?>
                             </td>
 <?php 
                 if (DISPLAY_MANUFACTURER) {
 ?>
                             <td class="lineItemContent">
-                                <?php echo $p_data['manufacturer']; ?>
+                                <?= $p_data['manufacturer'] ?>
                             </td>
 <?php 
                 }
 ?>
                             <td class="lineItemContent">
-                                <?php echo $p_data['model']; ?>
+                                <?= $p_data['model'] ?>
                             </td>
                             <td class="lineItemContent text-right">
-                                <?php echo $currencies->format($p_data['base_price']); ?>
+                                <?= $currencies->format($p_data['base_price']) ?>
                             </td>
                             <td class="lineItemContent text-right">
-                                <?php echo $currencies->format($p_data['final_price']); ?>
+                                <?= $currencies->format($p_data['final_price']) ?>
                             </td>
                             <td class="lineItemContent text-right">
-                                <?php echo $p_data['quantity']; ?>
+                                <?= $p_data['quantity'] ?>
                             </td>
 <?php 
                 if ($display_tax === true) {
 ?>
                             <td class="lineItemContent text-right">
-                                <?php echo $currencies->format($p_data['tax']); ?>
+                                <?= $currencies->format($p_data['tax']) ?>
                             </td>
 <?php 
                 }
                 if (DISPLAY_ONE_TIME_FEES) {
 ?>
                             <td class="lineItemContent text-right">
-                                <?php echo $currencies->format($p_data['onetime_charges']); ?>
+                                <?= $currencies->format($p_data['onetime_charges']) ?>
                             </td>
 <?php 
                 }
                 if ($display_tax === true) {
 ?>
                             <td class="lineItemContent text-right">
-                                <?php echo $currencies->format($p_data['total']); ?>
+                                <?= $currencies->format($p_data['total']) ?>
                             </td>
 <?php 
                 }
 ?>
                             <td class="lineItemContent text-right">
-                                <?php echo $currencies->format($p_data['grand']); ?>
+                                <?= $currencies->format($p_data['grand']) ?>
                             </td>
                         </tr>
 <?php
@@ -1344,112 +1359,115 @@ if ($output_format === 'print' || $output_format === 'display') {
             if ($display_tax === true) {
                 $colspan += 2;
             }
+            if ($show_country_and_state === true) {
+                $colspan += 2;
+            }
             if ($order_total_validation === true) {
                 $colspan += 1;
             }
 ?>
                 <tr class="lineItemHeadingRow">
-                    <td class="lineItemHeadingContent text-center" colspan="<?php echo $colspan; ?>">
-                        <?php echo MATRIX_GENERAL_STATS; ?>
+                    <td class="lineItemHeadingContent text-center" colspan="<?= $colspan ?>">
+                        <?= MATRIX_GENERAL_STATS ?>
                     </td>
                 </tr>
                 <tr class="lineItemRow">
-                    <td colspan="<?php echo $colspan; ?>"><table>
+                    <td colspan="<?= $colspan ?>"><table>
                         <tr class="lineItemRow v-top">
                             <td><table class="table">
                                 <tr>
                                     <td class="lineItemContent" colspan="3">
-                                        <strong><?php echo MATRIX_ORDER_REVENUE; ?></strong>
+                                        <strong><?= MATRIX_ORDER_REVENUE ?></strong>
                                     </td>
                                 </tr>
                                 <tr>
                                     <td class="lineItemContent">
-                                        <?php echo MATRIX_LARGEST; ?>
+                                        <?= MATRIX_LARGEST ?>
                                     </td>
                                     <td class="lineItemContent">
-                                        <?php echo $timeframe['matrix']['biggest_per_revenue']; ?>
+                                        <?= $timeframe['matrix']['biggest_per_revenue'] ?>
                                     </td>
                                     <td class="lineItemContent">
-                                        <?php echo '(' . $currencies->format($timeframe['orders'][ $timeframe['matrix']['biggest_per_revenue'] ]['goods']) . ')'; ?>
+                                        <?= '(' . $currencies->format($timeframe['orders'][ $timeframe['matrix']['biggest_per_revenue'] ]['goods']) . ')' ?>
                                     </td>
                                 </tr>
                                 <tr>
                                     <td class="lineItemContent">
-                                        <?php echo MATRIX_SMALLEST; ?>
+                                        <?= MATRIX_SMALLEST ?>
                                     </td>
                                     <td class="lineItemContent">
-                                        <?php echo $timeframe['matrix']['smallest_per_revenue']; ?>
+                                        <?= $timeframe['matrix']['smallest_per_revenue'] ?>
                                     </td>
                                     <td class="lineItemContent">
-                                        <?php echo '(' . $currencies->format($timeframe['orders'][ $timeframe['matrix']['smallest_per_revenue'] ]['goods']) . ')'; ?>
+                                        <?= '(' . $currencies->format($timeframe['orders'][ $timeframe['matrix']['smallest_per_revenue'] ]['goods']) . ')' ?>
                                     </td>
                                 </tr>
                             </table></td>
                             <td><table class="table">
                                 <tr>
                                     <td class="lineItemContent" colspan="3">
-                                        <strong><?php echo MATRIX_ORDER_PRODUCT_COUNT; ?></strong>
+                                        <strong><?= MATRIX_ORDER_PRODUCT_COUNT ?></strong>
                                     </td>
                                 </tr>
                                 <tr>
                                     <td class="lineItemContent">
-                                        <?php echo MATRIX_LARGEST; ?>
+                                        <?= MATRIX_LARGEST ?>
                                     </td>
                                     <td class="lineItemContent">
-                                        <?php echo $timeframe['matrix']['biggest_per_product']; ?>
+                                        <?= $timeframe['matrix']['biggest_per_product'] ?>
                                     </td>
                                     <td class="lineItemContent">
-                                        <?php echo '(' . $timeframe['orders'][ $timeframe['matrix']['biggest_per_product'] ]['num_products'] . ')'; ?>
+                                        <?= '(' . $timeframe['orders'][ $timeframe['matrix']['biggest_per_product'] ]['num_products'] . ')' ?>
                                     </td>
                                 </tr>
                                 <tr>
                                     <td class="lineItemContent">
-                                        <?php echo MATRIX_SMALLEST; ?>
+                                        <?= MATRIX_SMALLEST ?>
                                     </td>
                                     <td class="lineItemContent">
-                                        <?php echo $timeframe['matrix']['smallest_per_product']; ?>
+                                        <?= $timeframe['matrix']['smallest_per_product'] ?>
                                     </td>
                                     <td class="lineItemContent">
-                                        <?php echo '(' . $timeframe['orders'][ $timeframe['matrix']['smallest_per_product'] ]['num_products'] . ')'; ?>
+                                        <?= '(' . $timeframe['orders'][ $timeframe['matrix']['smallest_per_product'] ]['num_products'] . ')' ?>
                                     </td>
                                 </tr>
                             </table></td>
                             <td><table class="table">
                                 <tr>
                                     <td class="lineItemContent" colspan="2">
-                                        <strong><?php echo MATRIX_AVERAGES; ?></strong>
+                                        <strong><?= MATRIX_AVERAGES ?></strong>
                                     </td>
                                 </tr>
                                 <tr>
                                     <td class="lineItemContent text-right">
-                                        <strong><?php echo $currencies->format($timeframe['matrix']['avg_order_value']); ?></strong>
+                                        <strong><?= $currencies->format($timeframe['matrix']['avg_order_value']) ?></strong>
                                     </td>
                                     <td class="lineItemContent">
-                                        <?php echo MATRIX_AVG_ORDER; ?>
+                                        <?= MATRIX_AVG_ORDER ?>
                                     </td>
                                 </tr>
                                 <tr>
                                     <td class="lineItemContent text-right">
-                                        <strong><?php echo number_format($timeframe['matrix']['avg_products_per_order'], NUM_DECIMAL_PLACES); ?></strong>
+                                        <strong><?= number_format($timeframe['matrix']['avg_products_per_order'], NUM_DECIMAL_PLACES) ?></strong>
                                     </td>
                                     <td class="lineItemContent">
-                                        <?php echo MATRIX_AVG_PROD_ORDER; ?>
+                                        <?= MATRIX_AVG_PROD_ORDER ?>
                                     </td>
                                 </tr>
                                 <tr>
                                     <td class="lineItemContent text-right">
-                                        <strong><?php echo number_format($timeframe['matrix']['avg_diff_products_per_order'], NUM_DECIMAL_PLACES); ?></strong>
+                                        <strong><?= number_format($timeframe['matrix']['avg_diff_products_per_order'], NUM_DECIMAL_PLACES) ?></strong>
                                     </td>
                                     <td class="lineItemContent">
-                                        <?php echo MATRIX_AVG_PROD_ORDER_DIFF; ?>
+                                        <?= MATRIX_AVG_PROD_ORDER_DIFF ?>
                                     </td>
                                 </tr>
                                 <tr>
                                     <td class="lineItemContent text-right">
-                                        <strong><?php echo number_format($timeframe['matrix']['avg_orders_per_customer'], NUM_DECIMAL_PLACES); ?></strong>
+                                        <strong><?= number_format($timeframe['matrix']['avg_orders_per_customer'], NUM_DECIMAL_PLACES) ?></strong>
                                     </td>
                                     <td class="lineItemContent">
-                                        <?php echo MATRIX_AVG_ORDER_CUST; ?>
+                                        <?= MATRIX_AVG_ORDER_CUST ?>
                                     </td>
                                 </tr>
                             </table></td>
@@ -1457,17 +1475,17 @@ if ($output_format === 'print' || $output_format === 'display') {
                     </table></td>
                 </tr>
                 <tr class="lineItemHeadingRow">
-                    <td class="lineItemHeadingContent text-center" colspan="<?php echo $colspan; ?>">
-                        <?php echo MATRIX_ORDER_STATS; ?>
+                    <td class="lineItemHeadingContent text-center" colspan="<?= $colspan ?>">
+                        <?= MATRIX_ORDER_STATS ?>
                     </td>
                 </tr>
                 <tr class="lineItemRow">
-                    <td colspan="<?php echo $colspan; ?>"><table>
+                    <td colspan="<?= $colspan ?>"><table>
                         <tr class="lineItemRow v-top">
                             <td><table class="table">
                                 <tr>
                                     <td class="lineItemContent" colspan="3">
-                                        <strong><?php echo MATRIX_TOTAL_PAYMENTS; ?></strong>
+                                        <strong><?= MATRIX_TOTAL_PAYMENTS ?></strong>
                                     </td>
                                 </tr>
 <?php 
@@ -1475,13 +1493,13 @@ if ($output_format === 'print' || $output_format === 'display') {
 ?>
                                 <tr>
                                     <td class="lineItemContent">
-                                        <?php echo $payment['method']; ?>
+                                        <?= $payment['method'] ?>
                                     </td>
                                     <td class="lineItemContent">
-                                        <?php echo '&nbsp;[' . $payment['module_code'] . ']'; ?>
+                                        <?= '&nbsp;[' . $payment['module_code'] . ']' ?>
                                     </td>
-                                    <td class="lineItemContent" align="text-right">
-                                        <?php echo $payment['count']; ?>
+                                    <td class="lineItemContent text-right">
+                                        <?= $payment['count'] ?>
                                     </td>
                                 </tr>
 <?php 
@@ -1491,7 +1509,7 @@ if ($output_format === 'print' || $output_format === 'display') {
                             <td><table class="table">
                                 <tr>
                                     <td class="lineItemContent" colspan="2">
-                                        <strong><?php echo MATRIX_TOTAL_CC; ?></strong>
+                                        <strong><?= MATRIX_TOTAL_CC ?></strong>
                                     </td>
                                 </tr>
  <?php 
@@ -1499,10 +1517,10 @@ if ($output_format === 'print' || $output_format === 'display') {
  ?>
                                 <tr>
                                     <td class="lineItemContent">
-                                        <?php echo $cc['type']; ?>
+                                        <?= $cc['type'] ?>
                                     </td>
                                     <td class="lineItemContent text-right">
-                                        <?php echo $cc['count']; ?>
+                                        <?= $cc['count'] ?>
                                     </td>
                                 </tr>
 <?php 
@@ -1512,7 +1530,7 @@ if ($output_format === 'print' || $output_format === 'display') {
                             <td><table class="table">
                                 <tr>
                                     <td class="lineItemContent" colspan="3">
-                                        <strong><?php echo MATRIX_TOTAL_SHIPPING; ?></strong>
+                                        <strong><?= MATRIX_TOTAL_SHIPPING ?></strong>
                                     </td>
                                 </tr>
 <?php 
@@ -1520,13 +1538,13 @@ if ($output_format === 'print' || $output_format === 'display') {
 ?>
                                 <tr>
                                     <td class="lineItemContent">
-                                        <?php echo $shipping['method']; ?>
+                                        <?= $shipping['method'] ?>
                                     </td>
                                     <td class="lineItemContent">
-                                        <?php echo '&nbsp;[' . $shipping['module_code'] . ']'; ?>
+                                        <?= '&nbsp;[' . $shipping['module_code'] . ']' ?>
                                     </td>
                                     <td class="llineItemContent text-right">
-                                        <?php echo $shipping['count']; ?>
+                                        <?= $shipping['count'] ?>
                                     </td>
                                 </tr>
 <?php 
@@ -1539,7 +1557,7 @@ if ($output_format === 'print' || $output_format === 'display') {
                             <td><table class="table">
                                 <tr>
                                     <td class="lineItemContent" colspan="2">
-                                        <strong><?php echo MATRIX_TOTAL_CURRENCIES; ?></strong>
+                                        <strong><?= MATRIX_TOTAL_CURRENCIES ?></strong>
                                     </td>
                                 </tr>
 <?php 
@@ -1547,10 +1565,10 @@ if ($output_format === 'print' || $output_format === 'display') {
 ?>
                                 <tr>
                                     <td class="lineItemContent">
-                                        <?php echo $currency['type']; ?>
+                                        <?= $currency['type'] ?>
                                     </td>
                                     <td class="lineItemContent text-right">
-                                        <?php echo $currency['count']; ?>
+                                        <?= $currency['count'] ?>
                                     </td>
                                 </tr>
 <?php 
@@ -1564,27 +1582,27 @@ if ($output_format === 'print' || $output_format === 'display') {
                     </table></td>
                 </tr>
                 <tr class="lineItemHeadingRow">
-                    <td class="lineItemHeadingContent text-center" colspan="<?php echo $colspan; ?>">
-                        <?php echo MATRIX_PRODUCT_STATS; ?>
+                    <td class="lineItemHeadingContent text-center" colspan="<?= $colspan ?>">
+                        <?= MATRIX_PRODUCT_STATS ?>
                     </td>
                 </tr>
                 <tr class="lineItemRow">
-                    <td colspan="<?php echo $colspan; ?>"><table class="table">
+                    <td colspan="<?= $colspan ?>"><table class="table">
                         <tr class="lineItemRow">
                             <td class="lineItemContent">
-                                <strong><?php echo TABLE_HEADING_PRODUCT_ID; ?></strong>
+                                <strong><?= TABLE_HEADING_PRODUCT_ID ?></strong>
                             </td>
                             <td class="lineItemContent">
-                                <strong><?php echo TABLE_HEADING_PRODUCT_NAME; ?></strong>
+                                <strong><?= TABLE_HEADING_PRODUCT_NAME ?></strong>
                             </td>
                             <td class="lineItemContent text-center">
-                                <strong><?php echo MATRIX_PRODUCT_SPREAD; ?></strong>
+                                <strong><?= MATRIX_PRODUCT_SPREAD ?></strong>
                             </td>
                             <td class="lineItemContent text-right">
-                                <strong><?php echo MATRIX_PRODUCT_REVENUE_RATIO; ?></strong>
+                                <strong><?= MATRIX_PRODUCT_REVENUE_RATIO ?></strong>
                             </td>
                             <td class="lineItemContent text-right">
-                                <strong><?php echo MATRIX_PRODUCT_QUANTITY_RATIO; ?></strong>
+                                <strong><?= MATRIX_PRODUCT_QUANTITY_RATIO ?></strong>
                             </td>
                         </tr>
 <?php
@@ -1592,19 +1610,19 @@ if ($output_format === 'print' || $output_format === 'display') {
 ?>
                         <tr class="lineItemRow">
                             <td class="lineItemContent">
-                                <?php echo $pID; ?>
+                                <?= $pID ?>
                             </td>
                             <td class="lineItemContent">
-                                <?php echo $p_data['name'] . $p_data['attributes']; ?>
+                                <?= $p_data['name'] . $p_data['attributes'] ?>
                             </td>
                             <td class="lineItemContent text-center">
-                                <?php echo $timeframe['matrix']['product_spread'][$pID]; ?>
+                                <?= $timeframe['matrix']['product_spread'][$pID] ?>
                             </td>
                             <td class="lineItemContent text-right">
-                                <?php echo $timeframe['matrix']['product_revenue_ratio'][$pID]; ?>
+                                <?= $timeframe['matrix']['product_revenue_ratio'][$pID] ?>
                             </td>
                             <td class="lineItemContent text-right">
-                                <?php echo $timeframe['matrix']['product_quantity_ratio'][$pID]; ?>
+                                <?= $timeframe['matrix']['product_quantity_ratio'][$pID] ?>
                             </td>
                         </tr>
 <?php
@@ -1621,52 +1639,47 @@ if ($output_format === 'print' || $output_format === 'display') {
     // the totals don't change with only 1 timeframe, so we
     // require that there be more than one to display it
     if (count($sr->timeframe) > 1) {
-?>
-                <tr>
-                    <td><!-- spacer cell --></td>
-                </tr>
-<?php 
         if ($sr->detail_level !== 'timeframe') {
 ?>
                 <tr class="totalHeadingRow">
                     <td class="totalHeadingContent">
-                        <?php echo TABLE_HEADING_TIMEFRAME; ?>
+                        <?= TABLE_HEADING_TIMEFRAME ?>
                     </td>
                     <td class="totalHeadingContent">
-                        <?php echo TABLE_HEADING_NUM_ORDERS; ?>
+                        <?= TABLE_HEADING_NUM_ORDERS ?>
                     </td>
                     <td class="totalHeadingContent text-center" colspan="2">
-                        <?php echo TABLE_HEADING_NUM_PRODUCTS; ?>
+                        <?= TABLE_HEADING_NUM_PRODUCTS ?>
                     </td>
                     <td class="totalHeadingContent text-right">
-                        <?php echo TABLE_HEADING_TOTAL_GOODS; ?>
+                        <?= TABLE_HEADING_TOTAL_GOODS ?>
                     </td>
 <?php 
             if ($display_tax === true) {
 ?>
                     <td class="totalHeadingContent text-right">
-                        <?php echo TABLE_HEADING_GOODS_TAX; ?>
+                        <?= TABLE_HEADING_GOODS_TAX ?>
                     </td>
                     <td class="totalHeadingContent text-right">
-                        <?php echo TABLE_HEADING_ORDER_RECORDED_TAX; ?>
+                        <?= TABLE_HEADING_ORDER_RECORDED_TAX ?>
                     </td>
 <?php 
             }
 ?>
                     <td class="totalHeadingContent text-right">
-                        <?php echo TABLE_HEADING_SHIPPING; ?>
+                        <?= TABLE_HEADING_SHIPPING ?>
                     </td>
                     <td class="totalHeadingContent text-center" colspan="2">
-                        <?php echo TABLE_HEADING_DISCOUNTS; ?>
+                        <?= TABLE_HEADING_DISCOUNTS ?>
                     </td>
                     <td class="totalHeadingContent text-center" colspan="2">
-                        <?php echo TABLE_HEADING_GC_SOLD; ?>
+                        <?= TABLE_HEADING_GC_SOLD ?>
                     </td>
                     <td class="totalHeadingContent text-center" colspan="2">
-                        <?php echo TABLE_HEADING_GC_USED; ?>
+                        <?= TABLE_HEADING_GC_USED ?>
                     </td>
                     <td class="totalHeadingContent text-right">
-                        <?php echo TABLE_HEADING_TOTAL; ?>
+                        <?= TABLE_HEADING_TOTAL ?>
                     </td>
 <?php 
             if ($sr->detail_level === 'order' && $order_total_validation === true) {
@@ -1682,52 +1695,52 @@ if ($output_format === 'print' || $output_format === 'display') {
       <!-- GRAND TOTAL LINE -->
                 <tr class="footerRow">
                     <td class="footerContent">
-                        <?php echo count($sr->timeframe) . TABLE_FOOTER_TIMEFRAMES; ?>
+                        <?= count($sr->timeframe) . TABLE_FOOTER_TIMEFRAMES ?>
                     </td>
                     <td class="footerContent">
-                        <?php echo $sr->grand_total['num_orders']; ?>
+                        <?= $sr->grand_total['num_orders'] ?>
                     </td>
                     <td class="footerContent text-center" colspan="2">
-                        <?php echo $sr->grand_total['num_products']; ?>
+                        <?= $sr->grand_total['num_products'] ?>
                     </td>
                     <td class="footerContent text-right">
-                        <?php echo $currencies->format($sr->grand_total['goods']); ?>
+                        <?= $currencies->format($sr->grand_total['goods']) ?>
                     </td>
 <?php 
         if ($display_tax === true) {
 ?>
                     <td class="footerContent text-right">
-                        <?php echo $currencies->format($sr->grand_total['goods_tax']); ?>
+                        <?= $currencies->format($sr->grand_total['goods_tax']) ?>
                     </td>
                     <td class="footerContent text-right">
-                        <?php echo $currencies->format($sr->grand_total['order_recorded_tax']); ?>
+                        <?= $currencies->format($sr->grand_total['order_recorded_tax']) ?>
                     </td>
 <?php 
         }
 ?>
                     <td class="footerContent text-right">
-                        <?php echo $currencies->format($sr->grand_total['shipping']); ?>
+                        <?= $currencies->format($sr->grand_total['shipping']) ?>
                     </td>
                     <td class="footerContent text-right">
-                        <?php echo $currencies->format($sr->grand_total['discount']); ?>
+                        <?= $currencies->format($sr->grand_total['discount']) ?>
                     </td>
                     <td class="footerContent no-wrap">
-                        <?php echo TEXT_QTY . $sr->grand_total['discount_qty']; ?>
+                        <?= TEXT_QTY . $sr->grand_total['discount_qty'] ?>
                     </td>
                     <td class="footerContent text-right">
-                        <?php echo $currencies->format($sr->grand_total['gc_sold']); ?>
+                        <?= $currencies->format($sr->grand_total['gc_sold']) ?>
                     </td>
                     <td class="footerContent no-wrap">
-                        <?php echo TEXT_QTY . $sr->grand_total['gc_sold_qty']; ?>
+                        <?= TEXT_QTY . $sr->grand_total['gc_sold_qty'] ?>
                     </td>
                     <td class="footerContent text-right">
-                        <?php echo $currencies->format($sr->grand_total['gc_used']); ?>
+                        <?= $currencies->format($sr->grand_total['gc_used']) ?>
                     </td>
                     <td class="footerContent no-wrap">
-                        <?php echo TEXT_QTY . $sr->grand_total['gc_used_qty']; ?>
+                        <?= TEXT_QTY . $sr->grand_total['gc_used_qty'] ?>
                     </td>
                     <td class="footerContent text-right">
-                        <?php echo $currencies->format($sr->grand_total['grand']); ?>
+                        <?= $currencies->format($sr->grand_total['grand']) ?>
                     </td>
 <?php 
         if ($sr->detail_level === 'order' && $order_total_validation === true) {
@@ -1747,9 +1760,9 @@ if ($output_format === 'print' || $output_format === 'display') {
     if ($output_format === 'print') {
 ?>
         <tr>
-            <td><?php echo zen_draw_separator('pixel_trans.gif', 30, 20); ?></td>
+            <td><?= zen_draw_separator('pixel_trans.gif', 30, 20) ?></td>
             <td class="smallText text-right">
-                <?php echo TEXT_REPORT_TIMESTAMP . zen_datetime_short(date('Y-m-d H:i:s')); ?>
+                <?= TEXT_REPORT_TIMESTAMP . zen_datetime_short(date('Y-m-d H:i:s')) ?>
             </td>
         </tr>
 <?php
@@ -1759,22 +1772,22 @@ if ($output_format === 'print' || $output_format === 'display') {
 ?>
         <tr>
             <td colspan="2" class="text-right">
-                <a href="<?php echo zen_href_link(FILENAME_STATS_SALES_REPORT2, zen_get_all_get_params(['output_format', 'auto_print']) . 'output_format=print&auto_print=1', 'NONSSL'); ?>" title="<?php echo TEXT_PRINT_FORMAT_TITLE; ?>">
-                    <span class="smallText"><i class="fa fa-2x fa-print" aria-hidden="true"></i><?php echo TEXT_PRINT_FORMAT; ?></span>
+                <a href="<?= zen_href_link(FILENAME_STATS_SALES_REPORT2, zen_get_all_get_params(['output_format', 'auto_print']) . 'output_format=print&auto_print=1', 'NONSSL') ?>" title="<?= TEXT_PRINT_FORMAT_TITLE ?>">
+                    <span class="smallText"><i class="fa fa-2x fa-print" aria-hidden="true"></i><?= TEXT_PRINT_FORMAT ?></span>
                 </a>
             </td>
         </tr>
         <tr>
             <td class="smallText">
-                <?php printf(TEXT_PARSE_TIME, number_format($parse_time, 5) ); ?>
+                <?php printf(TEXT_PARSE_TIME, number_format($parse_time, 5) ) ?>
             </td>
-            <td><?php echo zen_draw_separator('pixel_trans.gif', 1, 20); ?></td>
+            <td><?= zen_draw_separator('pixel_trans.gif', 1, 20) ?></td>
         </tr>
 <?php
     }
 }  // END if ($output_format == 'print' || $output_format == 'display')
 ?>
-    </table><?php echo '</form>'; ?>
+    </table><?= '</form>' ?>
 <?php 
 if ($output_format !== 'print') {
     require DIR_WS_INCLUDES . 'footer.php';
