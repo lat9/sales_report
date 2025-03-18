@@ -62,7 +62,6 @@
                         <a class="nav-link link-secondary" href="#item-usage">Usage</a>
                         <a class="nav-link link-secondary" href="#item-uninstall">Uninstall</a>
                         <a class="nav-link link-secondary" href="#item-faq">Frequently Asked Questions</a>
-                        <a class="nav-link link-secondary" href="#item-files-list">Files List</a>
                         <a class="nav-link link-secondary" href="#item-changelog">Change History</a>
                     </nav>
                 </nav>
@@ -75,7 +74,7 @@
                     <p>Its features are explained in the <a href="https://github.com/lat9/sales_report/wiki/Report-generation-Options" target="_blank">report's wiki</a>, but the report has been built with usability in mind, even for the most simplistic of users.  Using the report should be fairly obvious and self-explanatory, but please let me know if you feel something can be tweaked/added/removed to offer a more user-friendly experience.</p>
 
                     <h2 id="item-credits" class="fs-4 pt-1 pb-3">History and Credits</h2>
-                    <p>This report is based on v3.5.1 of the <em>Sales Report</em> authored by Frank Koehl (PM: BlindSide), Conor Kerr Ceon, Carl Peach, Cindy Merkin (lat9) and Scott C. Wilson (swguy).  See this distribution's <code>readme.txt</code> for previous modifications.</p>
+                    <p>This report is based on v3.5.1 of the <em>Sales Report</em> authored by Frank Koehl (PM: BlindSide), Conor Kerr Ceon, Carl Peach, Cindy Merkin (lat9) and Scott C. Wilson (swguy).</p>
                     <p>This readme's formatting based on that originally developed by <a href="https://github.com/marco-pm" _target="blank">@marco-pm</a>.</p>
                 </section>
 
@@ -83,7 +82,7 @@
                     <h1 id="item-prerequisites" class="display-1 fs-2 pb-2 pt-4">Prerequisites</h1>
                     <ul class="mt-3">
                         <li>A Zen Cart installation, v1.5.8 or later.</li>
-                        <li class="mt-1">PHP 7.3 through 8.3</li>
+                        <li class="mt-1">PHP 7.4 through 8.4.</li>
                         <li class="mt-1">Javascript must be enabled in your browser.</li>
                     </ul>
                 </section>
@@ -115,24 +114,10 @@
                 </section>
 
                 <section>
-                    <h1 id="item-files-list" class="display-1 fs-2 pb-2 pt-4">Files List</h1>
-                    <p>The report provides the following files in its <span class="font-monospace">/zc_plugins/SalesReport/v4.0.1</span> directory:</p>
-                    <ul class="mt-2 text-break">
-                        <li><span class="font-monospace">/admin/stats_sales_report2.php</span></li>
-                        <li><span class="font-monospace">/admin/includes/classes/sales_report2.php</span></li>
-                        <li><span class="font-monospace">/admin/includes/css/stats_sales_report2.css</span></li>
-                        <li><span class="font-monospace">/admin/includes/extra_datafiles/sales_report2_filenames.php</span></li>
-                        <li><span class="font-monospace">/admin/includes/javascript/stats_sales_report2.php</span></li>
-                        <li><span class="font-monospace">/admin/includes/languages/english/lang.stats_sales_report2.php</span></li>
-                        <li><span class="font-monospace">/admin/includes/languages/english/extra_definitions/lang.sales_report2_menu_name.php</span></li>
-                    </ul>
-                </section>
-
-                <section>
                     <h1 id="item-changelog" class="display-1 fs-2 pb-2 pt-4">Change History</h1>
                     <p>You can view the details of these changes on the report's <a href="https://github.com/lat9/sales_report" target="_blank" class="link-secondary">GitHub repository</a>.</p>
                     <ul>
-                        <li>v4.0.2-beta2, 2025-03-18 (lat9, proseLA):<ul>
+                        <li>v4.0.2, 2025-03-18 (lat9, proseLA):<ul>
                             <li>BUGFIX: Report only <em>first</em> time order changed to selected status in timeframe.</li>
                             <li>BUGFIX: Report's column-count goes &quot;off&quot; when displaying orders' country/state.<ul>
                                 <li><b>Note:</b> The method to enable the report to display the orders' country and state has changed.  See <a href="https://github.com/lat9/sales_report/wiki/Frequently-Asked-Questions#how-do-i-get-orders-country-and-state-displayed" target="_blank">this</a> GitHub wiki article for additional information.</li>
