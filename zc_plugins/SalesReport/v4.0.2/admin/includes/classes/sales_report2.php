@@ -1122,6 +1122,9 @@ ORDER BY orders_id, orders_status_id, date_added) '. PHP_EOL;
             }
             switch ($this->detail_level) {
                 case 'timeframe':
+                    if (!isset($timeframe['total'])) {
+                        break;
+                    }
                     $line = [
                         $start_date,
                         $end_date,
