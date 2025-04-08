@@ -41,12 +41,12 @@ $currencies = new currencies();
 // Moved here from the report's language file for v3.2.1 to provide zc156 interoperation,
 // given that that version has changed the loading order of admin language files.
 //
-$time_display = (strtolower(DATE_FORMAT) === 'd/m/y') ? 'n-j-Y' : 'jS-M-y';
+$time_display = DATE_FORMAT_TIMEFRAME;
 zen_define_default('TIME_DISPLAY_DAY', $time_display);
 zen_define_default('TIME_DISPLAY_WEEK', $time_display);
 zen_define_default('TIME_DISPLAY_MONTH', $time_display);
 zen_define_default('TIME_DISPLAY_YEAR', $time_display);
-  
+
 // we ramp up the execution time to make sure those
 // really big reports don't time out
 ini_set('max_execution_time', 300);
@@ -148,7 +148,7 @@ $detail_array = [
     ['id' => 'order', 'text' => SELECT_DETAIL_ORDER],
     ['id' => 'matrix', 'text' => SELECT_DETAIL_MATRIX],
 ];
-    
+
 $order_sorts = ['oID', 'last_name', 'email', 'num_products', 'goods', 'shipping', 'discount', 'gc_sold', 'gc_used', 'grand'];
 $order_sorts_array = [
     ['id' => 'oID', 'text' => TABLE_HEADING_ORDERS_ID],
@@ -397,7 +397,7 @@ if ($output_format === false) {
             'prod_includes' => $prod_includes,
         ];
         $sr = new sales_report2($sr_parms);
-    
+
         if ($output_format === 'csv') {
             // we have to pass the sorting values of the form since
             // the class instantiation does not require them
@@ -474,7 +474,7 @@ if ($output_format === 'print') {
             </tr>
 <?php 
     }
-    
+
     if ($current_status !== 0) {
 ?>
             <tr>
@@ -519,22 +519,22 @@ if ($output_format === 'print') {
                             </tr>
                             <tr>
                                 <td class="smallText" id="td_today">
-                                    <?= zen_draw_radio_field('date_preset', 'today', ($date_preset === 'today')) . sprintf(SEARCH_DATE_TODAY, date('M. j', $today_timestamp)) ?>
+                                    <?= zen_draw_radio_field('date_preset', 'today', ($date_preset === 'today')) . sprintf(SEARCH_DATE_TODAY, $zcDate->output(SEARCH_DATE_YTD_FORMAT_M_D, $today_timestamp)) ?>
                                 </td>
                             </tr>
                             <tr>
                                 <td class="smallText" id="td_yesterday">
-                                    <?= zen_draw_radio_field('date_preset', 'yesterday', ($date_preset === 'yesterday')) . sprintf(SEARCH_DATE_YESTERDAY, date('M. j', strtotime('-1 day', $today_timestamp))) ?>
+                                    <?= zen_draw_radio_field('date_preset', 'yesterday', ($date_preset === 'yesterday')) . sprintf(SEARCH_DATE_YESTERDAY, $zcDate->output(SEARCH_DATE_YTD_FORMAT_M_D, strtotime('-1 day', $today_timestamp))) ?>
                                 </td>
                             </tr>
                             <tr>
                                 <td class="smallText" id="td_last_month">
-                                    <?= zen_draw_radio_field('date_preset', 'last_month', ($date_preset === 'last_month')) . sprintf(SEARCH_DATE_LAST_MONTH, date("F \'y", strtotime('-1 month', $today_timestamp))) ?>
+                                    <?= zen_draw_radio_field('date_preset', 'last_month', ($date_preset === 'last_month')) . sprintf(SEARCH_DATE_LAST_MONTH, $zcDate->output(SEARCH_DATE_YTD_FORMAT_M_Y, strtotime('-1 month', $today_timestamp))) ?>
                                 </td>
                             </tr>
                             <tr>
                                 <td class="smallText" id="td_this_month">
-                                    <?= zen_draw_radio_field('date_preset', 'this_month', ($date_preset === 'this_month')) . sprintf(SEARCH_DATE_THIS_MONTH, date("F \'y")) ?>
+                                    <?= zen_draw_radio_field('date_preset', 'this_month', ($date_preset === 'this_month')) . sprintf(SEARCH_DATE_THIS_MONTH, $zcDate->output(SEARCH_DATE_YTD_FORMAT_M_Y)) ?>
                                 </td>
                             </tr>
                             <tr>
@@ -549,7 +549,7 @@ if ($output_format === 'print') {
                             </tr>
                             <tr>
                                 <td class="smallText" id="td_YTD">
-                                    <?= zen_draw_radio_field('date_preset', 'YTD', ($date_preset === 'YTD' || !empty($date_custom))) . sprintf(SEARCH_DATE_YTD, 'Jan 1 to ' . date('M. j Y', $today_timestamp)) ?>
+                                    <?= zen_draw_radio_field('date_preset', 'YTD', ($date_preset === 'YTD' || !empty($date_custom))) . sprintf(SEARCH_DATE_YTD, $zcDate->output(SEARCH_DATE_YTD_FORMAT_1, mktime(0,0,0,1,1,date('Y'))), $zcDate->output(SEARCH_DATE_YTD_FORMAT_2)) ?>
                                 </td>
                             </tr>
                         </table>
@@ -788,7 +788,7 @@ if ($output_format === 'print') {
         </tr>
 <?php 
 }  // END <?php if ( (!$output_format || $output_format = 'display') && $output_format != 'print')
-    
+
 if ($output_format === 'print' || $output_format === 'display') {
     // timeframes are in ascending order by default, so we only
     // need to make changes if the user requests descending order
@@ -902,16 +902,16 @@ if ($output_format === 'print' || $output_format === 'display') {
         // generate the timeframe date display
         switch ($sr->timeframe_group) {
             case 'day':
-                $time_display = date(TIME_DISPLAY_DAY, $timeframe['sd']);
+                $time_display = $zcDate->output(TIME_DISPLAY_DAY, $timeframe['sd']);
                 break;
             case 'week':
-                $time_display = date(TIME_DISPLAY_WEEK, $timeframe['sd']) . DATE_SPACER . date(TIME_DISPLAY_WEEK, $timeframe['ed']);
+                $time_display = $zcDate->output(TIME_DISPLAY_WEEK, $timeframe['sd']) . DATE_SPACER . $zcDate->output(TIME_DISPLAY_WEEK, $timeframe['ed']);
                 break;
             case 'month':
-                $time_display = date(TIME_DISPLAY_MONTH, $timeframe['sd']) . DATE_SPACER . date(TIME_DISPLAY_MONTH, $timeframe['ed']);
+                $time_display = $zcDate->output(TIME_DISPLAY_MONTH, $timeframe['sd']) . DATE_SPACER . $zcDate->output(TIME_DISPLAY_MONTH, $timeframe['ed']);
                 break;
             case 'year':
-                $time_display = date(TIME_DISPLAY_YEAR, $timeframe['sd']) . DATE_SPACER . date(TIME_DISPLAY_YEAR, $timeframe['ed']);
+                $time_display = $zcDate->output(TIME_DISPLAY_YEAR, $timeframe['sd']) . DATE_SPACER . $zcDate->output(TIME_DISPLAY_YEAR, $timeframe['ed']);
                 break;
         }
 

@@ -89,6 +89,7 @@ $defines = [
     // TIMEFRAME DATE DISPLAY
     // Note:  Other constants moved to the main processing file for v3.2.1.
     //
+    'DATE_FORMAT_TIMEFRAME' => 'd-MMM.-yy',
     'DATE_SPACER' => ' to<br>&nbsp;&nbsp;&nbsp;',
 
     //////////////////////////////////////////////////////////
@@ -137,7 +138,11 @@ $defines = [
     'SEARCH_DATE_THIS_MONTH' => ' This Month (%s)',
     'SEARCH_DATE_LAST_YEAR' => ' Last Year (%s)',
     'SEARCH_DATE_LAST_12_MONTHS' => ' Last 12 Months',
-    'SEARCH_DATE_YTD' => ' YTD (%s)',
+    'SEARCH_DATE_YTD' => ' YTD (%s to %s)',
+    'SEARCH_DATE_YTD_FORMAT_1' => 'MMM. d',
+    'SEARCH_DATE_YTD_FORMAT_2' => 'MMM. d y',
+    'SEARCH_DATE_YTD_FORMAT_M_D' => 'MMM. d',
+    'SEARCH_DATE_YTD_FORMAT_M_Y' => 'MMMM \'\'yy',
     'SEARCH_START_DATE' => 'Start Date',
     'SEARCH_END_DATE' => 'End Date (inclusive)',
     'SEARCH_DATE_FORMAT' => 'mm/dd/yyyy',
