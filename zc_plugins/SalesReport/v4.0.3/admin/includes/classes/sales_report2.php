@@ -1,6 +1,6 @@
 <?php
 /**
- * Sales Report II, v4.0.2
+ * Sales Report II, v4.0.3
  *
  * The class file acts as the engine in the sales report.  All the data displayed is gathered and
  * calculated in here. The logic tree provides a brief summary of the main functions at work every
@@ -322,19 +322,12 @@ ORDER BY orders_id, orders_status_id, date_added) '. PHP_EOL;
             $totals = $this->initializeTotals();
             $totals['diff_products'] = [];
             $this->timeframe[$id]['total'] = $totals;
-            if ($this->detail_level === 'order') {
-                $this->timeframe[$id]['orders'] = [];
-            } elseif ($this->detail_level === 'product') {
-                $this->timeframe[$id]['products'] = [];
-            }
+
+            $this->timeframe[$id]['orders'] = [];
+            $this->timeframe[$id]['products'] = [];
+
             foreach ($sales as $next_sale) {
                 $grand_total += $this->build_li_totals($next_sale);
-                if (empty($this->timeframe[$id]['orders'])) {
-                    $this->timeframe[$id]['orders'] = false;
-                }
-                if (empty($this->timeframe[$id]['products'])) {
-                    $this->timeframe[$id]['products'] = false;
-                }
             }
             // calculate the total for the timeframe
             $this->timeframe[$id]['total']['grand'] = $grand_total;
