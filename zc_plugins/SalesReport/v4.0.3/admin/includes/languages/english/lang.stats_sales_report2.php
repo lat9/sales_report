@@ -1,6 +1,6 @@
 <?php
 /**
- * Sales Report II, v4.0.2
+ * Sales Report II, v4.0.3
  *
  * The language file contains all the text that appears on the report. The first set of
  * configuration defines actually impact the report's output and behavior.
