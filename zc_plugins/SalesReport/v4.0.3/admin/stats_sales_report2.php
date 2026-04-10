@@ -179,52 +179,51 @@ $product_sorts_array = [
 $date_preset = (!empty($_GET['date_preset'])) ? $_GET['date_preset'] : 'YTD';
 $date_custom = (isset($_GET['date_custom']) && $_GET['date_custom'] === '1') ? '1' : '0';
 $today_timestamp = strtotime('today midnight');
-$datepicker_format = DATE_FORMAT;
 if ($date_custom === '1') {
     // defaults to beginning of the month when not set
-    $start_date = (!empty($_GET['start_date'])) ? $_GET['start_date'] : date($datepicker_format, strtotime('first day of this month', $today_timestamp));
+    $start_date = (!empty($_GET['start_date'])) ? $_GET['start_date'] : date(DATE_FORMAT, strtotime('first day of this month', $today_timestamp));
     $end_date = (!empty($_GET['end_date'])) ? $_GET['end_date'] : $start_date;
 } else {
     switch ($date_preset) {
         case 'today':
-            $start_date = date($datepicker_format, $today_timestamp);
+            $start_date = date(DATE_FORMAT, $today_timestamp);
             $end_date = $start_date;
             break;
         case 'yesterday':
-            $start_date = date($datepicker_format, strtotime('yesterday', $today_timestamp));
+            $start_date = date(DATE_FORMAT, strtotime('yesterday', $today_timestamp));
             $end_date = $start_date;
             break;
         case 'last_month':
-            $start_date = date($datepicker_format, strtotime('first day of last month', $today_timestamp));
-            $end_date = date($datepicker_format, strtotime('last day of last month', $today_timestamp));
+            $start_date = date(DATE_FORMAT, strtotime('first day of last month', $today_timestamp));
+            $end_date = date(DATE_FORMAT, strtotime('last day of last month', $today_timestamp));
             break;
         case 'this_month':
-            $start_date = date($datepicker_format, strtotime('first day of this month', $today_timestamp));
-            $end_date = date($datepicker_format, $today_timestamp);
+            $start_date = date(DATE_FORMAT, strtotime('first day of this month', $today_timestamp));
+            $end_date = date(DATE_FORMAT, $today_timestamp);
             break;
         case 'last_year':
-            $start_date = date($datepicker_format, strtotime('last year January 1st', $today_timestamp));
-            $end_date = date($datepicker_format, strtotime('last year December 31st', $today_timestamp));
+            $start_date = date(DATE_FORMAT, strtotime('last year January 1st', $today_timestamp));
+            $end_date = date(DATE_FORMAT, strtotime('last year December 31st', $today_timestamp));
             break;
         case 'last_12_months':
-            $start_date = date($datepicker_format, strtotime('1 year ago', $today_timestamp));
-            $end_date = date($datepicker_format, $today_timestamp);
+            $start_date = date(DATE_FORMAT, strtotime('1 year ago', $today_timestamp));
+            $end_date = date(DATE_FORMAT, $today_timestamp);
             break;
         default:
             $_GET['date_preset'] = 'YTD';
-            $start_date = date($datepicker_format, strtotime('first day of January this year', $today_timestamp));
-            $end_date = date($datepicker_format, $today_timestamp);
+            $start_date = date(DATE_FORMAT, strtotime('first day of January this year', $today_timestamp));
+            $end_date = date(DATE_FORMAT, $today_timestamp);
             break;
     }
 }
 
-$dt = DateTime::createFromFormat($datepicker_format, $start_date);
+$dt = DateTime::createFromFormat(DATE_FORMAT, $start_date);
 if ($dt === false) {
-    $dt = DateTime::createFromFormat($datepicker_format, date($datepicker_format, strtotime('first day of this month', $today_timestamp)));
+    $dt = DateTime::createFromFormat(DATE_FORMAT, date(DATE_FORMAT, strtotime('first day of this month', $today_timestamp)));
 }
 $dt_start = $dt->format('Y-m-d'); // SQL format
 
-$dt = DateTime::createFromFormat($datepicker_format, $end_date);
+$dt = DateTime::createFromFormat(DATE_FORMAT, $end_date);
 $end_date = ($dt === false) ? $start_date : $end_date;
 $dt_end = ($dt === false) ? $dt_start : $dt->format('Y-m-d'); // SQL format
 
