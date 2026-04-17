@@ -1796,10 +1796,10 @@ if ($output_format !== 'print') {
     <script>
     $(function() {
         $('#start-date').datepicker({
-            dateFormat: '<?= sales_report2::zen_date_format_fordatepicker(); ?>',
+            dateFormat: '<?= sales_report2::zen_date_format_fordatepicker() ?>',
         });
         $('#end-date').datepicker({
-                    dateFormat: '<?= sales_report2::zen_date_format_fordatepicker(); ?>',
+            dateFormat: '<?= sales_report2::zen_date_format_fordatepicker() ?>',
         });
     });
     </script>
