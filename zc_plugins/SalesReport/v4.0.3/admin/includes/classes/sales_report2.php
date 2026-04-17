@@ -1097,20 +1097,20 @@ ORDER BY orders_id, orders_status_id, date_added) '. PHP_EOL;
             // format the dates
             switch ($this->timeframe_group) {
                 case 'day':
-                    $start_date = date(TIME_DISPLAY_DAY, $timeframe['sd']);
-                    $end_date = date(TIME_DISPLAY_DAY, $timeframe['ed']);
+                    $start_date = date(DATE_FORMAT, $timeframe['sd']);
+                    $end_date = date(DATE_FORMAT, $timeframe['ed']);
                     break;
                 case 'week':
-                    $start_date = date(TIME_DISPLAY_WEEK, $timeframe['sd']);
-                    $end_date = date(TIME_DISPLAY_WEEK, $timeframe['ed']);
+                    $start_date = date(DATE_FORMAT, $timeframe['sd']);
+                    $end_date = date(DATE_FORMAT, $timeframe['ed']);
                     break;
                 case 'month':
-                    $start_date = date(TIME_DISPLAY_MONTH, $timeframe['sd']);
-                    $end_date = date(TIME_DISPLAY_MONTH, $timeframe['ed']);
+                    $start_date = date(DATE_FORMAT, $timeframe['sd']);
+                    $end_date = date(DATE_FORMAT, $timeframe['ed']);
                     break;
                 case 'year':
-                    $start_date = date(TIME_DISPLAY_YEAR, $timeframe['sd']);
-                    $end_date = date(TIME_DISPLAY_YEAR, $timeframe['ed']);
+                    $start_date = date(DATE_FORMAT, $timeframe['sd']);
+                    $end_date = date(DATE_FORMAT, $timeframe['ed']);
                     break;
             }
             switch ($this->detail_level) {
@@ -1260,5 +1260,19 @@ ORDER BY orders_id, orders_status_id, date_added) '. PHP_EOL;
     protected function outputCsvLine($line)
     {
         echo implode(CSV_SEPARATOR, $line) . CSV_NEWLINE;
+    }
+
+    public static function zen_date_format_fordatepicker()
+    {
+        $date = DATE_FORMAT;
+        $date = str_replace('m', 'mm', $date);
+        $date = str_replace('d', 'dd', $date);
+        $date = str_replace('Y', 'yy', $date);
+        return $date;
+    }
+
+    public static function zen_date_to_datepicker_format_full()
+    {
+        return str_replace("YY", "YYYY", strtoupper(self::zen_date_format_fordatepicker()));
     }
 }

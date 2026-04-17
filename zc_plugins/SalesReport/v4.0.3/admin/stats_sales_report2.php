@@ -179,52 +179,53 @@ $product_sorts_array = [
 $date_preset = (!empty($_GET['date_preset'])) ? $_GET['date_preset'] : 'YTD';
 $date_custom = (isset($_GET['date_custom']) && $_GET['date_custom'] === '1') ? '1' : '0';
 $today_timestamp = strtotime('today midnight');
-$datepicker_format = zen_datepicker_format_fordate();
 if ($date_custom === '1') {
     // defaults to beginning of the month when not set
-    $start_date = (!empty($_GET['start_date'])) ? $_GET['start_date'] : date($datepicker_format, strtotime('first day of this month', $today_timestamp));
+    $start_date = (!empty($_GET['start_date'])) ? $_GET['start_date'] : date(DATE_FORMAT, strtotime('first day of this month', $today_timestamp));
     $end_date = (!empty($_GET['end_date'])) ? $_GET['end_date'] : $start_date;
 } else {
     switch ($date_preset) {
         case 'today':
-            $start_date = date($datepicker_format, $today_timestamp);
+            $start_date = date(DATE_FORMAT, $today_timestamp);
             $end_date = $start_date;
             break;
         case 'yesterday':
-            $start_date = date($datepicker_format, strtotime('yesterday', $today_timestamp));
+            $start_date = date(DATE_FORMAT, strtotime('yesterday', $today_timestamp));
             $end_date = $start_date;
             break;
         case 'last_month':
-            $start_date = date($datepicker_format, strtotime('first day of last month', $today_timestamp));
-            $end_date = date($datepicker_format, strtotime('last day of last month', $today_timestamp));
+            $start_date = date(DATE_FORMAT, strtotime('first day of last month', $today_timestamp));
+            $end_date = date(DATE_FORMAT, strtotime('last day of last month', $today_timestamp));
             break;
         case 'this_month':
-            $start_date = date($datepicker_format, strtotime('first day of this month', $today_timestamp));
-            $end_date = date($datepicker_format, $today_timestamp);
+            $start_date = date(DATE_FORMAT, strtotime('first day of this month', $today_timestamp));
+            $end_date = date(DATE_FORMAT, $today_timestamp);
             break;
         case 'last_year':
-            $start_date = date($datepicker_format, strtotime('last year January 1st', $today_timestamp));
-            $end_date = date($datepicker_format, strtotime('last year December 31st', $today_timestamp));
+            $start_date = date(DATE_FORMAT, strtotime('last year January 1st', $today_timestamp));
+            $end_date = date(DATE_FORMAT, strtotime('last year December 31st', $today_timestamp));
             break;
         case 'last_12_months':
-            $start_date = date($datepicker_format, strtotime('1 year ago', $today_timestamp));
-            $end_date = date($datepicker_format, $today_timestamp);
+            $start_date = date(DATE_FORMAT, strtotime('1 year ago', $today_timestamp));
+            $end_date = date(DATE_FORMAT, $today_timestamp);
             break;
         default:
             $_GET['date_preset'] = 'YTD';
-            $start_date = date($datepicker_format, strtotime('first day of January this year', $today_timestamp));
-            $end_date = date($datepicker_format, $today_timestamp);
+            $start_date = date(DATE_FORMAT, strtotime('first day of January this year', $today_timestamp));
+            $end_date = date(DATE_FORMAT, $today_timestamp);
             break;
     }
 }
 
-$dt = DateTime::createFromFormat($datepicker_format, $start_date);
+$dt = DateTime::createFromFormat(DATE_FORMAT, $start_date);
 if ($dt === false) {
-    $dt = DateTime::createFromFormat($datepicker_format, date($datepicker_format, strtotime('first day of this month', $today_timestamp)));
+    $dt = DateTime::createFromFormat(DATE_FORMAT, date(DATE_FORMAT, strtotime('first day of this month', $today_timestamp)));
 }
+$dt_start = $dt->format('Y-m-d'); // SQL format
 
-$dt = DateTime::createFromFormat($datepicker_format, $end_date);
+$dt = DateTime::createFromFormat(DATE_FORMAT, $end_date);
 $end_date = ($dt === false) ? $start_date : $end_date;
+$dt_end = ($dt === false) ? $dt_start : $dt->format('Y-m-d'); // SQL format
 
 $date_target = (isset($_GET['date_target']) && in_array($_GET['date_target'], ['purchased', 'status'])) ? $_GET['date_target'] : 'purchased';
 if ($date_target === 'status') {
@@ -374,8 +375,8 @@ if ($output_format === false) {
         $sr_parms = [
             'timeframe' => $timeframe,
             'timeframe_sort' => ($timeframe_sort === SEARCH_TIMEFRAME_SORT_DESC) ? 'desc' : 'asc',
-            'start_date' => $start_date,
-            'end_date' => $end_date,
+            'start_date' => $dt_start,
+            'end_date' => $dt_end,
             'date_target' => $date_target,
             'date_status' => $date_status,
             'payment_method' => $payment_method,
@@ -566,7 +567,7 @@ if ($output_format === 'print') {
                                     <div class="date">
                                         <?= zen_draw_input_field('start_date', $start_date, 'id="start-date" autocomplete="off"') ?>
                                     </div>
-                                    <span class="help-block errorText">(<?= zen_datepicker_format_full() ?>)</span>
+                                    <span class="help-block errorText">(<?= sales_report2::zen_date_to_datepicker_format_full() ?>)</span>
                                 </td>
                             </tr>
                             <tr>
@@ -575,7 +576,7 @@ if ($output_format === 'print') {
                                     <div class="date">
                                         <?= zen_draw_input_field('end_date', $end_date, 'id="end-date" autocomplete="off"') ?>
                                     </div>
-                                    <span class="help-block errorText">(<?= zen_datepicker_format_full() ?>)</span>
+                                    <span class="help-block errorText">(<?= sales_report2::zen_date_to_datepicker_format_full() ?>)</span>
                                 </td>
                             </tr>
                         </table></td>
@@ -1794,8 +1795,12 @@ if ($output_format !== 'print') {
 ?>
     <script>
     $(function() {
-        $('#start-date').datepicker();
-        $('#end-date').datepicker();
+        $('#start-date').datepicker({
+            dateFormat: '<?= sales_report2::zen_date_format_fordatepicker() ?>',
+        });
+        $('#end-date').datepicker({
+            dateFormat: '<?= sales_report2::zen_date_format_fordatepicker() ?>',
+        });
     });
     </script>
 <?php
