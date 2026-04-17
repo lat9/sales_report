@@ -145,10 +145,10 @@ ORDER BY orders_id, orders_status_id, date_added) '. PHP_EOL;
         // avoid dates before the first order
         $first = $db->Execute("SELECT MIN(date_purchased) AS date FROM " . TABLE_ORDERS);
         $this->global_sd = strtotime(substr($first->fields['date'], 0, 10));
-        if ($this->sd_raw === false || $this->sd_raw < $this->global_sd) {
+        if ($this->sd_raw === false) {
             $this->sd_raw = $this->global_sd;
         }
-        if ($this->ed_raw === false || $this->ed_raw < $this->global_sd) {
+        if ($this->ed_raw === false) {
             $this->ed_raw = $this->global_sd;
         }
 
